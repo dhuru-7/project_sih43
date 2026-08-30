@@ -1,0 +1,52 @@
+{
+  "CATEGORIES": [
+    {
+      "id": "WATER_SANITATION",
+      "name": "Water & Sanitation",
+      "department": "Ministry of Jal Shakti",
+      "icon": "droplet",
+      "keywords": ["leakage", "contamination", "drainage", "sewage", "drinking water", "pipeline"]
+    },
+    {
+      "id": "URBAN_INFRASTRUCTURE",
+      "name": "Urban Infrastructure & Roads",
+      "department": "Ministry of Housing & Urban Affairs",
+      "icon": "road",
+      "keywords": ["pothole", "street light", "traffic", "bridge", "footpath", "construction"]
+    },
+    {
+      "id": "ENERGY_ELECTRICITY",
+      "name": "Energy & Power Distribution",
+      "department": "Ministry of Power",
+      "icon": "zap",
+      "keywords": ["power cut", "transformer", "electric pole", "voltage", "renewable energy"]
+    },
+    {
+      "id": "ENVIRONMENT_WASTE",
+      "name": "Environment & Waste Management",
+      "department": "Ministry of Environment, Forest and Climate Change",
+      "icon": "trash-2",
+      "keywords": ["garbage", "air pollution", "burning", "recycling", "industrial waste"]
+    },
+    {
+      "id": "HEALTHCARE",
+      "name": "Public Health & Sanitation",
+      "department": "Ministry of Health & Family Welfare",
+      "icon": "activity",
+      "keywords": ["hospital", "clinic", "disease outbreak", "medicine shortage", "hygiene"]
+    },
+    {
+      "id": "AGRICULTURE_RURAL",
+      "name": "Agriculture & Rural Development",
+      "department": "Ministry of Agriculture & Farmers Welfare",
+      "icon": "wheat",
+      "keywords": ["crop loss", "irrigation", "soil erosion", "market access", "storage"]
+    }
+  ],
+  "SEVERITY_LEVELS": {
+    "LOW": { "level": 1, "weight": 1.0, "color": "#10B981" },
+    "MEDIUM": { "level": 2, "weight": 1.5, "color": "#F59E0B" },
+    "HIGH": { "level": 3, "weight": 2.5, "color": "#EF4444" },
+    "CRITICAL": { "level": 4, "weight": 4.0, "color": "#7C3AED" }
+  }
+}

@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && request.auth.token.role == role;
+    }
+
+    // Problems Collection
+    match /problems/{problemId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if hasRole('GOVERNMENT') || hasRole('ADMIN');
+    }
+
+    // Challenges Collection
+    match /challenges/{challengeId} {
+      allow read: if true;
+      allow create, update: if hasRole('GOVERNMENT') || hasRole('ADMIN');
+    }
+
+    // Projects & Milestones
+    match /projects/{projectId} {
+      allow read: if isAuthenticated();
+      allow create: if hasRole('UNIVERSITY') || hasRole('GOVERNMENT');
+      allow update: if hasRole('UNIVERSITY') || hasRole('GOVERNMENT') || hasRole('INDUSTRY');
+    }
+
+    // Funding Records
+    match /funding/{fundingId} {
+      allow read: if isAuthenticated();
+      allow create, update: if hasRole('GOVERNMENT') || hasRole('INDUSTRY') || hasRole('ADMIN');
+    }
+  }
+}

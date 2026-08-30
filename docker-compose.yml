@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sih26043-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - PORT=5000
+      - SECRET_KEY=sih_super_secret_jwt_key_2026
+      - DATABASE_URL=sqlite:///sih26043.db
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+    volumes:
+      - ./backend:/app
+    networks:
+      - sih-network
+
+  web-portal:
+    build:
+      context: ./apps/web-portal
+      dockerfile: Dockerfile
+    container_name: sih26043-web-portal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000/api/v1
+    volumes:
+      - ./apps/web-portal:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - sih-network
+
+networks:
+  sih-network:
+    driver: bridge

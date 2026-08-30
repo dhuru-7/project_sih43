@@ -1,0 +1,50 @@
+{
+  "ROLES": {
+    "CITIZEN": "CITIZEN",
+    "GOVERNMENT": "GOVERNMENT",
+    "UNIVERSITY": "UNIVERSITY",
+    "INDUSTRY": "INDUSTRY",
+    "ADMIN": "ADMIN"
+  },
+  "PERMISSIONS": {
+    "CITIZEN": [
+      "problem:create",
+      "problem:read:own",
+      "problem:track",
+      "evidence:upload"
+    ],
+    "GOVERNMENT": [
+      "problem:read:all",
+      "problem:verify",
+      "problem:publish_challenge",
+      "challenge:create",
+      "funding:allocate",
+      "project:review",
+      "certificate:issue",
+      "analytics:read"
+    ],
+    "UNIVERSITY": [
+      "challenge:read",
+      "challenge:apply",
+      "team:manage",
+      "project:create",
+      "milestone:submit",
+      "mentor:request",
+      "funding:request"
+    ],
+    "INDUSTRY": [
+      "challenge:read",
+      "challenge:co_sponsor",
+      "funding:grant",
+      "mentorship:provide",
+      "project:review",
+      "ip:license"
+    ]
+  },
+  "ROLE_PORTAL_MAP": {
+    "GOVERNMENT": "/government/dashboard",
+    "UNIVERSITY": "/university/dashboard",
+    "INDUSTRY": "/industry/dashboard",
+    "ADMIN": "/government/dashboard"
+  }
+}

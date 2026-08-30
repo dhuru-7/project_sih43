@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: SIH26043 Unified Ecosystem API
+  description: Shared API specification for Citizen Flutter App, Unified React Web Portal, and Flask AI Backend.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local Development Server
+  - url: https://sih26043-backend.onrender.com/api/v1
+    description: Production Cloud API
+
+paths:
+  /auth/login:
+    post:
+      summary: Unified User Authentication
+      description: Authenticates user credentials and returns JWT token with role information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: officer@jalshakti.gov.in
+                password:
+                  type: string
+                  example: securePassword123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                        enum: [CITIZEN, GOVERNMENT, UNIVERSITY, INDUSTRY, ADMIN]
+                      organization:
+                        type: string
+                  portalUrl:
+                    type: string
+                    example: /government/dashboard
+
+  /problems:
+    get:
+      summary: List all problems / grievances
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of problems
+    post:
+      summary: Submit a new problem (Citizen / Mobile)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, description, latitude, longitude]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                voiceNoteUrl:
+                  type: string
+                evidenceUrls:
+                  type: array
+                  items:
+                    type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '201':
+          description: Problem submitted and queued for AI classification
+
+  /ai/classify:
+    post:
+      summary: Trigger NLP classification and deduplication for a problem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                problemId:
+                  type: string
+      responses:
+        '200':
+          description: AI classification and severity scoring results

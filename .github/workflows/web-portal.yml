@@ -1,0 +1,29 @@
+name: Web Portal CI/CD
+
+on:
+  push:
+    paths:
+      - 'apps/web-portal/**'
+      - '.github/workflows/web-portal.yml'
+  pull_request:
+    paths:
+      - 'apps/web-portal/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        working-directory: apps/web-portal
+        run: npm ci
+
+      - name: Build React App
+        working-directory: apps/web-portal
+        run: npm run build
