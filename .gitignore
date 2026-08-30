@@ -27,17 +27,15 @@ env/
 venv/
 .venv/
 ENV/
-build/
+# Python packaging
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
+wheels/
 wheels/
 *.egg-info/
 .installed.cfg
