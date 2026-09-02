@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/elastic_pressable.dart';
 import '../../services/api_service.dart';
 
 class ProblemReportScreen extends StatefulWidget {
@@ -76,16 +77,37 @@ class _ProblemReportScreenState extends State<ProblemReportScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _submitGrievance,
-                icon: const Icon(Icons.send),
-                label: Text(_isSubmitting ? 'Submitting to AI Pipeline...' : 'Submit Grievance'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  foregroundColor: Colors.white,
+            ElasticPressable(
+              pressedScale: 0.96,
+              onTap: _isSubmitting ? null : _submitGrievance,
+              child: Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: _isSubmitting ? const Color(0xFF93C5FD) : const Color(0xFF3B82F6),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3B82F6).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isSubmitting ? 'Submitting to AI Pipeline...' : 'Submit Grievance',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

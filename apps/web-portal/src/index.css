@@ -1,5 +1,47 @@
+/* Valley Sans Font Family */
+@font-face {
+  font-family: 'Valley Sans';
+  src: url('/fonts/ValleySans-Variable.woff2') format('woff2-variations'),
+       url('/fonts/ValleySans-Regular.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valley Sans';
+  src: url('/fonts/ValleySans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valley Sans';
+  src: url('/fonts/ValleySans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valley Sans';
+  src: url('/fonts/ValleySans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valley Sans';
+  src: url('/fonts/ValleySans-Bold.woff2') format('woff2');
+  font-weight: 700 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --bg-primary: #0b0f19;
   --bg-secondary: #111827;
   --bg-card: rgba(17, 24, 39, 0.8);
@@ -30,11 +72,27 @@
 
 body {
   font-family: var(--font-sans);
+  font-weight: 400;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Inter Typography Pairing: Bold/Medium Headers, Regular Body */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+p, span, label, input, textarea, select {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
 
 a {
   color: inherit;
@@ -107,3 +165,147 @@ button {
 .card:hover {
   border-color: var(--border-hover);
 }
+
+/* Responsive Setu Mobile Experience */
+.setu-citizen-container {
+  min-height: 100vh;
+  background-color: #F8F9FA;
+  display: flex;
+  justify-content: center;
+  padding: 20px 10px;
+  color: #0F1115;
+  font-family: var(--font-sans);
+}
+
+.setu-citizen-frame {
+  width: 100%;
+  max-width: 430px;
+  min-height: 880px;
+  background-color: #FFFFFF;
+  border-radius: 44px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .setu-citizen-container {
+    padding: 0 !important;
+    background-color: #FFFFFF !important;
+  }
+  .setu-citizen-frame {
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Apple Fluid Interaction Design System */
+.apple-pressable {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.apple-pressable:active {
+  transform: scale(0.92);
+  opacity: 0.86;
+}
+
+.apple-pill-pressable {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.apple-pill-pressable:active {
+  transform: scale(0.94);
+}
+
+.clamp-2-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes appleSheetSlideUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes appleFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes appleBookmarkPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.32); }
+  70% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.apple-sheet-animate {
+  animation: appleSheetSlideUp 0.38s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+.apple-fullbleed-feed {
+  margin-left: -20px;
+  margin-right: -20px;
+  width: calc(100% + 40px);
+}
+
+.apple-carousel-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.apple-carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.apple-carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: start;
+  position: relative;
+}
+
+.apple-fade-transition {
+  transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), filter 0.35s ease;
+}
+
+.apple-desc-transition {
+  transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease;
+}
+
+@keyframes appleCardFadeScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.apple-card-smooth {
+  animation: appleCardFadeScale 0.28s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+
+

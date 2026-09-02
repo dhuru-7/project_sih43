@@ -11,12 +11,12 @@ class SetuApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Setu - Citizen Grievance Portal',
+      title: 'Setu',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        fontFamily: 'SF Pro Display',
+        fontFamily: 'Inter',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF121417),
           primary: const Color(0xFF121417),

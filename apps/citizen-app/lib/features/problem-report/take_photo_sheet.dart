@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/apple_theme.dart';
+import '../../core/widgets/elastic_pressable.dart';
 import '../../services/api_service.dart';
 
 class TakePhotoSheet extends StatefulWidget {
@@ -14,7 +15,6 @@ class TakePhotoSheet extends StatefulWidget {
 class _TakePhotoSheetState extends State<TakePhotoSheet> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  String _selectedCategory = "WATER_SANITATION";
   bool _isSubmitting = false;
 
   void _submit() async {
@@ -85,7 +85,7 @@ class _TakePhotoSheetState extends State<TakePhotoSheet> {
           ),
           const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.between,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Report New Issue',
@@ -95,32 +95,45 @@ class _TakePhotoSheetState extends State<TakePhotoSheet> {
                   color: AppleTheme.textPrimary,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
+              ElasticPressable(
+                pressedScale: 0.88,
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFF3F4F6),
+                  ),
+                  child: const Icon(Icons.close, size: 18, color: AppleTheme.textPrimary),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          // Camera upload preview box
-          Container(
-            height: 120,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.camera_alt_outlined, size: 36, color: Color(0xFF6B7280)),
-                SizedBox(height: 8),
-                Text(
-                  'Tap to capture photo or evidence',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
-                ),
-              ],
+          // Camera upload preview box with elastic feedback
+          ElasticPressable(
+            pressedScale: 0.98,
+            onTap: () {},
+            child: Container(
+              height: 120,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.camera_alt_outlined, size: 36, color: Color(0xFF6B7280)),
+                  SizedBox(height: 8),
+                  Text(
+                    'Tap to capture photo or evidence',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -153,20 +166,44 @@ class _TakePhotoSheetState extends State<TakePhotoSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppleTheme.cardDark,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
+          ElasticPressable(
+            pressedScale: 0.96,
+            onTap: _isSubmitting ? null : _submit,
+            child: Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                color: _isSubmitting ? const Color(0xFF4B5563) : AppleTheme.cardDark,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Text(
-                _isSubmitting ? 'Analyzing with Setu AI...' : 'Submit Grievance',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              child: Center(
+                child: _isSubmitting
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Analyzing with Setu AI...',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                          ),
+                        ],
+                      )
+                    : const Text(
+                        'Submit Grievance',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
               ),
             ),
           ),
