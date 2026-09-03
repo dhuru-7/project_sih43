@@ -47,7 +47,7 @@ class _VoiceReportScreenState extends State<VoiceReportScreen> {
                   color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
                   boxShadow: [
                     BoxShadow(
-                      color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6)).withOpacity(0.35),
+                      color: (_isRecording ? const Color(0xFFEF4444) : const Color(0xFF3B82F6)).withValues(alpha: 0.35),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),
