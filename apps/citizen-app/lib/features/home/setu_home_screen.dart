@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,27 +21,29 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
 
   late AnimationController _morphController;
   late Animation<double> _morphAnimation;
+  Timer? _morphTimer;
 
   @override
   void initState() {
     super.initState();
-    // Apple fluid spring rotation controller: 380ms response
+    // Apple fluid spring rotation controller: 350ms response
     _morphController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: const Duration(milliseconds: 350),
       value: _currentNavIndex > 0 ? 1.0 : 0.0,
     );
 
-    // Apple rotation spring curve with gentle overshoot & critical damping
+    // Apple smooth cubic curve with balanced acceleration & settle in both directions
     _morphAnimation = CurvedAnimation(
       parent: _morphController,
-      curve: const Cubic(0.34, 1.25, 0.64, 1.0),
-      reverseCurve: const Cubic(0.34, 1.25, 0.64, 1.0),
+      curve: const Cubic(0.25, 0.1, 0.25, 1.0),
+      reverseCurve: const Cubic(0.25, 0.1, 0.25, 1.0),
     );
   }
 
   @override
   void dispose() {
+    _morphTimer?.cancel();
     _morphController.dispose();
     super.dispose();
   }
@@ -49,16 +52,31 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     if (_currentNavIndex == index) return;
     HapticFeedback.selectionClick();
 
-    // Apple fluid transitions:
-    // If navigating to Explore (1), Messages (2), or Profile (3), spin & morph into Star.
-    // If navigating to Home (0), spin & morph back into Plus.
-    if (index > 0) {
-      _morphController.forward();
-    } else {
-      _morphController.reverse();
-    }
+    _morphTimer?.cancel();
+
+    final wasHome = _currentNavIndex == 0;
+    final isGoingHome = index == 0;
 
     setState(() => _currentNavIndex = index);
+
+    if (wasHome && !isGoingHome) {
+      // Home -> Explore/Messages/Profile:
+      // Land on the page first, then after the interval (~140ms),
+      // smoothly spin & morph Plus into Star, matching the Star -> Plus timing.
+      _morphTimer = Timer(const Duration(milliseconds: 140), () {
+        if (mounted && _currentNavIndex > 0) {
+          _morphController.forward();
+        }
+      });
+    } else if (!wasHome && isGoingHome) {
+      // Explore/Messages/Profile -> Home:
+      // Land on Home, then smoothly reverse Star back into Plus.
+      _morphController.reverse();
+    } else if (!isGoingHome) {
+      // Navigating between Explore, Messages, and Profile:
+      // Keep Star steady.
+      _morphController.value = 1.0;
+    }
   }
 
   final Map<String, int> _activeMediaIndexes = {};
