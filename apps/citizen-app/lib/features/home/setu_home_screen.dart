@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../core/theme/apple_theme.dart';
 import '../../core/widgets/elastic_pressable.dart';
 import '../problem-report/take_photo_sheet.dart';
+import 'widgets/morph_star_painter.dart';
 
 class SetuHomeScreen extends StatefulWidget {
   const SetuHomeScreen({super.key});
@@ -12,9 +13,53 @@ class SetuHomeScreen extends StatefulWidget {
   State<SetuHomeScreen> createState() => _SetuHomeScreenState();
 }
 
-class _SetuHomeScreenState extends State<SetuHomeScreen> {
+class _SetuHomeScreenState extends State<SetuHomeScreen>
+    with SingleTickerProviderStateMixin {
   int _currentNavIndex = 0;
   String _exploreTab = 'forYou'; // 'forYou' | 'following'
+
+  late AnimationController _morphController;
+  late Animation<double> _morphAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    // Apple fluid spring rotation controller: 380ms response
+    _morphController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+      value: _currentNavIndex > 0 ? 1.0 : 0.0,
+    );
+
+    // Apple rotation spring curve with gentle overshoot & critical damping
+    _morphAnimation = CurvedAnimation(
+      parent: _morphController,
+      curve: const Cubic(0.34, 1.25, 0.64, 1.0),
+      reverseCurve: const Cubic(0.34, 1.25, 0.64, 1.0),
+    );
+  }
+
+  @override
+  void dispose() {
+    _morphController.dispose();
+    super.dispose();
+  }
+
+  void _onNavIndexChanged(int index) {
+    if (_currentNavIndex == index) return;
+    HapticFeedback.selectionClick();
+
+    // Apple fluid transitions:
+    // If navigating to Explore (1), Messages (2), or Profile (3), spin & morph into Star.
+    // If navigating to Home (0), spin & morph back into Plus.
+    if (index > 0) {
+      _morphController.forward();
+    } else {
+      _morphController.reverse();
+    }
+
+    setState(() => _currentNavIndex = index);
+  }
 
   final Map<String, int> _activeMediaIndexes = {};
   final Map<String, int> _likeCounts = {
@@ -224,13 +269,16 @@ class _SetuHomeScreenState extends State<SetuHomeScreen> {
       backgroundColor: AppleTheme.background,
       body: Stack(
         children: [
-          // Main Scrollable Page Area
+          // Main Scrollable Page Area with IndexedStack
           Positioned.fill(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeOutCubic,
-              child: _buildCurrentScreen(navBottomPosition + 76),
+            child: IndexedStack(
+              index: _currentNavIndex,
+              children: [
+                _buildHomeScreen(navBottomPosition + 76),
+                _buildExploreScreen(navBottomPosition + 76),
+                _buildMessagesScreen(navBottomPosition + 76),
+                _buildProfileScreen(navBottomPosition + 76),
+              ],
             ),
           ),
 
@@ -244,20 +292,6 @@ class _SetuHomeScreenState extends State<SetuHomeScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildCurrentScreen(double bottomPadding) {
-    switch (_currentNavIndex) {
-      case 1:
-        return _buildExploreScreen(bottomPadding);
-      case 2:
-        return _buildMessagesScreen(bottomPadding);
-      case 3:
-        return _buildProfileScreen(bottomPadding);
-      case 0:
-      default:
-        return _buildHomeScreen(bottomPadding);
-    }
   }
 
   // ==========================================
@@ -1639,32 +1673,17 @@ class _SetuHomeScreenState extends State<SetuHomeScreen> {
             label: 'Explore',
           ),
 
-          // 3. Center (+) Action Button
-          ElasticPressable(
-            pressedScale: 0.92,
-            onTap: _openReportSheet,
-            child: Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppleTheme.primary,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-            ),
+          // 3. Center (+) / (★) Morphing Action Button
+          SpinMorphActionButton(
+            animation: _morphAnimation,
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              if (_currentNavIndex == 0) {
+                _openReportSheet();
+              } else {
+                _showCivicSpotlightSheet();
+              }
+            },
           ),
 
           // 4. Messages / Updates
@@ -1697,10 +1716,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen> {
 
     return ElasticPressable(
       pressedScale: 0.9,
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _currentNavIndex = index);
-      },
+      onTap: () => _onNavIndexChanged(index),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
@@ -1711,6 +1727,235 @@ class _SetuHomeScreenState extends State<SetuHomeScreen> {
           isSelected ? activeIcon : inactiveIcon,
           size: 22,
           color: isSelected ? AppleTheme.primary : AppleTheme.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  /// Apple-styled modal sheet for Civic Star Actions & AI Spotlight
+  void _showCivicSpotlightSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            12,
+            24,
+            MediaQuery.of(context).padding.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Pull Bar
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4.5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Title Header with Star Badge
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Setu Civic Spotlight',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            color: AppleTheme.primary,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'AI insights & quick ward actions',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: AppleTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElasticPressable(
+                    pressedScale: 0.9,
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFF3F4F6),
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: AppleTheme.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 22),
+
+              // Spotlight Action 1: Ask Setu AI Assistant
+              _buildSpotlightActionTile(
+                icon: Icons.auto_awesome_outlined,
+                iconBg: const Color(0xFFEFF6FF),
+                iconColor: const Color(0xFF2563EB),
+                title: 'Ask Setu AI Assistant',
+                description: 'Get instant answers on ward issues, schemes & status',
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Setu AI Assistant ready! ✨'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Spotlight Action 2: Quick Photo Report
+              _buildSpotlightActionTile(
+                icon: Icons.photo_camera_outlined,
+                iconBg: const Color(0xFFFEF3C7),
+                iconColor: const Color(0xFFD97706),
+                title: 'Quick Photo Report',
+                description: 'Capture or upload problem evidence directly',
+                onTap: () {
+                  Navigator.pop(context);
+                  _openReportSheet();
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Spotlight Action 3: Community Leaderboard
+              _buildSpotlightActionTile(
+                icon: Icons.emoji_events_outlined,
+                iconBg: const Color(0xFFDCFCE7),
+                iconColor: const Color(0xFF16A34A),
+                title: 'Civic Leaderboard & Badges',
+                description: 'Check top citizen contributors in Pattikalyana',
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You are in Top 5% contributors this month! 🏆'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSpotlightActionTile({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required String description,
+    required VoidCallback onTap,
+  }) {
+    return ElasticPressable(
+      pressedScale: 0.97,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppleTheme.borderLight),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppleTheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppleTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: AppleTheme.textSecondary,
+            ),
+          ],
         ),
       ),
     );
