@@ -1,6 +1,6 @@
 # 🚀 All-in-One Vercel Deployment & In-App Auto-Update Guide
 
-This guide walks you through deploying the complete **SETU Ecosystem** (React Web Portal, Python Flask Backend with NINA Voice AI, and Citizen Android APK hosting) on a **single Vercel project** under one custom domain (`https://setu.vercel.app`).
+This guide walks you through deploying the complete **SETU Ecosystem** (React Web Portal, Python Flask Backend with TARA Voice AI, and Citizen Android APK hosting) on a **single Vercel project** under one custom domain (`https://setu.vercel.app`).
 
 ---
 
@@ -50,7 +50,7 @@ In the Vercel **Environment Variables** section, add the following key-value pai
 
 | Key | Value | Description |
 |---|---|---|
-| `GEMINI_API_KEY` | `your_gemini_api_key_here` | Google Gemini API key for NINA Voice AI |
+| `GEMINI_API_KEY` | `your_gemini_api_key_here` | Google Gemini API key for TARA Voice AI |
 | `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Ultra-fast Gemini model for instant conversational response |
 | `SARVAM_API_KEY` | `your_sarvam_api_key_here` | Sarvam AI API key for Saaras STT and Bulbul TTS |
 | `SECRET_KEY` | `your_256bit_secret_key_here` | Cryptographically secure 256-bit Flask JWT & session secret |

@@ -10,7 +10,7 @@ voice_agent_bp = Blueprint("voice_agent", __name__)
 @voice_agent_bp.route("/start", methods=["POST"])
 def start_voice():
     """
-    Initializes a voice session with NINA, returns greeting text and Bulbul TTS audio.
+    Initializes a voice session with TARA, returns greeting text and Bulbul TTS audio.
     """
     data = request.get_json(silent=True) or {}
     session_id = data.get("session_id")

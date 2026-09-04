@@ -27,7 +27,7 @@ class VoiceAgentService:
     @classmethod
     def start_session(cls, session_id: str = None, user_name: str = "Ramesh") -> dict:
         """
-        Starts a new voice conversation with NINA.
+        Starts a new voice conversation with TARA.
         Generates the initial warm greeting in Hindi/English and returns the audio.
         """
         session_id = session_id or str(uuid.uuid4())
@@ -37,7 +37,7 @@ class VoiceAgentService:
 
         session = cls._get_or_create_session(session_id, user_name)
 
-        greeting_text = f"नमस्ते {user_name} जी! मैं नीना हूँ। सेतु ऐप में आपका स्वागत है। आज आप किस समस्या के बारे में बताना चाहते हैं?"
+        greeting_text = f"नमस्ते {user_name} जी! मैं तारा हूँ। सेतु ऐप में आपका स्वागत है। आज आप किस समस्या के बारे में बताना चाहते हैं?"
         
         # Check cache or synthesize audio with Sarvam Bulbul v3
         cache_key = f"{user_name}:{greeting_text}"

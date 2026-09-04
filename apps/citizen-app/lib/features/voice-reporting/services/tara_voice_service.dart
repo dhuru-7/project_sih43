@@ -8,7 +8,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 
-enum NinaAgentState {
+enum TaraAgentState {
   idle,
   connecting,
   speaking,
@@ -17,11 +17,11 @@ enum NinaAgentState {
   error,
 }
 
-class NinaVoiceService extends ChangeNotifier {
-  static final NinaVoiceService _instance = NinaVoiceService._internal();
-  factory NinaVoiceService() => _instance;
+class TaraVoiceService extends ChangeNotifier {
+  static final TaraVoiceService _instance = TaraVoiceService._internal();
+  factory TaraVoiceService() => _instance;
 
-  NinaVoiceService._internal() {
+  TaraVoiceService._internal() {
     _initAudioPlayer();
   }
 
@@ -48,7 +48,7 @@ class NinaVoiceService extends ChangeNotifier {
         }
       } catch (e) {
         lastError = e;
-        debugPrint('[NINA] Endpoint $base$path failed ($e), trying fallback candidate...');
+        debugPrint('[Tara] Endpoint $base$path failed ($e), trying fallback candidate...');
       }
     }
     if (lastError != null) throw lastError;
@@ -58,8 +58,8 @@ class NinaVoiceService extends ChangeNotifier {
   final AudioRecorder _audioRecorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  NinaAgentState _state = NinaAgentState.idle;
-  NinaAgentState get state => _state;
+  TaraAgentState _state = TaraAgentState.idle;
+  TaraAgentState get state => _state;
 
   String? _sessionId;
   String? get sessionId => _sessionId;
@@ -85,8 +85,8 @@ class NinaVoiceService extends ChangeNotifier {
 
   void _initAudioPlayer() {
     _audioPlayer.onPlayerComplete.listen((_) {
-      if (_state == NinaAgentState.speaking) {
-        debugPrint('[NINA] Finished speaking. Now listening for citizen response...');
+      if (_state == TaraAgentState.speaking) {
+        debugPrint('[Tara] Finished speaking. Now listening for citizen response...');
         _startListening();
       }
     });
@@ -100,15 +100,15 @@ class NinaVoiceService extends ChangeNotifier {
     });
   }
 
-  void _setState(NinaAgentState newState) {
+  void _setState(TaraAgentState newState) {
     _state = newState;
     notifyListeners();
   }
 
-  /// Start a full conversational session with NINA
+  /// Start a full conversational session with Tara
   Future<void> startSession({String userName = 'Rampal'}) async {
     try {
-      _setState(NinaAgentState.connecting);
+      _setState(TaraAgentState.connecting);
       _currentTranscript = '';
       _currentReply = '';
 
@@ -124,7 +124,7 @@ class NinaVoiceService extends ChangeNotifier {
         final audioBase64 = resData['audio_base64'] ?? '';
 
         _currentReply = greetingText;
-        debugPrint('[NINA] Session started: $_sessionId. Greeting: $greetingText');
+        debugPrint('[Tara] Session started: $_sessionId. Greeting: $greetingText');
 
         if (audioBase64.isNotEmpty && _isSpeakerOn) {
           await _playAudioBase64(audioBase64);
@@ -133,28 +133,28 @@ class NinaVoiceService extends ChangeNotifier {
           _startListening();
         }
       } else {
-        debugPrint('[NINA] Failed to start session: ${response.statusCode} ${response.body}');
-        _setState(NinaAgentState.error);
+        debugPrint('[Tara] Failed to start session: ${response.statusCode} ${response.body}');
+        _setState(TaraAgentState.error);
       }
     } catch (e) {
-      debugPrint('[NINA] Error starting session: $e');
-      _setState(NinaAgentState.error);
+      debugPrint('[Tara] Error starting session: $e');
+      _setState(TaraAgentState.error);
     }
   }
 
   /// Plays synthesized audio from base64 string
   Future<void> _playAudioBase64(String base64String) async {
     try {
-      _setState(NinaAgentState.speaking);
+      _setState(TaraAgentState.speaking);
       final bytes = base64Decode(base64String);
       final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/nina_reply_${DateTime.now().millisecondsSinceEpoch}.wav');
+      final tempFile = File('${tempDir.path}/Tara_reply_${DateTime.now().millisecondsSinceEpoch}.wav');
       await tempFile.writeAsBytes(bytes, flush: true);
 
       await _audioPlayer.setVolume(_isSpeakerOn ? 1.0 : 0.0);
       await _audioPlayer.play(DeviceFileSource(tempFile.path));
     } catch (e) {
-      debugPrint('[NINA] Error playing audio: $e');
+      debugPrint('[Tara] Error playing audio: $e');
       _startListening();
     }
   }
@@ -162,15 +162,15 @@ class NinaVoiceService extends ChangeNotifier {
   /// Starts microphone recording to capture citizen's response
   Future<void> _startListening() async {
     if (_isMuted) {
-      _setState(NinaAgentState.listening);
+      _setState(TaraAgentState.listening);
       return;
     }
 
     try {
       final hasPerm = await _audioRecorder.hasPermission();
       if (!hasPerm) {
-        debugPrint('[NINA] Mic permission not granted');
-        _setState(NinaAgentState.error);
+        debugPrint('[Tara] Mic permission not granted');
+        _setState(TaraAgentState.error);
         return;
       }
 
@@ -186,24 +186,24 @@ class NinaVoiceService extends ChangeNotifier {
         path: _currentRecordingPath!,
       );
 
-      _setState(NinaAgentState.listening);
+      _setState(TaraAgentState.listening);
       _startMicLevelMonitor();
-      debugPrint('[NINA] Listening at: $_currentRecordingPath');
+      debugPrint('[Tara] Listening at: $_currentRecordingPath');
     } catch (e) {
-      debugPrint('[NINA] Error starting audio recording: $e');
-      _setState(NinaAgentState.error);
+      debugPrint('[Tara] Error starting audio recording: $e');
+      _setState(TaraAgentState.error);
     }
   }
 
   /// Stops recording and submits audio to Gemini & Sarvam
   Future<void> finishListeningAndSend() async {
-    if (_state != NinaAgentState.listening) return;
+    if (_state != TaraAgentState.listening) return;
 
     _stopAudioLevelSimulation();
     _silenceTimer?.cancel();
 
     try {
-      _setState(NinaAgentState.processing);
+      _setState(TaraAgentState.processing);
 
       String? recordedPath;
       if (await _audioRecorder.isRecording()) {
@@ -213,7 +213,7 @@ class NinaVoiceService extends ChangeNotifier {
       }
 
       if (recordedPath == null || !File(recordedPath).existsSync()) {
-        debugPrint('[NINA] No recorded audio file found.');
+        debugPrint('[Tara] No recorded audio file found.');
         _startListening();
         return;
       }
@@ -222,12 +222,12 @@ class NinaVoiceService extends ChangeNotifier {
       final bytes = await file.readAsBytes();
       if (bytes.length < 1000) {
         // Less than 1KB is probably silence or instant tap
-        debugPrint('[NINA] Audio too short, listening again.');
+        debugPrint('[Tara] Audio too short, listening again.');
         _startListening();
         return;
       }
 
-      debugPrint('[NINA] Uploading ${bytes.length} bytes to /chat...');
+      debugPrint('[Tara] Uploading ${bytes.length} bytes to /chat...');
 
       http.StreamedResponse? streamedResponse;
       String responseBody = '';
@@ -253,13 +253,13 @@ class NinaVoiceService extends ChangeNotifier {
             break;
           }
         } catch (e) {
-          debugPrint('[NINA] Upload to $base/chat failed ($e), trying next candidate...');
+          debugPrint('[Tara] Upload to $base/chat failed ($e), trying next candidate...');
         }
       }
 
       if (streamedResponse == null) {
-        debugPrint('[NINA] All candidates failed for /chat upload');
-        _setState(NinaAgentState.error);
+        debugPrint('[Tara] All candidates failed for /chat upload');
+        _setState(TaraAgentState.error);
         return;
       }
 
@@ -271,7 +271,7 @@ class NinaVoiceService extends ChangeNotifier {
         _currentReply = resData['reply_text'] ?? '';
         final audioBase64 = resData['audio_base64'] ?? '';
 
-        debugPrint('[NINA] Turn complete. User: "$_currentTranscript" | NINA: "$_currentReply"');
+        debugPrint('[Tara] Turn complete. User: "$_currentTranscript" | Tara: "$_currentReply"');
 
         if (audioBase64.isNotEmpty && _isSpeakerOn) {
           await _playAudioBase64(audioBase64);
@@ -279,12 +279,12 @@ class NinaVoiceService extends ChangeNotifier {
           _startListening();
         }
       } else {
-        debugPrint('[NINA] /chat failed: ${streamedResponse.statusCode} $responseBody');
-        _setState(NinaAgentState.error);
+        debugPrint('[Tara] /chat failed: ${streamedResponse.statusCode} $responseBody');
+        _setState(TaraAgentState.error);
       }
     } catch (e) {
-      debugPrint('[NINA] Error in finishListeningAndSend: $e');
-      _setState(NinaAgentState.error);
+      debugPrint('[Tara] Error in finishListeningAndSend: $e');
+      _setState(TaraAgentState.error);
     }
   }
 
@@ -292,11 +292,11 @@ class NinaVoiceService extends ChangeNotifier {
   void toggleMute() {
     _isMuted = !_isMuted;
     if (_isMuted) {
-      if (_state == NinaAgentState.listening) {
+      if (_state == TaraAgentState.listening) {
         _audioRecorder.stop();
       }
     } else {
-      if (_state == NinaAgentState.listening) {
+      if (_state == TaraAgentState.listening) {
         _startListening();
       }
     }
@@ -329,10 +329,10 @@ class NinaVoiceService extends ChangeNotifier {
         ).catchError((_) => http.Response('', 500));
       }
     } catch (e) {
-      debugPrint('[NINA] Error ending session: $e');
+      debugPrint('[Tara] Error ending session: $e');
     } finally {
       _sessionId = null;
-      _setState(NinaAgentState.idle);
+      _setState(TaraAgentState.idle);
     }
   }
 
@@ -367,3 +367,4 @@ class NinaVoiceService extends ChangeNotifier {
     super.dispose();
   }
 }
+

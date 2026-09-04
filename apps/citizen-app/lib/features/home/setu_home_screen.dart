@@ -7,7 +7,7 @@ import '../../core/theme/apple_theme.dart';
 import '../../core/widgets/elastic_pressable.dart';
 import '../problem-report/take_photo_sheet.dart';
 import '../voice-reporting/widgets/aura_glow_painter.dart';
-import '../voice-reporting/services/nina_voice_service.dart';
+import '../voice-reporting/services/tara_voice_service.dart';
 import '../../core/services/app_update_service.dart';
 import 'widgets/morph_star_painter.dart';
 
@@ -28,7 +28,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   Timer? _morphTimer;
 
   // On-Screen AI Assistant state & Voice Service
-  final NinaVoiceService _ninaService = NinaVoiceService();
+  final TaraVoiceService _taraService = TaraVoiceService();
   bool _isAIAssistantActive = false;
   late AnimationController _auraController;
 
@@ -112,12 +112,12 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       // Delay backend network connection by 200ms so the 240ms transition animation renders at 120 FPS
       _startSessionTimer = Timer(const Duration(milliseconds: 200), () {
         if (mounted && _isAIAssistantActive) {
-          _ninaService.startSession(userName: 'Rampal');
+          _taraService.startSession(userName: 'Rampal');
         }
       });
     } else {
       _assistantTransitionController.reverse();
-      _ninaService.endSession();
+      _taraService.endSession();
     }
   }
 
@@ -380,16 +380,16 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                   if (t <= 0.0) return const SizedBox.shrink();
 
                   return ListenableBuilder(
-                    listenable: _ninaService,
+                    listenable: _taraService,
                     builder: (context, _) {
                       return CustomPaint(
                         size: Size.infinite,
                         painter: AuraGlowPainter(
                           animationProgress: _auraController.value,
-                          soundLevel: _ninaService.isMuted
+                          soundLevel: _taraService.isMuted
                               ? 0.0
-                              : (_ninaService.audioLevel > 0.05
-                                  ? _ninaService.audioLevel
+                              : (_taraService.audioLevel > 0.05
+                                  ? _taraService.audioLevel
                                   : (0.24 + 0.10 * math.sin(_auraController.value * 2 * math.pi).abs())),
                           transitionProgress: t,
                         ),
@@ -401,7 +401,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
             ),
           ),
 
-          // NINA Live Assistant Status & Spoken Caption Pill (Positioned above bar)
+          // TARA Live Assistant Status & Spoken Caption Pill (Positioned above bar)
           Positioned(
             left: 20,
             right: 20,
@@ -414,8 +414,8 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                 return Opacity(
                   opacity: t.clamp(0.0, 1.0),
                   child: ListenableBuilder(
-                    listenable: _ninaService,
-                    builder: (context, _) => _buildNinaStatusPill(),
+                    listenable: _taraService,
+                    builder: (context, _) => _buildTaraStatusPill(),
                   ),
                 );
               },
@@ -1967,9 +1967,9 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     );
   }
 
-  Widget _buildNinaStatusPill() {
-    final state = _ninaService.state;
-    final isMuted = _ninaService.isMuted;
+  Widget _buildTaraStatusPill() {
+    final state = _taraService.state;
+    final isMuted = _taraService.isMuted;
 
     String label = '';
     IconData icon = Icons.auto_awesome;
@@ -1978,21 +1978,21 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     bool isTapToSend = false;
 
     switch (state) {
-      case NinaAgentState.connecting:
-        label = 'Connecting to NINA...';
+      case TaraAgentState.connecting:
+        label = 'Connecting to TARA...';
         icon = Icons.sync_rounded;
         iconColor = const Color(0xFF0284C7);
         badgeBg = const Color(0xFFE0F2FE);
         break;
-      case NinaAgentState.speaking:
-        label = _ninaService.currentReply.isNotEmpty
-            ? 'NINA: ${_ninaService.currentReply}'
-            : 'NINA is speaking...';
+      case TaraAgentState.speaking:
+        label = _taraService.currentReply.isNotEmpty
+            ? 'TARA: ${_taraService.currentReply}'
+            : 'TARA is speaking...';
         icon = Icons.graphic_eq_rounded;
         iconColor = const Color(0xFF059669);
         badgeBg = const Color(0xFFD1FAE5);
         break;
-      case NinaAgentState.listening:
+      case TaraAgentState.listening:
         if (isMuted) {
           label = 'Microphone Muted (Tap mic to talk)';
           icon = Icons.mic_off_rounded;
@@ -2006,20 +2006,20 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
           isTapToSend = true;
         }
         break;
-      case NinaAgentState.processing:
-        label = 'NINA is understanding...';
+      case TaraAgentState.processing:
+        label = 'TARA is understanding...';
         icon = Icons.auto_awesome;
         iconColor = const Color(0xFF7C3AED);
         badgeBg = const Color(0xFFEDE9FE);
         break;
-      case NinaAgentState.error:
+      case TaraAgentState.error:
         label = 'Voice server unreachable. Tap to retry.';
         icon = Icons.refresh_rounded;
         iconColor = const Color(0xFFDC2626);
         badgeBg = const Color(0xFFFEE2E2);
         break;
-      case NinaAgentState.idle:
-        label = 'NINA Voice Assistant';
+      case TaraAgentState.idle:
+        label = 'TARA Voice Assistant';
         icon = Icons.auto_awesome;
         iconColor = const Color(0xFF1F2937);
         badgeBg = const Color(0xFFF3F4F6);
@@ -2031,9 +2031,9 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       onTap: () {
         HapticFeedback.mediumImpact();
         if (isTapToSend) {
-          _ninaService.finishListeningAndSend();
-        } else if (state == NinaAgentState.error) {
-          _ninaService.startSession(userName: 'Rampal');
+          _taraService.finishListeningAndSend();
+        } else if (state == TaraAgentState.error) {
+          _taraService.startSession(userName: 'Rampal');
         }
       },
       child: ClipRRect(
@@ -2127,14 +2127,14 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
 
   Widget _buildMuteButton() {
     return ListenableBuilder(
-      listenable: _ninaService,
+      listenable: _taraService,
       builder: (context, _) {
-        final isMuted = _ninaService.isMuted;
+        final isMuted = _taraService.isMuted;
         return ElasticPressable(
           pressedScale: 0.90,
           onTap: () {
             HapticFeedback.mediumImpact();
-            _ninaService.toggleMute();
+            _taraService.toggleMute();
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
@@ -2213,14 +2213,14 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
 
   Widget _buildSpeakerButton() {
     return ListenableBuilder(
-      listenable: _ninaService,
+      listenable: _taraService,
       builder: (context, _) {
-        final isSpeakerOn = _ninaService.isSpeakerOn;
+        final isSpeakerOn = _taraService.isSpeakerOn;
         return ElasticPressable(
           pressedScale: 0.90,
           onTap: () {
             HapticFeedback.mediumImpact();
-            _ninaService.toggleSpeaker();
+            _taraService.toggleSpeaker();
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
@@ -2613,3 +2613,4 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     );
   }
 }
+

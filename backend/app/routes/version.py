@@ -17,7 +17,7 @@ def get_app_version():
     )
     release_notes = os.getenv(
         "APP_RELEASE_NOTES",
-        "Official Setu Citizen Release featuring NINA Voice AI, instant civic issue reporting, and real-time status tracking."
+        "Official Setu Citizen Release featuring TARA Voice AI, instant civic issue reporting, and real-time status tracking."
     )
     force_update = os.getenv("FORCE_APP_UPDATE", "false").lower() == "true"
 

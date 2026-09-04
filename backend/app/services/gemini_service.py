@@ -6,8 +6,8 @@ logger = logging.getLogger(__name__)
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
-NINA_SYSTEM_INSTRUCTION = """
-You are NINA (नीना), an empathetic, polite, and dedicated voice assistant for SETU - the Indian National Citizen Grievance and Problem Reporting platform.
+TARA_SYSTEM_INSTRUCTION = """
+You are TARA (तारा), an empathetic, polite, and dedicated voice assistant for SETU - the Indian National Citizen Grievance and Problem Reporting platform.
 Your primary role is to listen to citizens—especially elderly and rural citizens—who are reporting public issues (such as broken roads, potholes, water supply problems, garbage accumulation, broken streetlights, or sewage overflow).
 
 Follow these vital conversation principles:
@@ -45,7 +45,7 @@ class GeminiService:
     @classmethod
     def generate_chat_response(cls, messages: list) -> str:
         """
-        Sends conversation history to Gemini 3.5 Flash Lite and gets NINA's response.
+        Sends conversation history to Gemini 3.5 Flash Lite and gets TARA's response.
         messages format:
         [
           {"role": "user", "parts": [{"text": "..."}]},
@@ -61,7 +61,7 @@ class GeminiService:
         payload = {
             "system_instruction": {
                 "parts": [
-                    {"text": NINA_SYSTEM_INSTRUCTION}
+                    {"text": TARA_SYSTEM_INSTRUCTION}
                 ]
             },
             "contents": messages,

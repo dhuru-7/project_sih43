@@ -48,7 +48,7 @@ export const LandingPage = () => {
         <div style={{ marginTop: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
           <span>✓ Direct APK Download (~28 MB)</span>
           <span>✓ Android 8.0 to Android 16</span>
-          <span>✓ Real-time NINA Voice AI</span>
+          <span>✓ Real-time TARA Voice AI</span>
           <span>✓ Auto-Updates Included</span>
         </div>
       </div>
@@ -137,7 +137,7 @@ export const LandingPage = () => {
           </p>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#9CA3AF' }}>
             <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> 1-Tap Camera & Video Issue Capture</li>
-            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> NINA Voice AI Assistant in Indian Languages</li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> TARA Voice AI Assistant in Indian Languages</li>
             <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> Apple-Fluid Motion & Live Status Tracking</li>
           </ul>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
