@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'features/home/setu_home_screen.dart';
 
 void main() {
+  debugPrint('============================== [MAIN] APP STARTING ==============================');
+  WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('[CRITICAL_FLUTTER_ERROR] ${details.exceptionAsString()}');
+    debugPrint('[CRITICAL_FLUTTER_STACK] ${details.stack}');
+  };
   runApp(const SetuApp());
 }
 

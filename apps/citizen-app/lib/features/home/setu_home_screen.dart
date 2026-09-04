@@ -7,6 +7,8 @@ import '../../core/theme/apple_theme.dart';
 import '../../core/widgets/elastic_pressable.dart';
 import '../problem-report/take_photo_sheet.dart';
 import '../voice-reporting/widgets/aura_glow_painter.dart';
+import '../voice-reporting/services/nina_voice_service.dart';
+import '../../core/services/app_update_service.dart';
 import 'widgets/morph_star_painter.dart';
 
 class SetuHomeScreen extends StatefulWidget {
@@ -25,10 +27,9 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   late Animation<double> _morphAnimation;
   Timer? _morphTimer;
 
-  // On-Screen AI Assistant state
+  // On-Screen AI Assistant state & Voice Service
+  final NinaVoiceService _ninaService = NinaVoiceService();
   bool _isAIAssistantActive = false;
-  bool _isMuted = false;
-  bool _isSpeakerOn = true;
   late AnimationController _auraController;
 
   // Apple fluid spring transition controller for AI Assistant & Nav bar morph
@@ -38,6 +39,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   @override
   void initState() {
     super.initState();
+    debugPrint('[SETU] initState started');
     // Apple fluid spring rotation controller: 350ms response
     _morphController = AnimationController(
       vsync: this,
@@ -58,22 +60,41 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       duration: const Duration(milliseconds: 3500),
     )..repeat();
 
-    // Apple fluid curve for AI Assistant soft wipe & button transitions (matched forward & reverse)
+    // Apple fluid spring curve for AI Assistant soft wipe & button transitions (240ms responsive)
     _assistantTransitionController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
-      reverseDuration: const Duration(milliseconds: 380),
+      duration: const Duration(milliseconds: 240),
+      reverseDuration: const Duration(milliseconds: 220),
     );
 
     _assistantTransitionAnimation = CurvedAnimation(
       parent: _assistantTransitionController,
-      curve: const Cubic(0.25, 0.1, 0.25, 1.0),
-      reverseCurve: const Cubic(0.25, 0.1, 0.25, 1.0),
+      curve: const Cubic(0.2, 0.0, 0.0, 1.0),
+      reverseCurve: const Cubic(0.2, 0.0, 0.0, 1.0),
     );
+
+    // Check for in-app OTA updates on launch after first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAppUpdate();
+    });
   }
+
+  Future<void> _checkAppUpdate() async {
+    try {
+      final updateInfo = await AppUpdateService.checkForUpdate();
+      if (updateInfo != null && mounted) {
+        AppUpdateService.showUpdateSheet(context, updateInfo);
+      }
+    } catch (e) {
+      debugPrint('[SETU] App update check failed: $e');
+    }
+  }
+
+  Timer? _startSessionTimer;
 
   @override
   void dispose() {
+    _startSessionTimer?.cancel();
     _morphTimer?.cancel();
     _morphController.dispose();
     _auraController.dispose();
@@ -83,13 +104,20 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
 
   void _setAIAssistantActive(bool active) {
     if (_isAIAssistantActive == active) return;
-    setState(() {
-      _isAIAssistantActive = active;
-    });
+    _isAIAssistantActive = active;
+    _startSessionTimer?.cancel();
+
     if (active) {
       _assistantTransitionController.forward();
+      // Delay backend network connection by 200ms so the 240ms transition animation renders at 120 FPS
+      _startSessionTimer = Timer(const Duration(milliseconds: 200), () {
+        if (mounted && _isAIAssistantActive) {
+          _ninaService.startSession(userName: 'Rampal');
+        }
+      });
     } else {
       _assistantTransitionController.reverse();
+      _ninaService.endSession();
     }
   }
 
@@ -317,6 +345,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[SETU] build started, currentNavIndex: $_currentNavIndex');
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final navBottomPosition = bottomInset > 0 ? bottomInset + 10.0 : 16.0;
 
@@ -350,18 +379,46 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                   final t = _assistantTransitionAnimation.value;
                   if (t <= 0.0) return const SizedBox.shrink();
 
-                  return CustomPaint(
-                    size: Size.infinite,
-                    painter: AuraGlowPainter(
-                      animationProgress: _auraController.value,
-                      soundLevel: _isMuted
-                          ? 0.0
-                          : (0.28 + 0.12 * math.sin(_auraController.value * 2 * math.pi).abs()),
-                      transitionProgress: t,
-                    ),
+                  return ListenableBuilder(
+                    listenable: _ninaService,
+                    builder: (context, _) {
+                      return CustomPaint(
+                        size: Size.infinite,
+                        painter: AuraGlowPainter(
+                          animationProgress: _auraController.value,
+                          soundLevel: _ninaService.isMuted
+                              ? 0.0
+                              : (_ninaService.audioLevel > 0.05
+                                  ? _ninaService.audioLevel
+                                  : (0.24 + 0.10 * math.sin(_auraController.value * 2 * math.pi).abs())),
+                          transitionProgress: t,
+                        ),
+                      );
+                    },
                   );
                 },
               ),
+            ),
+          ),
+
+          // NINA Live Assistant Status & Spoken Caption Pill (Positioned above bar)
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: navBottomPosition + 68,
+            child: AnimatedBuilder(
+              animation: _assistantTransitionAnimation,
+              builder: (context, child) {
+                final t = _assistantTransitionAnimation.value;
+                if (t <= 0.05) return const SizedBox.shrink();
+                return Opacity(
+                  opacity: t.clamp(0.0, 1.0),
+                  child: ListenableBuilder(
+                    listenable: _ninaService,
+                    builder: (context, _) => _buildNinaStatusPill(),
+                  ),
+                );
+              },
             ),
           ),
 
@@ -401,6 +458,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                   style: AppleTheme.brandTitle,
                 ),
               ),
+              // Notifications Icon Button
               ElasticPressable(
                 pressedScale: 0.92,
                 onTap: () {
@@ -510,7 +568,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
 
                 const SizedBox(height: 26),
 
-                // Full-width White "Take Photo" Button with Google Icon
+                // Full-width White "Take Video" Button with Video Icon
                 ElasticPressable(
                   pressedScale: 0.97,
                   onTap: _openReportSheet,
@@ -532,13 +590,13 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.photo_camera,
+                          Icons.videocam_rounded,
                           color: AppleTheme.primary,
-                          size: 20,
+                          size: 22,
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Take Photo',
+                          'Take Video',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
@@ -1713,39 +1771,31 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       builder: (context, child) {
         final t = _assistantTransitionAnimation.value;
 
-        // Fluid interpolation of container styling
-        final bgColor = Color.lerp(
-          Colors.white,
-          const Color(0xFF14171F),
-          t,
-        )!;
-
+        // Keep the bar light colored (matching normal nav bar) with a subtle blue accent tint in call mode
         final borderColor = Color.lerp(
           AppleTheme.borderLight,
-          const Color(0xFF3B82F6).withValues(alpha: 0.40),
+          const Color(0xFF3B82F6).withValues(alpha: 0.25),
           t,
         )!;
-
-        final borderWidth = lerpDouble(1.0, 1.5, t)!;
 
         return Container(
           height: 64,
           decoration: BoxDecoration(
-            color: bgColor,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(32),
             border: Border.all(
               color: borderColor,
-              width: borderWidth,
+              width: 1.0,
             ),
             boxShadow: [
-              if (t > 0.05)
+              if (t > 0.01)
                 BoxShadow(
-                  color: const Color(0xFF3B82F6).withValues(alpha: 0.32 * t),
-                  blurRadius: 20.0 + 8.0 * t,
-                  offset: const Offset(0, 4),
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.08 * t),
+                  blurRadius: 18.0,
+                  offset: const Offset(0, 2),
                 ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: lerpDouble(0.08, 0.28, t)!),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 6),
               ),
@@ -1778,102 +1828,87 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   }
 
   Widget _buildStandardNavLayer(double t) {
+    // Apple unified group cross-fade: direct & smooth (no dead-time delay)
     final standardOpacity = (1.0 - t).clamp(0.0, 1.0);
     if (standardOpacity <= 0.0) return const SizedBox.shrink();
+
+    final standardScale = lerpDouble(1.0, 0.92, t)!;
 
     return IgnorePointer(
       ignoring: t > 0.40,
       child: Opacity(
         opacity: standardOpacity,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            // 1. Home (slides inward toward center)
-            Transform.translate(
-              offset: Offset(14.0 * t, 0),
-              child: _buildNavItem(
+        child: Transform.scale(
+          scale: standardScale,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavItem(
                 index: 0,
                 activeIcon: Icons.home,
                 inactiveIcon: Icons.home_outlined,
                 label: 'Home',
               ),
-            ),
-
-            // 2. Explore (slides inward toward center)
-            Transform.translate(
-              offset: Offset(7.0 * t, 0),
-              child: _buildNavItem(
+              _buildNavItem(
                 index: 1,
                 activeIcon: Icons.explore,
                 inactiveIcon: Icons.explore_outlined,
                 label: 'Explore',
               ),
-            ),
-
-            // Gap for center button
-            const SizedBox(width: 48),
-
-            // 3. Messages (slides inward toward center)
-            Transform.translate(
-              offset: Offset(-7.0 * t, 0),
-              child: _buildNavItem(
+              // Center gap for the floating action button
+              const SizedBox(width: 48),
+              _buildNavItem(
                 index: 2,
                 activeIcon: Icons.chat_bubble,
                 inactiveIcon: Icons.chat_bubble_outline,
                 label: 'Messages',
               ),
-            ),
-
-            // 4. Profile (slides inward toward center)
-            Transform.translate(
-              offset: Offset(-14.0 * t, 0),
-              child: _buildNavItem(
+              _buildNavItem(
                 index: 3,
                 activeIcon: Icons.person,
                 inactiveIcon: Icons.person_outline,
                 label: 'Profile',
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildAICallNavLayer(double t) {
+    // Apple unified group cross-fade: smoothly fades in simultaneously from frame 0
     final callOpacity = t.clamp(0.0, 1.0);
     if (callOpacity <= 0.0) return const SizedBox.shrink();
 
-    final callScale = lerpDouble(0.88, 1.0, t)!;
+    final callScale = lerpDouble(0.92, 1.0, t)!;
 
     return IgnorePointer(
-      ignoring: t < 0.60,
+      ignoring: t < 0.50,
       child: Opacity(
         opacity: callOpacity,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            // Left: Mute / Unmute Button (slides outward from center)
-            Transform.translate(
-              offset: Offset(-14.0 * (1.0 - t), 0),
-              child: Transform.scale(
-                scale: callScale,
-                child: _buildMuteButton(),
+        child: Transform.scale(
+          scale: callScale,
+          child: Row(
+            children: [
+              // Left Wing: Mute Button centered in left wing
+              Expanded(
+                child: Center(
+                  child: _buildMuteButton(),
+                ),
               ),
-            ),
 
-            // Gap for center 48px End Call button
-            const SizedBox(width: 54),
+              // Gap for center 48px End Call button
+              const SizedBox(width: 48),
 
-            // Right: Speaker Button (slides outward from center)
-            Transform.translate(
-              offset: Offset(14.0 * (1.0 - t), 0),
-              child: Transform.scale(
-                scale: callScale,
-                child: _buildSpeakerButton(),
+              // Right Wing: Speaker Button centered in right wing
+              Expanded(
+                child: Center(
+                  child: _buildSpeakerButton(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1890,7 +1925,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
           Opacity(
             opacity: (1.0 - t).clamp(0.0, 1.0),
             child: Transform.scale(
-              scale: lerpDouble(1.0, 0.82, t)!,
+              scale: lerpDouble(1.0, 0.85, t)!,
               child: Transform.rotate(
                 angle: t * (math.pi / 4),
                 child: IgnorePointer(
@@ -1920,9 +1955,9 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
           Opacity(
             opacity: t.clamp(0.0, 1.0),
             child: Transform.scale(
-              scale: lerpDouble(0.82, 1.0, t)!,
+              scale: lerpDouble(0.85, 1.0, t)!,
               child: IgnorePointer(
-                ignoring: t < 0.60,
+                ignoring: t < 0.50,
                 child: _buildEndCallButton(),
               ),
             ),
@@ -1932,33 +1967,207 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     );
   }
 
-  Widget _buildMuteButton() {
+  Widget _buildNinaStatusPill() {
+    final state = _ninaService.state;
+    final isMuted = _ninaService.isMuted;
+
+    String label = '';
+    IconData icon = Icons.auto_awesome;
+    Color iconColor = const Color(0xFF2563EB);
+    Color badgeBg = const Color(0xFFEFF6FF);
+    bool isTapToSend = false;
+
+    switch (state) {
+      case NinaAgentState.connecting:
+        label = 'Connecting to NINA...';
+        icon = Icons.sync_rounded;
+        iconColor = const Color(0xFF0284C7);
+        badgeBg = const Color(0xFFE0F2FE);
+        break;
+      case NinaAgentState.speaking:
+        label = _ninaService.currentReply.isNotEmpty
+            ? 'NINA: ${_ninaService.currentReply}'
+            : 'NINA is speaking...';
+        icon = Icons.graphic_eq_rounded;
+        iconColor = const Color(0xFF059669);
+        badgeBg = const Color(0xFFD1FAE5);
+        break;
+      case NinaAgentState.listening:
+        if (isMuted) {
+          label = 'Microphone Muted (Tap mic to talk)';
+          icon = Icons.mic_off_rounded;
+          iconColor = const Color(0xFFDC2626);
+          badgeBg = const Color(0xFFFEE2E2);
+        } else {
+          label = 'Listening to you... (Tap when done)';
+          icon = Icons.mic_rounded;
+          iconColor = const Color(0xFFD97706);
+          badgeBg = const Color(0xFFFEF3C7);
+          isTapToSend = true;
+        }
+        break;
+      case NinaAgentState.processing:
+        label = 'NINA is understanding...';
+        icon = Icons.auto_awesome;
+        iconColor = const Color(0xFF7C3AED);
+        badgeBg = const Color(0xFFEDE9FE);
+        break;
+      case NinaAgentState.error:
+        label = 'Voice server unreachable. Tap to retry.';
+        icon = Icons.refresh_rounded;
+        iconColor = const Color(0xFFDC2626);
+        badgeBg = const Color(0xFFFEE2E2);
+        break;
+      case NinaAgentState.idle:
+        label = 'NINA Voice Assistant';
+        icon = Icons.auto_awesome;
+        iconColor = const Color(0xFF1F2937);
+        badgeBg = const Color(0xFFF3F4F6);
+        break;
+    }
+
     return ElasticPressable(
-      pressedScale: 0.90,
+      pressedScale: 0.96,
       onTap: () {
         HapticFeedback.mediumImpact();
-        setState(() => _isMuted = !_isMuted);
+        if (isTapToSend) {
+          _ninaService.finishListeningAndSend();
+        } else if (state == NinaAgentState.error) {
+          _ninaService.startSession(userName: 'Rampal');
+        }
       },
-      child: Container(
-        width: 46,
-        height: 46,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _isMuted
-              ? const Color(0xFFEF4444).withValues(alpha: 0.22)
-              : Colors.white.withValues(alpha: 0.12),
-          border: Border.all(
-            color: _isMuted
-                ? const Color(0xFFEF4444)
-                : Colors.white.withValues(alpha: 0.22),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: AppleTheme.borderLight,
+                width: 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: badgeBg,
+                  ),
+                  child: Center(
+                    child: Icon(icon, color: iconColor, size: 15),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+                if (isTapToSend) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1F2937),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Done',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 3),
+                        Icon(
+                          Icons.arrow_upward_rounded,
+                          size: 11,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
-        child: Icon(
-          _isMuted ? Icons.mic_off : Icons.mic,
-          color: _isMuted ? const Color(0xFFEF4444) : Colors.white,
-          size: 22,
-        ),
       ),
+    );
+  }
+
+  Widget _buildMuteButton() {
+    return ListenableBuilder(
+      listenable: _ninaService,
+      builder: (context, _) {
+        final isMuted = _ninaService.isMuted;
+        return ElasticPressable(
+          pressedScale: 0.90,
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            _ninaService.toggleMute();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isMuted ? const Color(0xFFFEE4E2) : const Color(0xFFF2F4F7),
+              border: Border.all(
+                color: isMuted ? const Color(0xFFFDA29B) : const Color(0xFFE4E7EC),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isMuted
+                      ? const Color(0xFFD92D20).withValues(alpha: 0.16)
+                      : Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+                color: isMuted ? const Color(0xFFD92D20) : const Color(0xFF1D2939),
+                size: 22,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1974,11 +2183,18 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
         height: 48,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFFEF4444),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF87171),
+              Color(0xFFDC2626),
+            ],
+          ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFEF4444).withValues(alpha: 0.50),
-              blurRadius: 16,
+              color: const Color(0xFFEF4444).withValues(alpha: 0.38),
+              blurRadius: 14,
               spreadRadius: 1,
               offset: const Offset(0, 3),
             ),
@@ -1986,7 +2202,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
         ),
         child: const Center(
           child: Icon(
-            Icons.call_end,
+            Icons.call_end_rounded,
             color: Colors.white,
             size: 24,
           ),
@@ -1996,32 +2212,48 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   }
 
   Widget _buildSpeakerButton() {
-    return ElasticPressable(
-      pressedScale: 0.90,
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        setState(() => _isSpeakerOn = !_isSpeakerOn);
-      },
-      child: Container(
-        width: 46,
-        height: 46,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _isSpeakerOn
-              ? const Color(0xFF3B82F6).withValues(alpha: 0.22)
-              : Colors.white.withValues(alpha: 0.12),
-          border: Border.all(
-            color: _isSpeakerOn
-                ? const Color(0xFF3B82F6)
-                : Colors.white.withValues(alpha: 0.22),
+    return ListenableBuilder(
+      listenable: _ninaService,
+      builder: (context, _) {
+        final isSpeakerOn = _ninaService.isSpeakerOn;
+        return ElasticPressable(
+          pressedScale: 0.90,
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            _ninaService.toggleSpeaker();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSpeakerOn ? const Color(0xFFEFF8FF) : const Color(0xFFF2F4F7),
+              border: Border.all(
+                color: isSpeakerOn ? const Color(0xFFB2DDFF) : const Color(0xFFE4E7EC),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isSpeakerOn
+                      ? const Color(0xFF175CD3).withValues(alpha: 0.15)
+                      : Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                isSpeakerOn ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                color: isSpeakerOn ? const Color(0xFF175CD3) : const Color(0xFF475467),
+                size: 22,
+              ),
+            ),
           ),
-        ),
-        child: Icon(
-          _isSpeakerOn ? Icons.volume_up : Icons.volume_off,
-          color: _isSpeakerOn ? const Color(0xFF60A5FA) : Colors.white,
-          size: 22,
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -19,13 +19,40 @@ export const LandingPage = () => {
         <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '750px', margin: '0 auto 2.5rem' }}>
           An AI-orchestrated multi-stakeholder ecosystem connecting citizen problem reports with academic research teams, government funding, and corporate CSR sponsorship.
         </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <Link to="/setu" className="btn btn-primary" style={{ padding: '0.875rem 2rem', fontSize: '1rem', background: 'linear-gradient(135deg, #121417, #262930)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-            📱 Launch Setu Citizen App <GoogleIcon name="arrow_forward" size={18} />
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <a
+            href="/downloads/setu-citizen.apk"
+            download="setu-citizen.apk"
+            className="btn btn-primary"
+            style={{
+              padding: '0.875rem 2rem',
+              fontSize: '1.05rem',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              border: 'none',
+              color: '#ffffff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              fontWeight: '700',
+              textDecoration: 'none',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+            }}
+          >
+            <GoogleIcon name="download" size={20} /> Download Setu APK (v1.0.0)
+          </a>
+          <Link to="/setu" className="btn btn-outline" style={{ padding: '0.875rem 1.75rem', fontSize: '1rem', background: 'rgba(255, 255, 255, 0.05)' }}>
+            📱 Launch Web Preview <GoogleIcon name="arrow_forward" size={16} />
           </Link>
-          <Link to="/login" className="btn btn-outline" style={{ padding: '0.875rem 2rem', fontSize: '1rem' }}>
-            Access Institutional Portals
+          <Link to="/login" className="btn btn-outline" style={{ padding: '0.875rem 1.75rem', fontSize: '1rem' }}>
+            Access Portals
           </Link>
+        </div>
+        <div style={{ marginTop: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <span>✓ Direct APK Download (~28 MB)</span>
+          <span>✓ Android 8.0 to Android 16</span>
+          <span>✓ Real-time NINA Voice AI</span>
+          <span>✓ Auto-Updates Included</span>
         </div>
       </div>
 
@@ -112,13 +139,46 @@ export const LandingPage = () => {
             Report civic problems with photo evidence, automatic GPS geo-tagging, voice notes, and live resolution tracking.
           </p>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#9CA3AF' }}>
-            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#FFFFFF" /> 1-Tap Camera & Photo Capture</li>
-            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#FFFFFF" /> Real-time status & milestone tracking</li>
-            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#FFFFFF" /> Apple fluid interface & design system</li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> 1-Tap Camera & Video Issue Capture</li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> NINA Voice AI Assistant in Indian Languages</li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> Apple-Fluid Motion & Live Status Tracking</li>
           </ul>
-          <Link to="/setu" className="btn btn-primary" style={{ width: '100%', backgroundColor: '#FFFFFF', color: '#0F1115' }}>
-            Open Setu Citizen App <GoogleIcon name="arrow_forward" size={16} />
-          </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <a
+              href="/downloads/setu-citizen.apk"
+              download="setu-citizen.apk"
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                backgroundColor: '#10B981',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                fontWeight: '700',
+                textDecoration: 'none',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+              }}
+            >
+              <GoogleIcon name="download" size={18} /> Download Android APK (v1.0.0)
+            </a>
+            <Link
+              to="/setu"
+              className="btn btn-outline"
+              style={{
+                width: '100%',
+                borderColor: 'rgba(255, 255, 255, 0.25)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              📱 Launch Web App Preview <GoogleIcon name="arrow_forward" size={16} />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

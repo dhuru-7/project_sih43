@@ -1,0 +1,11 @@
+{
+  "name": "setu-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SETU - Indian National Citizen Grievance & Academic Innovation Platform",
+  "scripts": {
+    "build": "cd apps/web-portal && npm install && npm run build",
+    "dev": "cd apps/web-portal && npm run dev",
+    "preview": "cd apps/web-portal && npm run preview"
+  }
+}

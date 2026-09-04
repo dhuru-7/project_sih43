@@ -29,7 +29,8 @@ venv/
 ENV/
 # Python packaging
 develop-eggs/
-downloads/
+/downloads/
+!apps/web-portal/public/downloads/
 eggs/
 .eggs/
 parts/
@@ -50,6 +51,8 @@ wheels/
 *.apk
 *.aab
 *.ipa
+!apps/web-portal/public/downloads/**
+!apps/web-portal/public/downloads/*.apk
 .pub-cache/
 .pub/
 
