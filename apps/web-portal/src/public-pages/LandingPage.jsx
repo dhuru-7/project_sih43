@@ -41,9 +41,6 @@ export const LandingPage = () => {
           >
             <GoogleIcon name="download" size={20} /> Download Setu APK (v1.0.0)
           </a>
-          <Link to="/setu" className="btn btn-outline" style={{ padding: '0.875rem 1.75rem', fontSize: '1rem', background: 'rgba(255, 255, 255, 0.05)' }}>
-            📱 Launch Web Preview <GoogleIcon name="arrow_forward" size={16} />
-          </Link>
           <Link to="/login" className="btn btn-outline" style={{ padding: '0.875rem 1.75rem', fontSize: '1rem' }}>
             Access Portals
           </Link>
@@ -158,26 +155,12 @@ export const LandingPage = () => {
                 gap: '0.5rem',
                 fontWeight: '700',
                 textDecoration: 'none',
+                padding: '0.875rem',
                 boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
               }}
             >
               <GoogleIcon name="download" size={18} /> Download Android APK (v1.0.0)
             </a>
-            <Link
-              to="/setu"
-              className="btn btn-outline"
-              style={{
-                width: '100%',
-                borderColor: 'rgba(255, 255, 255, 0.25)',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              📱 Launch Web App Preview <GoogleIcon name="arrow_forward" size={16} />
-            </Link>
           </div>
         </div>
       </div>

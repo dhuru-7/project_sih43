@@ -38,15 +38,9 @@ import {
   IndustryFunding, IndustryMentorship, IndustryProfile 
 } from '../portals/industry/pages/OtherPages';
 
-import { SetuCitizenPortal } from '../portals/citizen/SetuCitizenPortal';
-
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Setu Citizen Mobile Portal View */}
-      <Route path="/setu" element={<SetuCitizenPortal />} />
-      <Route path="/citizen" element={<SetuCitizenPortal />} />
-
       {/* Public Pages */}
       <Route element={<LandingLayout />}>
         <Route path="/" element={<LandingPage />} />

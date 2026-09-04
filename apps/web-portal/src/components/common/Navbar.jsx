@@ -54,9 +54,22 @@ export const Navbar = () => {
           </>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Link to="/setu" className="btn btn-outline" style={{ border: '1px solid rgba(59, 130, 246, 0.4)', color: '#60a5fa' }}>
-              📱 Open Setu Citizen App
-            </Link>
+            <a
+              href="/downloads/setu-citizen.apk"
+              download="setu-citizen.apk"
+              className="btn btn-outline"
+              style={{
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                color: '#34d399',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                textDecoration: 'none',
+                fontSize: '0.875rem'
+              }}
+            >
+              <GoogleIcon name="download" size={16} /> Download APK
+            </a>
             <Link to="/login" className="btn btn-primary">Sign In</Link>
           </div>
         )}
