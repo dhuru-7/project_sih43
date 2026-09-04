@@ -91,11 +91,13 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   }
 
   Timer? _startSessionTimer;
+  final ScrollController _captionScrollController = ScrollController();
 
   @override
   void dispose() {
     _startSessionTimer?.cancel();
     _morphTimer?.cancel();
+    _captionScrollController.dispose();
     _morphController.dispose();
     _auraController.dispose();
     _assistantTransitionController.dispose();
@@ -401,7 +403,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
             ),
           ),
 
-          // TARA Live Assistant Status & Spoken Caption Pill (Positioned above bar)
+          // TARA Live Moving Captions Card (2 lines length, keeps moving lines up)
           Positioned(
             left: 20,
             right: 20,
@@ -415,7 +417,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                   opacity: t.clamp(0.0, 1.0),
                   child: ListenableBuilder(
                     listenable: _taraService,
-                    builder: (context, _) => _buildTaraStatusPill(),
+                    builder: (context, _) => _buildTaraLiveCaptionsCard(),
                   ),
                 );
               },
@@ -1967,84 +1969,87 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     );
   }
 
-  Widget _buildTaraStatusPill() {
+  Widget _buildTaraLiveCaptionsCard() {
+    final captions = _taraService.captions;
     final state = _taraService.state;
     final isMuted = _taraService.isMuted;
 
-    String label = '';
-    IconData icon = Icons.auto_awesome;
-    Color iconColor = const Color(0xFF2563EB);
-    Color badgeBg = const Color(0xFFEFF6FF);
-    bool isTapToSend = false;
+    // Auto-scroll to bottom whenever captions change so new lines smoothly move up
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_captionScrollController.hasClients) {
+        _captionScrollController.animateTo(
+          _captionScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+
+    IconData stateIcon = Icons.auto_awesome;
+    Color stateIconColor = const Color(0xFF2563EB);
+    Color stateBadgeBg = const Color(0xFFEFF6FF);
+    String liveStatusText = 'TARA Live';
 
     switch (state) {
       case TaraAgentState.connecting:
-        label = 'Connecting to TARA...';
-        icon = Icons.sync_rounded;
-        iconColor = const Color(0xFF0284C7);
-        badgeBg = const Color(0xFFE0F2FE);
+        stateIcon = Icons.sync_rounded;
+        stateIconColor = const Color(0xFF0284C7);
+        stateBadgeBg = const Color(0xFFE0F2FE);
+        liveStatusText = 'Connecting to TARA...';
         break;
       case TaraAgentState.speaking:
-        label = _taraService.currentReply.isNotEmpty
-            ? 'TARA: ${_taraService.currentReply}'
-            : 'TARA is speaking...';
-        icon = Icons.graphic_eq_rounded;
-        iconColor = const Color(0xFF059669);
-        badgeBg = const Color(0xFFD1FAE5);
+        stateIcon = Icons.graphic_eq_rounded;
+        stateIconColor = const Color(0xFF059669);
+        stateBadgeBg = const Color(0xFFD1FAE5);
+        liveStatusText = 'TARA speaking...';
         break;
       case TaraAgentState.listening:
         if (isMuted) {
-          label = 'Microphone Muted (Tap mic to talk)';
-          icon = Icons.mic_off_rounded;
-          iconColor = const Color(0xFFDC2626);
-          badgeBg = const Color(0xFFFEE2E2);
+          stateIcon = Icons.mic_off_rounded;
+          stateIconColor = const Color(0xFFDC2626);
+          stateBadgeBg = const Color(0xFFFEE2E2);
+          liveStatusText = 'Microphone Muted';
         } else {
-          label = 'Listening to you... (Tap when done)';
-          icon = Icons.mic_rounded;
-          iconColor = const Color(0xFFD97706);
-          badgeBg = const Color(0xFFFEF3C7);
-          isTapToSend = true;
+          stateIcon = Icons.mic_rounded;
+          stateIconColor = const Color(0xFFD97706);
+          stateBadgeBg = const Color(0xFFFEF3C7);
+          liveStatusText = 'Listening (3s pause to send)...';
         }
         break;
       case TaraAgentState.processing:
-        label = 'TARA is understanding...';
-        icon = Icons.auto_awesome;
-        iconColor = const Color(0xFF7C3AED);
-        badgeBg = const Color(0xFFEDE9FE);
+        stateIcon = Icons.auto_awesome;
+        stateIconColor = const Color(0xFF7C3AED);
+        stateBadgeBg = const Color(0xFFEDE9FE);
+        liveStatusText = 'TARA thinking...';
         break;
       case TaraAgentState.error:
-        label = 'Voice server unreachable. Tap to retry.';
-        icon = Icons.refresh_rounded;
-        iconColor = const Color(0xFFDC2626);
-        badgeBg = const Color(0xFFFEE2E2);
+        stateIcon = Icons.refresh_rounded;
+        stateIconColor = const Color(0xFFDC2626);
+        stateBadgeBg = const Color(0xFFFEE2E2);
+        liveStatusText = 'Connection failed. Tap to retry';
         break;
       case TaraAgentState.idle:
-        label = 'TARA Voice Assistant';
-        icon = Icons.auto_awesome;
-        iconColor = const Color(0xFF1F2937);
-        badgeBg = const Color(0xFFF3F4F6);
+        liveStatusText = 'TARA Ready';
         break;
     }
 
     return ElasticPressable(
-      pressedScale: 0.96,
+      pressedScale: 0.98,
       onTap: () {
-        HapticFeedback.mediumImpact();
-        if (isTapToSend) {
-          _taraService.finishListeningAndSend();
-        } else if (state == TaraAgentState.error) {
+        if (state == TaraAgentState.error) {
           _taraService.startSession(userName: 'Rampal');
         }
       },
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            height: 66,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: AppleTheme.borderLight,
                 width: 1.0,
@@ -2058,65 +2063,94 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
               ],
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Live state indicator badge
                 Container(
-                  width: 26,
-                  height: 26,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: badgeBg,
+                    color: stateBadgeBg,
                   ),
                   child: Center(
-                    child: Icon(icon, color: iconColor, size: 15),
+                    child: Icon(stateIcon, color: stateIconColor, size: 17),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2937),
-                      letterSpacing: -0.2,
-                    ),
-                  ),
+
+                // 2-Line Moving Captions Area
+                Expanded(
+                  child: captions.isEmpty
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              liveStatusText,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: stateIconColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Speak anything... Tara is listening',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF4B5563),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          controller: _captionScrollController,
+                          physics: const ClampingScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemCount: captions.length,
+                          itemBuilder: (context, index) {
+                            final item = captions[index];
+                            final isYou = item.speaker == 'You';
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: RichText(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '${item.speaker}: ',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: isYou
+                                            ? const Color(0xFFD97706)
+                                            : const Color(0xFF059669),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: item.text,
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF1F2937),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
-                if (isTapToSend) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1F2937),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Done',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 3),
-                        Icon(
-                          Icons.arrow_upward_rounded,
-                          size: 11,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),

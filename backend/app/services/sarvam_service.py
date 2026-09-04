@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
 SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
+SARVAM_CHAT_URL = "https://api.sarvam.ai/v1/chat/completions"
 
 class SarvamService:
     @staticmethod
@@ -98,3 +99,35 @@ class SarvamService:
         except Exception as e:
             logger.exception("Error during Sarvam TTS synthesis")
             raise
+
+    @classmethod
+    def chat_completion(cls, messages: list, model: str = "sarvam-105b-conversations", max_tokens: int = 100, temperature: float = 0.6) -> str:
+        """
+        Generates colloquial Indian language speech responses using Sarvam 105B.
+        """
+        api_key = cls._get_api_key()
+        headers = {
+            "api-subscription-key": api_key,
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+
+        try:
+            response = requests.post(SARVAM_CHAT_URL, headers=headers, json=payload, timeout=20)
+            if response.status_code == 200:
+                res_json = response.json()
+                choices = res_json.get("choices", [])
+                if choices:
+                    content = choices[0].get("message", {}).get("content", "").strip()
+                    logger.info(f"Sarvam 105B completion success ({len(content)} chars)")
+                    return content
+            logger.warning(f"Sarvam 105B call returned {response.status_code}: {response.text}")
+        except Exception as e:
+            logger.exception("Error during Sarvam 105B chat completion")
+        return ""
+

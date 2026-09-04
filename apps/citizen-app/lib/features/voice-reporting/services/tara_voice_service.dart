@@ -17,6 +17,18 @@ enum TaraAgentState {
   error,
 }
 
+class TaraCaption {
+  final String speaker; // 'You' or 'Tara'
+  final String text;
+  final DateTime timestamp;
+
+  TaraCaption({
+    required this.speaker,
+    required this.text,
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
+}
+
 class TaraVoiceService extends ChangeNotifier {
   static final TaraVoiceService _instance = TaraVoiceService._internal();
   factory TaraVoiceService() => _instance;
@@ -70,6 +82,15 @@ class TaraVoiceService extends ChangeNotifier {
   String _currentReply = '';
   String get currentReply => _currentReply;
 
+  final List<TaraCaption> _captions = [];
+  List<TaraCaption> get captions => List.unmodifiable(_captions);
+
+  void _addCaption(String speaker, String text) {
+    if (text.trim().isEmpty) return;
+    _captions.add(TaraCaption(speaker: speaker, text: text.trim()));
+    notifyListeners();
+  }
+
   bool _isMuted = false;
   bool get isMuted => _isMuted;
 
@@ -82,6 +103,10 @@ class TaraVoiceService extends ChangeNotifier {
   String? _currentRecordingPath;
   Timer? _levelTimer;
   Timer? _silenceTimer;
+
+  bool _hasUserSpoken = false;
+  int _consecutiveSilenceMs = 0;
+  static const int _silenceThresholdMs = 3000; // 3 seconds of pause detection
 
   void _initAudioPlayer() {
     _audioPlayer.onPlayerComplete.listen((_) {
@@ -105,37 +130,42 @@ class TaraVoiceService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void>? _sessionInitFuture;
+
   /// Start a full conversational session with Tara
   Future<void> startSession({String userName = 'Rampal'}) async {
     try {
-      _setState(TaraAgentState.connecting);
       _currentTranscript = '';
       _currentReply = '';
+      _captions.clear();
+      _hasUserSpoken = false;
+      _consecutiveSilenceMs = 0;
 
-      final response = await _postWithFallback('/start', {
-        'user_name': userName,
-      });
+      // Seed initial caption
+      _addCaption('Tara', 'Namaste! Listening to you... Speak anytime.');
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final resData = data['data'] ?? {};
-        _sessionId = resData['session_id'];
-        final greetingText = resData['text'] ?? '';
-        final audioBase64 = resData['audio_base64'] ?? '';
+      // Immediately start microphone recording so citizen speaks first
+      await _startListening();
 
-        _currentReply = greetingText;
-        debugPrint('[Tara] Session started: $_sessionId. Greeting: $greetingText');
+      // Register session on backend concurrently
+      _sessionInitFuture = () async {
+        try {
+          final response = await _postWithFallback('/start', {
+            'user_name': userName,
+          });
 
-        if (audioBase64.isNotEmpty && _isSpeakerOn) {
-          await _playAudioBase64(audioBase64);
-        } else {
-          // If no audio or speaker off, immediately start listening
-          _startListening();
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final resData = data['data'] ?? {};
+            _sessionId = resData['session_id'];
+            debugPrint('[Tara] Session initialized: $_sessionId. Waiting for citizen to speak first.');
+          } else {
+            debugPrint('[Tara] Failed to start session on backend: ${response.statusCode} ${response.body}');
+          }
+        } catch (e) {
+          debugPrint('[Tara] Error calling /start: $e');
         }
-      } else {
-        debugPrint('[Tara] Failed to start session: ${response.statusCode} ${response.body}');
-        _setState(TaraAgentState.error);
-      }
+      }();
     } catch (e) {
       debugPrint('[Tara] Error starting session: $e');
       _setState(TaraAgentState.error);
@@ -148,7 +178,7 @@ class TaraVoiceService extends ChangeNotifier {
       _setState(TaraAgentState.speaking);
       final bytes = base64Decode(base64String);
       final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/Tara_reply_${DateTime.now().millisecondsSinceEpoch}.wav');
+      final tempFile = File('${tempDir.path}/tara_reply_${DateTime.now().millisecondsSinceEpoch}.wav');
       await tempFile.writeAsBytes(bytes, flush: true);
 
       await _audioPlayer.setVolume(_isSpeakerOn ? 1.0 : 0.0);
@@ -167,6 +197,10 @@ class TaraVoiceService extends ChangeNotifier {
     }
 
     try {
+      if (await _audioRecorder.isRecording()) {
+        await _audioRecorder.stop();
+      }
+
       final hasPerm = await _audioRecorder.hasPermission();
       if (!hasPerm) {
         debugPrint('[Tara] Mic permission not granted');
@@ -186,6 +220,8 @@ class TaraVoiceService extends ChangeNotifier {
         path: _currentRecordingPath!,
       );
 
+      _hasUserSpoken = false;
+      _consecutiveSilenceMs = 0;
       _setState(TaraAgentState.listening);
       _startMicLevelMonitor();
       debugPrint('[Tara] Listening at: $_currentRecordingPath');
@@ -201,6 +237,7 @@ class TaraVoiceService extends ChangeNotifier {
 
     _stopAudioLevelSimulation();
     _silenceTimer?.cancel();
+    _levelTimer?.cancel();
 
     try {
       _setState(TaraAgentState.processing);
@@ -227,7 +264,14 @@ class TaraVoiceService extends ChangeNotifier {
         return;
       }
 
-      debugPrint('[Tara] Uploading ${bytes.length} bytes to /chat...');
+      // Await session initialization if still in flight
+      if (_sessionInitFuture != null) {
+        try {
+          await _sessionInitFuture;
+        } catch (_) {}
+      }
+
+      debugPrint('[Tara] Uploading ${bytes.length} bytes to /chat (session: $_sessionId)...');
 
       http.StreamedResponse? streamedResponse;
       String responseBody = '';
@@ -271,6 +315,14 @@ class TaraVoiceService extends ChangeNotifier {
         _currentReply = resData['reply_text'] ?? '';
         final audioBase64 = resData['audio_base64'] ?? '';
 
+        // Add captions for live moving captions card
+        if (_currentTranscript.trim().isNotEmpty) {
+          _addCaption('You', _currentTranscript);
+        }
+        if (_currentReply.trim().isNotEmpty) {
+          _addCaption('Tara', _currentReply);
+        }
+
         debugPrint('[Tara] Turn complete. User: "$_currentTranscript" | Tara: "$_currentReply"');
 
         if (audioBase64.isNotEmpty && _isSpeakerOn) {
@@ -310,9 +362,10 @@ class TaraVoiceService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// End conversation session
+  /// End conversation session immediately
   Future<void> endSession() async {
     _stopAudioLevelSimulation();
+    _levelTimer?.cancel();
     _silenceTimer?.cancel();
 
     try {
@@ -332,6 +385,9 @@ class TaraVoiceService extends ChangeNotifier {
       debugPrint('[Tara] Error ending session: $e');
     } finally {
       _sessionId = null;
+      _hasUserSpoken = false;
+      _consecutiveSilenceMs = 0;
+      _audioLevel = 0.0;
       _setState(TaraAgentState.idle);
     }
   }
@@ -346,9 +402,37 @@ class TaraVoiceService extends ChangeNotifier {
 
   void _startMicLevelMonitor() {
     _levelTimer?.cancel();
-    _levelTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
-      _audioLevel = 0.20 + 0.15 * math.sin(timer.tick * 0.3).abs();
-      notifyListeners();
+    _levelTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) async {
+      if (_state != TaraAgentState.listening) return;
+      try {
+        if (await _audioRecorder.isRecording()) {
+          final amp = await _audioRecorder.getAmplitude();
+          final db = amp.current; // dBFS (-60 to 0)
+
+          // Normalize audio visualizer
+          final normalized = ((db + 45.0) / 35.0).clamp(0.0, 1.0);
+          _audioLevel = normalized > 0.05 ? normalized : 0.0;
+
+          // Check for active speech
+          if (db > -34.0) {
+            _hasUserSpoken = true;
+            _consecutiveSilenceMs = 0;
+          } else if (_hasUserSpoken) {
+            // Speech was detected, user is now silent
+            _consecutiveSilenceMs += 150;
+            if (_consecutiveSilenceMs >= _silenceThresholdMs) {
+              debugPrint('[Tara] 3s silence pause detected! Auto-sending turn...');
+              _levelTimer?.cancel();
+              finishListeningAndSend();
+              return;
+            }
+          }
+          notifyListeners();
+        }
+      } catch (e) {
+        _audioLevel = 0.15 + 0.15 * math.sin(timer.tick * 0.3).abs();
+        notifyListeners();
+      }
     });
   }
 
