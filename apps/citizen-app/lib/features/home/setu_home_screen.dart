@@ -2013,7 +2013,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
           stateIcon = Icons.mic_rounded;
           stateIconColor = const Color(0xFFD97706);
           stateBadgeBg = const Color(0xFFFEF3C7);
-          liveStatusText = 'Listening (3s pause to send)...';
+          liveStatusText = 'Listening to you...';
         }
         break;
       case TaraAgentState.processing:

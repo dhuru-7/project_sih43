@@ -79,43 +79,8 @@ class VoiceAgentService:
             "parts": [{"text": transcript}]
         })
 
-        # 3. Gemini Director: Tells Sarvam 105B what to say in English
-        director_prompt = f"""You are the Director of TARA, a warm, caring, and conversational AI companion and civic assistant for citizens.
-The user said: "{transcript}"
-Recent conversation history: {[m.get('parts', [{}])[0].get('text', '') for m in session.get('history', [])[-4:]]}
-The user can talk about ANYTHING: daily life, friendly chat, emotional support, general questions, or civic issues.
-Decide what Tara should say back to the user.
-Guidance rules:
-- Be warm, attentive, polite, and helpful.
-- Include a friendly 'Namaste' greeting if appropriate or if starting the conversation.
-- Output concise directions in ENGLISH (1 to 2 short sentences max) specifying what to tell the user and any follow-up question."""
-
-        try:
-            gemini_direction = GeminiService.generate_chat_response([{"role": "user", "parts": [{"text": director_prompt}]}])
-        except Exception as e:
-            logger.warning(f"Gemini Director call failed: {e}")
-            gemini_direction = "Acknowledge the user warmly in Hindi and ask how you can help them."
-
-        # 4. Sarvam 105B Localizer: Expresses direction in user's spoken language/dialect
-        sarvam_messages = [
-            {
-                "role": "system",
-                "content": f"You are TARA (तारा), an empathetic and caring voice assistant. Express the provided direction in natural, colloquial spoken {detected_lang}. Speak like a warm Indian friend over a phone call. Keep it to 1-2 short natural spoken sentences without any asterisks, markdown formatting, emojis, or bullet points."
-            },
-            {
-                "role": "user",
-                "content": f"Direction: {gemini_direction}\nUser said: {transcript}"
-            }
-        ]
-
-        reply_text = SarvamService.chat_completion(sarvam_messages, model="sarvam-105b-conversations", max_tokens=100)
-
-        # Fallback if Sarvam 105B is empty or offline
-        if not reply_text or not reply_text.strip():
-            logger.info("Falling back to direct Gemini response")
-            reply_text = GeminiService.generate_chat_response(session["history"])
-
-        # Clean any accidental markdown or quotes
+        # 3. Direct Gemini 3.5 Flash Lite conversational response (ultra-low latency)
+        reply_text = GeminiService.generate_chat_response(session["history"])
         reply_text = reply_text.replace("*", "").replace("#", "").replace('"', '').strip()
 
         session["history"].append({
@@ -123,7 +88,7 @@ Guidance rules:
             "parts": [{"text": reply_text}]
         })
 
-        # 5. Determine target language code for Bulbul TTS
+        # 4. Determine target language code for Bulbul TTS
         tts_lang = "hi-IN"
         if detected_lang and detected_lang.startswith("en"):
             tts_lang = "en-IN"
@@ -143,7 +108,7 @@ Guidance rules:
     @classmethod
     def process_text_turn(cls, session_id: str, user_text: str) -> dict:
         """
-        Fallback turn for text input testing with Gemini Director + Sarvam 105B.
+        Fallback turn for text input testing with Gemini 3.5 Flash Lite directly.
         """
         session = cls._get_or_create_session(session_id)
 
@@ -152,30 +117,7 @@ Guidance rules:
             "parts": [{"text": user_text}]
         })
 
-        director_prompt = f"""You are the Director of TARA, a warm voice assistant for citizens.
-The user said: "{user_text}"
-Decide what Tara should say back in English (1-2 sentences max). Warm, helpful, friendly."""
-
-        try:
-            gemini_direction = GeminiService.generate_chat_response([{"role": "user", "parts": [{"text": director_prompt}]}])
-        except Exception:
-            gemini_direction = "Acknowledge the user warmly and ask how you can help."
-
-        sarvam_messages = [
-            {
-                "role": "system",
-                "content": "You are TARA, a warm Indian voice assistant. Express the direction in natural spoken Hindi in 1-2 short sentences without markdown."
-            },
-            {
-                "role": "user",
-                "content": f"Direction: {gemini_direction}\nUser said: {user_text}"
-            }
-        ]
-
-        reply_text = SarvamService.chat_completion(sarvam_messages, model="sarvam-105b-conversations", max_tokens=100)
-        if not reply_text:
-            reply_text = GeminiService.generate_chat_response(session["history"])
-
+        reply_text = GeminiService.generate_chat_response(session["history"])
         reply_text = reply_text.replace("*", "").replace("#", "").replace('"', '').strip()
 
         session["history"].append({

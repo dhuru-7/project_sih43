@@ -106,7 +106,7 @@ class TaraVoiceService extends ChangeNotifier {
 
   bool _hasUserSpoken = false;
   int _consecutiveSilenceMs = 0;
-  static const int _silenceThresholdMs = 3000; // 3 seconds of pause detection
+  static const int _silenceThresholdMs = 1600; // 1.6 seconds natural pause detection
 
   void _initAudioPlayer() {
     _audioPlayer.onPlayerComplete.listen((_) {
