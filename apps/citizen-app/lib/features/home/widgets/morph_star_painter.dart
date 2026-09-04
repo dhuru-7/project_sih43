@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/apple_theme.dart';
 import '../../../core/widgets/elastic_pressable.dart';
+import 'gemini_shapeshift_painter.dart';
 
 /// A high-performance [CustomPainter] that smoothly morphs
 /// between the classic slim Plus (+) icon (2.0px stroke, 14px span)
@@ -106,60 +108,211 @@ class MorphStarPainter extends CustomPainter {
   }
 }
 
-/// A floating action button that implements the Apple Design principles
-/// for fluid rotational spring motion and seamless shape morphing
-/// between the classic slim Plus (+) on Home and Sparkle Star (★) on other screens.
-class SpinMorphActionButton extends StatelessWidget {
+/// A floating action button that implements Apple Design principles
+/// for fluid rotational spring motion and seamless shape morphing:
+/// 1. Home: Pure Circle with Plus (+) icon.
+/// 2. Leaving Home to Explore / Messages / Profile:
+///    - Stays as a pure Circle for 0.5s while Plus morphs to Star.
+///    - Starts a 1-time 360° showcase through all Gemini shapes.
+///    - Settle & stays on that tab's unique shape (Flower, Cylinder, or Hexagon).
+/// 3. Tab switching (Explore <-> Messages <-> Profile): Smoothly morphs directly between shapes.
+/// 4. Return to Home: Smoothly morphs back to Circle and reverses Star to Plus.
+class SpinMorphActionButton extends StatefulWidget {
   final Animation<double> animation;
+  final int navIndex;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const SpinMorphActionButton({
     super.key,
     required this.animation,
+    required this.navIndex,
     required this.onTap,
+    this.onLongPress,
   });
+
+  @override
+  State<SpinMorphActionButton> createState() => _SpinMorphActionButtonState();
+}
+
+class _SpinMorphActionButtonState extends State<SpinMorphActionButton>
+    with TickerProviderStateMixin {
+  late final AnimationController _showcaseController;
+  late final AnimationController _tabMorphController;
+  Timer? _delayTimer;
+
+  // The base shape displayed when neither controller is running
+  ShapeDefinition _currentBaseShape = ShapeDefinition.circle;
+  // Starting and target shapes for tab-to-tab morphing
+  ShapeDefinition _morphStartShape = ShapeDefinition.circle;
+  ShapeDefinition _morphTargetShape = ShapeDefinition.circle;
+  // Final destination shape for the showcase animation
+  ShapeDefinition _tabDestinationShape = ShapeDefinition.circle;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 1-time showcase loop over 3.55 seconds (10% speed reduction), showing all shapes with 1 full turn
+    _showcaseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3550),
+    );
+
+    // Smooth tab-to-tab morph controller over 350ms
+    _tabMorphController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _tabDestinationShape = ShapeDefinition.forNavIndex(widget.navIndex);
+    _currentBaseShape = widget.navIndex == 0 ? ShapeDefinition.circle : _tabDestinationShape;
+    _morphStartShape = _currentBaseShape;
+    _morphTargetShape = _currentBaseShape;
+
+    _showcaseController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _currentBaseShape = _tabDestinationShape;
+        });
+      }
+    });
+
+    _tabMorphController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _currentBaseShape = _morphTargetShape;
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant SpinMorphActionButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.navIndex != widget.navIndex) {
+      _delayTimer?.cancel();
+      _delayTimer = null;
+
+      if (widget.navIndex == 0) {
+        // Going back to Home: smoothly morph from current shape back to pure circle
+        final currentDisplay = _getCurrentDisplayShape();
+        if (_showcaseController.isAnimating) {
+          _showcaseController.stop();
+        }
+        _morphStartShape = currentDisplay;
+        _morphTargetShape = ShapeDefinition.circle;
+        _tabDestinationShape = ShapeDefinition.circle;
+        _tabMorphController.forward(from: 0.0);
+      } else if (oldWidget.navIndex == 0 && widget.navIndex > 0) {
+        // Leaving Home to an AI tab (e.g. Explore, Messages, Profile):
+        // 1. Maintain pure circle for exactly 0.2s while arriving on page
+        _currentBaseShape = ShapeDefinition.circle;
+        _tabDestinationShape = ShapeDefinition.forNavIndex(widget.navIndex);
+        if (_showcaseController.isAnimating) {
+          _showcaseController.stop();
+          _showcaseController.value = 0.0;
+        }
+        if (_tabMorphController.isAnimating) {
+          _tabMorphController.stop();
+        }
+
+        // 2. After 0.2s delay, start the 1-time showcase animation
+        _delayTimer = Timer(const Duration(milliseconds: 200), () {
+          if (!mounted) return;
+          if (widget.navIndex > 0) {
+            _tabDestinationShape = ShapeDefinition.forNavIndex(widget.navIndex);
+            _showcaseController.forward(from: 0.0);
+          }
+        });
+      } else {
+        // Switching between AI tabs (Explore <-> Messages <-> Profile):
+        // Directly and smoothly morph from current shape to the new tab's shape
+        final currentDisplay = _getCurrentDisplayShape();
+        if (_showcaseController.isAnimating) {
+          _showcaseController.stop();
+        }
+        _morphStartShape = currentDisplay;
+        _tabDestinationShape = ShapeDefinition.forNavIndex(widget.navIndex);
+        _morphTargetShape = _tabDestinationShape;
+        _tabMorphController.forward(from: 0.0);
+      }
+    }
+  }
+
+  ShapeDefinition _getCurrentDisplayShape() {
+    if (_showcaseController.isAnimating) {
+      return ShapeDefinition.computeShowcaseShape(
+        _showcaseController.value,
+        _tabDestinationShape,
+      );
+    } else if (_tabMorphController.isAnimating) {
+      final t = Curves.easeInOutCubic.transform(_tabMorphController.value);
+      return ShapeDefinition.lerp(_morphStartShape, _morphTargetShape, t);
+    }
+    return _currentBaseShape;
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _showcaseController.dispose();
+    _tabMorphController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return ElasticPressable(
       pressedScale: 0.92,
-      onTap: onTap,
-      child: Container(
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      child: SizedBox(
         width: 46,
         height: 46,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppleTheme.primary,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Center(
-          child: AnimatedBuilder(
-            animation: animation,
-            builder: (context, child) {
-              final t = animation.value.clamp(0.0, 1.0);
-              // Apple rotation motion: 180 degrees (pi radians)
-              final rotation = t * math.pi;
-              // Apple fluid dynamics: slight tactile scale compression during rotation
-              final scale = 1.0 - (math.sin(t * math.pi) * 0.12);
+        child: AnimatedBuilder(
+          animation: Listenable.merge([
+            widget.animation,
+            _showcaseController,
+            _tabMorphController,
+          ]),
+          builder: (context, child) {
+            final t = widget.animation.value.clamp(0.0, 1.0);
 
-              return Transform.scale(
-                scale: scale,
-                child: Transform.rotate(
-                  angle: rotation,
-                  child: CustomPaint(
-                    size: const Size(24, 24),
-                    painter: MorphStarPainter(progress: t),
+            // Shape and rotation
+            final currentShape = _getCurrentDisplayShape();
+            double rotation = 0.0;
+            if (_showcaseController.isAnimating) {
+              rotation = _showcaseController.value * 2 * math.pi;
+            }
+
+            // Apple rotation motion: 180 degrees (pi radians) for Plus -> Star
+            final starRotation = t * math.pi;
+            // Apple fluid dynamics: slight tactile scale compression during initial rotation
+            final starScale = 1.0 - (math.sin(t * math.pi) * 0.12);
+
+            return CustomPaint(
+              size: const Size(46, 46),
+              painter: GeminiShapeshiftPainter(
+                shape: currentShape,
+                rotation: rotation,
+                color: AppleTheme.primary, // Pure Setu Black
+              ),
+              child: Center(
+                child: Transform.scale(
+                  scale: starScale,
+                  child: Transform.rotate(
+                    angle: starRotation,
+                    child: CustomPaint(
+                      size: const Size(24, 24),
+                      painter: MorphStarPainter(progress: t),
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

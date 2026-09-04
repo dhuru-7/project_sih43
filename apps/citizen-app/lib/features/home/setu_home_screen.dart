@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/apple_theme.dart';
 import '../../core/widgets/elastic_pressable.dart';
 import '../problem-report/take_photo_sheet.dart';
+import '../voice-reporting/widgets/aura_glow_painter.dart';
 import 'widgets/morph_star_painter.dart';
 
 class SetuHomeScreen extends StatefulWidget {
@@ -15,13 +17,23 @@ class SetuHomeScreen extends StatefulWidget {
 }
 
 class _SetuHomeScreenState extends State<SetuHomeScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _currentNavIndex = 0;
   String _exploreTab = 'forYou'; // 'forYou' | 'following'
 
   late AnimationController _morphController;
   late Animation<double> _morphAnimation;
   Timer? _morphTimer;
+
+  // On-Screen AI Assistant state
+  bool _isAIAssistantActive = false;
+  bool _isMuted = false;
+  bool _isSpeakerOn = true;
+  late AnimationController _auraController;
+
+  // Apple fluid spring transition controller for AI Assistant & Nav bar morph
+  late AnimationController _assistantTransitionController;
+  late Animation<double> _assistantTransitionAnimation;
 
   @override
   void initState() {
@@ -39,13 +51,46 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       curve: const Cubic(0.25, 0.1, 0.25, 1.0),
       reverseCurve: const Cubic(0.25, 0.1, 0.25, 1.0),
     );
+
+    // Continuous aura breathing & rotation controller
+    _auraController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3500),
+    )..repeat();
+
+    // Apple fluid curve for AI Assistant soft wipe & button transitions (matched forward & reverse)
+    _assistantTransitionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+      reverseDuration: const Duration(milliseconds: 380),
+    );
+
+    _assistantTransitionAnimation = CurvedAnimation(
+      parent: _assistantTransitionController,
+      curve: const Cubic(0.25, 0.1, 0.25, 1.0),
+      reverseCurve: const Cubic(0.25, 0.1, 0.25, 1.0),
+    );
   }
 
   @override
   void dispose() {
     _morphTimer?.cancel();
     _morphController.dispose();
+    _auraController.dispose();
+    _assistantTransitionController.dispose();
     super.dispose();
+  }
+
+  void _setAIAssistantActive(bool active) {
+    if (_isAIAssistantActive == active) return;
+    setState(() {
+      _isAIAssistantActive = active;
+    });
+    if (active) {
+      _assistantTransitionController.forward();
+    } else {
+      _assistantTransitionController.reverse();
+    }
   }
 
   void _onNavIndexChanged(int index) {
@@ -98,6 +143,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       "author": "Sarah Jenkins",
       "authorInitials": "SJ",
       "date": "2h ago",
+      "district": "Panchkula",
       "location": "Sector 4 Park",
       "status": "IN PROGRESS",
       "title": "Community Garden in Sector 4",
@@ -118,6 +164,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       "author": "Mike Kumar",
       "authorInitials": "MK",
       "date": "4h ago",
+      "district": "Panchkula",
       "location": "Main St & 3rd Cross",
       "status": "PENDING",
       "title": "Pothole on Main St",
@@ -131,7 +178,8 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       "id": "exp-3",
       "author": "City Dept of Parks",
       "authorInitials": "DP",
-      "date": "1d ago",
+      "date": "1day ago",
+      "district": "Panchkula",
       "location": "Riverside Promenade",
       "status": "RESOLVED",
       "title": "Riverside Park Renovation Complete",
@@ -233,17 +281,6 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     },
   ];
 
-  void _toggleFollow(String id) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      final idx = _exploreReports.indexWhere((r) => r["id"] == id);
-      if (idx != -1) {
-        _exploreReports[idx]["isFollowing"] =
-            !(_exploreReports[idx]["isFollowing"] as bool);
-      }
-    });
-  }
-
   void _toggleLike(String id) {
     HapticFeedback.selectionClick();
     setState(() {
@@ -297,6 +334,34 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                 _buildMessagesScreen(navBottomPosition + 76),
                 _buildProfileScreen(navBottomPosition + 76),
               ],
+            ),
+          ),
+
+          // On-Screen AI Assistant Aura Gradient & Corner Glow (Bottom 15% & 4 Screen Corners)
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: true,
+              child: AnimatedBuilder(
+                animation: Listenable.merge([
+                  _auraController,
+                  _assistantTransitionAnimation,
+                ]),
+                builder: (context, child) {
+                  final t = _assistantTransitionAnimation.value;
+                  if (t <= 0.0) return const SizedBox.shrink();
+
+                  return CustomPaint(
+                    size: Size.infinite,
+                    painter: AuraGlowPainter(
+                      animationProgress: _auraController.value,
+                      soundLevel: _isMuted
+                          ? 0.0
+                          : (0.28 + 0.12 * math.sin(_auraController.value * 2 * math.pi).abs()),
+                      transitionProgress: t,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
 
@@ -845,7 +910,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
     final likeCount = _likeCounts[reportId] ?? 0;
     final mediaList = (item["media"] as List<dynamic>?) ?? [];
     final activeIdx = _activeMediaIndexes[reportId] ?? 0;
-    final isFollowing = item["isFollowing"] == true;
+    final district = (item["district"] as String?) ?? "Panchkula";
 
     return Container(
       color: Colors.white,
@@ -890,8 +955,9 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                         color: AppleTheme.primary,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      item["date"] as String,
+                      '${item["date"]} · $district',
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
@@ -899,20 +965,6 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                       ),
                     ),
                   ],
-                ),
-              ),
-              // Follow bookmark button
-              ElasticPressable(
-                pressedScale: 0.9,
-                onTap: () => _toggleFollow(reportId),
-                child: Icon(
-                  isFollowing
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded,
-                  color: isFollowing
-                      ? AppleTheme.primary
-                      : AppleTheme.textSecondary,
-                  size: 22,
                 ),
               ),
             ],
@@ -1652,74 +1704,323 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   // ==========================================
   // 5. STITCH BOTTOM NAVIGATION BAR
   // ==========================================
+  // ==========================================
+  // 5. STITCH BOTTOM NAVIGATION BAR (Apple Fluid Morphing)
+  // ==========================================
   Widget _buildStitchBottomBar() {
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: AppleTheme.borderLight),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+    return AnimatedBuilder(
+      animation: _assistantTransitionAnimation,
+      builder: (context, child) {
+        final t = _assistantTransitionAnimation.value;
+
+        // Fluid interpolation of container styling
+        final bgColor = Color.lerp(
+          Colors.white,
+          const Color(0xFF14171F),
+          t,
+        )!;
+
+        final borderColor = Color.lerp(
+          AppleTheme.borderLight,
+          const Color(0xFF3B82F6).withValues(alpha: 0.40),
+          t,
+        )!;
+
+        final borderWidth = lerpDouble(1.0, 1.5, t)!;
+
+        return Container(
+          height: 64,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(
+              color: borderColor,
+              width: borderWidth,
+            ),
+            boxShadow: [
+              if (t > 0.05)
+                BoxShadow(
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.32 * t),
+                  blurRadius: 20.0 + 8.0 * t,
+                  offset: const Offset(0, 4),
+                ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: lerpDouble(0.08, 0.28, t)!),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Layer 1: Standard Navigation Items (Home, Explore, Messages, Profile)
+                _buildStandardNavLayer(t),
+
+                // Layer 2: AI Call Navigation Items (Mute, Speaker)
+                _buildAICallNavLayer(t),
+
+                // Layer 3: Center Anchor Button Morph (Plus/Star <-> Red End Call)
+                _buildCenterAnchorButton(t),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStandardNavLayer(double t) {
+    final standardOpacity = (1.0 - t).clamp(0.0, 1.0);
+    if (standardOpacity <= 0.0) return const SizedBox.shrink();
+
+    return IgnorePointer(
+      ignoring: t > 0.40,
+      child: Opacity(
+        opacity: standardOpacity,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // 1. Home (slides inward toward center)
+            Transform.translate(
+              offset: Offset(14.0 * t, 0),
+              child: _buildNavItem(
+                index: 0,
+                activeIcon: Icons.home,
+                inactiveIcon: Icons.home_outlined,
+                label: 'Home',
+              ),
+            ),
+
+            // 2. Explore (slides inward toward center)
+            Transform.translate(
+              offset: Offset(7.0 * t, 0),
+              child: _buildNavItem(
+                index: 1,
+                activeIcon: Icons.explore,
+                inactiveIcon: Icons.explore_outlined,
+                label: 'Explore',
+              ),
+            ),
+
+            // Gap for center button
+            const SizedBox(width: 48),
+
+            // 3. Messages (slides inward toward center)
+            Transform.translate(
+              offset: Offset(-7.0 * t, 0),
+              child: _buildNavItem(
+                index: 2,
+                activeIcon: Icons.chat_bubble,
+                inactiveIcon: Icons.chat_bubble_outline,
+                label: 'Messages',
+              ),
+            ),
+
+            // 4. Profile (slides inward toward center)
+            Transform.translate(
+              offset: Offset(-14.0 * t, 0),
+              child: _buildNavItem(
+                index: 3,
+                activeIcon: Icons.person,
+                inactiveIcon: Icons.person_outline,
+                label: 'Profile',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAICallNavLayer(double t) {
+    final callOpacity = t.clamp(0.0, 1.0);
+    if (callOpacity <= 0.0) return const SizedBox.shrink();
+
+    final callScale = lerpDouble(0.88, 1.0, t)!;
+
+    return IgnorePointer(
+      ignoring: t < 0.60,
+      child: Opacity(
+        opacity: callOpacity,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Left: Mute / Unmute Button (slides outward from center)
+            Transform.translate(
+              offset: Offset(-14.0 * (1.0 - t), 0),
+              child: Transform.scale(
+                scale: callScale,
+                child: _buildMuteButton(),
+              ),
+            ),
+
+            // Gap for center 48px End Call button
+            const SizedBox(width: 54),
+
+            // Right: Speaker Button (slides outward from center)
+            Transform.translate(
+              offset: Offset(14.0 * (1.0 - t), 0),
+              child: Transform.scale(
+                scale: callScale,
+                child: _buildSpeakerButton(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterAnchorButton(double t) {
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 1. Standard Plus (+) / Star (★) Action Button
+          Opacity(
+            opacity: (1.0 - t).clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: lerpDouble(1.0, 0.82, t)!,
+              child: Transform.rotate(
+                angle: t * (math.pi / 4),
+                child: IgnorePointer(
+                  ignoring: t > 0.40,
+                  child: SpinMorphActionButton(
+                    animation: _morphAnimation,
+                    navIndex: _currentNavIndex,
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      if (_currentNavIndex == 0) {
+                        _openReportSheet();
+                      } else {
+                        _setAIAssistantActive(true);
+                      }
+                    },
+                    onLongPress: () {
+                      HapticFeedback.heavyImpact();
+                      _showCivicSpotlightSheet();
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 2. AI Live End Call Button (Symmetric smooth cross-morph)
+          Opacity(
+            opacity: t.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: lerpDouble(0.82, 1.0, t)!,
+              child: IgnorePointer(
+                ignoring: t < 0.60,
+                child: _buildEndCallButton(),
+              ),
+            ),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // 1. Home
-          _buildNavItem(
-            index: 0,
-            activeIcon: Icons.home,
-            inactiveIcon: Icons.home_outlined,
-            label: 'Home',
-          ),
+    );
+  }
 
-          // 2. Explore
-          _buildNavItem(
-            index: 1,
-            activeIcon: Icons.explore,
-            inactiveIcon: Icons.explore_outlined,
-            label: 'Explore',
+  Widget _buildMuteButton() {
+    return ElasticPressable(
+      pressedScale: 0.90,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        setState(() => _isMuted = !_isMuted);
+      },
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _isMuted
+              ? const Color(0xFFEF4444).withValues(alpha: 0.22)
+              : Colors.white.withValues(alpha: 0.12),
+          border: Border.all(
+            color: _isMuted
+                ? const Color(0xFFEF4444)
+                : Colors.white.withValues(alpha: 0.22),
           ),
+        ),
+        child: Icon(
+          _isMuted ? Icons.mic_off : Icons.mic,
+          color: _isMuted ? const Color(0xFFEF4444) : Colors.white,
+          size: 22,
+        ),
+      ),
+    );
+  }
 
-          // 3. Center (+) / (★) Morphing Action Button
-          SpinMorphActionButton(
-            animation: _morphAnimation,
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              if (_currentNavIndex == 0) {
-                _openReportSheet();
-              } else {
-                _showCivicSpotlightSheet();
-              }
-            },
+  Widget _buildEndCallButton() {
+    return ElasticPressable(
+      pressedScale: 0.90,
+      onTap: () {
+        HapticFeedback.heavyImpact();
+        _setAIAssistantActive(false);
+      },
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFFEF4444),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFEF4444).withValues(alpha: 0.50),
+              blurRadius: 16,
+              spreadRadius: 1,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.call_end,
+            color: Colors.white,
+            size: 24,
           ),
+        ),
+      ),
+    );
+  }
 
-          // 4. Messages / Updates
-          _buildNavItem(
-            index: 2,
-            activeIcon: Icons.chat_bubble,
-            inactiveIcon: Icons.chat_bubble_outline,
-            label: 'Messages',
+  Widget _buildSpeakerButton() {
+    return ElasticPressable(
+      pressedScale: 0.90,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        setState(() => _isSpeakerOn = !_isSpeakerOn);
+      },
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _isSpeakerOn
+              ? const Color(0xFF3B82F6).withValues(alpha: 0.22)
+              : Colors.white.withValues(alpha: 0.12),
+          border: Border.all(
+            color: _isSpeakerOn
+                ? const Color(0xFF3B82F6)
+                : Colors.white.withValues(alpha: 0.22),
           ),
-
-          // 5. Profile
-          _buildNavItem(
-            index: 3,
-            activeIcon: Icons.person,
-            inactiveIcon: Icons.person_outline,
-            label: 'Profile',
-          ),
-        ],
+        ),
+        child: Icon(
+          _isSpeakerOn ? Icons.volume_up : Icons.volume_off,
+          color: _isSpeakerOn ? const Color(0xFF60A5FA) : Colors.white,
+          size: 22,
+        ),
       ),
     );
   }
@@ -1861,12 +2162,7 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
                 description: 'Get instant answers on ward issues, schemes & status',
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Setu AI Assistant ready! ✨'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  _setAIAssistantActive(true);
                 },
               ),
               const SizedBox(height: 12),
