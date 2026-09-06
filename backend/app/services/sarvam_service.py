@@ -17,9 +17,11 @@ class SarvamService:
         return key
 
     @classmethod
-    def speech_to_text(cls, audio_bytes: bytes, filename: str = "audio.wav", mime_type: str = "audio/wav") -> dict:
+    def speech_to_text(cls, audio_bytes: bytes, filename: str = "audio.wav", mime_type: str = "audio/wav", language_code: str = "hi-IN") -> dict:
         """
         Converts speech audio to text using Sarvam Saaras v3 model.
+        Uses fast language hint (default hi-IN) to avoid multi-second LID delay,
+        falling back to 'unknown' auto-detection if no transcript was found.
         """
         api_key = cls._get_api_key()
         headers = {
@@ -30,23 +32,40 @@ class SarvamService:
         }
         data = {
             "model": "saaras:v3",
-            "language_code": "unknown"
+            "language_code": language_code or "hi-IN"
         }
 
         try:
             response = requests.post(SARVAM_STT_URL, headers=headers, files=files, data=data, timeout=25)
-            if response.status_code != 200:
+            if response.status_code == 200:
+                res_json = response.json()
+                transcript = res_json.get("transcript", "").strip()
+                detected_lang = res_json.get("language_code", language_code or "hi-IN")
+
+                # If empty and language_code was specific, retry once with unknown for regional dialect detection
+                if not transcript and language_code != "unknown":
+                    logger.info("Specific language STT returned empty; trying auto language detection fallback...")
+                    files_fallback = {"file": (filename, audio_bytes, mime_type)}
+                    fb_resp = requests.post(
+                        SARVAM_STT_URL,
+                        headers=headers,
+                        files=files_fallback,
+                        data={"model": "saaras:v3", "language_code": "unknown"},
+                        timeout=25
+                    )
+                    if fb_resp.status_code == 200:
+                        fb_json = fb_resp.json()
+                        transcript = fb_json.get("transcript", "").strip()
+                        detected_lang = fb_json.get("language_code", "hi-IN")
+
+                logger.info(f"Sarvam STT success. Lang: {detected_lang}, Transcript: {transcript}")
+                return {
+                    "transcript": transcript,
+                    "language_code": detected_lang
+                }
+            else:
                 logger.error(f"Sarvam STT failed ({response.status_code}): {response.text}")
                 response.raise_for_status()
-
-            res_json = response.json()
-            transcript = res_json.get("transcript", "").strip()
-            language_code = res_json.get("language_code", "hi-IN")
-            logger.info(f"Sarvam STT success. Lang: {language_code}, Transcript: {transcript}")
-            return {
-                "transcript": transcript,
-                "language_code": language_code
-            }
         except Exception as e:
             logger.exception("Error during Sarvam STT transcription")
             raise

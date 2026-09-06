@@ -55,8 +55,8 @@ class GeminiService:
             },
             "contents": messages,
             "generationConfig": {
-                "temperature": 0.6,
-                "maxOutputTokens": 80,
+                "temperature": 0.5,
+                "maxOutputTokens": 40,
                 "topP": 0.95
             }
         }

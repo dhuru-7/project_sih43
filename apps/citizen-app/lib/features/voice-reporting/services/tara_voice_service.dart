@@ -37,7 +37,7 @@ class TaraVoiceService extends ChangeNotifier {
     _initAudioPlayer();
   }
 
-  // Base URLs for SETU Backend API (USB reverse tethering and LAN Wi-Fi fallback)
+  // Base URLs for SETU Backend API (USB reverse tethering primary, LAN Wi-Fi direct fallback)
   String _activeBaseUrl = 'http://127.0.0.1:5000/api/v1/voice';
   static const List<String> _candidateUrls = [
     'http://127.0.0.1:5000/api/v1/voice',
@@ -53,7 +53,7 @@ class TaraVoiceService extends ChangeNotifier {
           Uri.parse('$base$path'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(body),
-        ).timeout(const Duration(seconds: 15));
+        ).timeout(const Duration(seconds: 4));
         if (res.statusCode == 200) {
           _activeBaseUrl = base;
           return res;
@@ -106,7 +106,10 @@ class TaraVoiceService extends ChangeNotifier {
 
   bool _hasUserSpoken = false;
   int _consecutiveSilenceMs = 0;
-  static const int _silenceThresholdMs = 1600; // 1.6 seconds natural pause detection
+  int _speechDurationMs = 0;
+  int _speechTicks = 0;
+  double _noiseFloor = -55.0;
+  static const int _silenceThresholdMs = 500; // 500ms fast natural conversational pause detection
 
   void _initAudioPlayer() {
     _audioPlayer.onPlayerComplete.listen((_) {
@@ -132,6 +135,9 @@ class TaraVoiceService extends ChangeNotifier {
 
   Future<void>? _sessionInitFuture;
 
+  bool get hasUserSpoken => _hasUserSpoken;
+  bool get isUserSpeaking => _hasUserSpoken && _state == TaraAgentState.listening;
+
   /// Start a full conversational session with Tara
   Future<void> startSession({String userName = 'Rampal'}) async {
     try {
@@ -140,9 +146,9 @@ class TaraVoiceService extends ChangeNotifier {
       _captions.clear();
       _hasUserSpoken = false;
       _consecutiveSilenceMs = 0;
-
-      // Seed initial caption
-      _addCaption('Tara', 'Namaste! Listening to you... Speak anytime.');
+      _speechDurationMs = 0;
+      _speechTicks = 0;
+      _noiseFloor = -55.0;
 
       // Immediately start microphone recording so citizen speaks first
       await _startListening();
@@ -222,6 +228,9 @@ class TaraVoiceService extends ChangeNotifier {
 
       _hasUserSpoken = false;
       _consecutiveSilenceMs = 0;
+      _speechDurationMs = 0;
+      _speechTicks = 0;
+      _noiseFloor = -55.0;
       _setState(TaraAgentState.listening);
       _startMicLevelMonitor();
       debugPrint('[Tara] Listening at: $_currentRecordingPath');
@@ -387,6 +396,8 @@ class TaraVoiceService extends ChangeNotifier {
       _sessionId = null;
       _hasUserSpoken = false;
       _consecutiveSilenceMs = 0;
+      _speechDurationMs = 0;
+      _speechTicks = 0;
       _audioLevel = 0.0;
       _setState(TaraAgentState.idle);
     }
@@ -402,35 +413,65 @@ class TaraVoiceService extends ChangeNotifier {
 
   void _startMicLevelMonitor() {
     _levelTimer?.cancel();
-    _levelTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) async {
+    _levelTimer = Timer.periodic(const Duration(milliseconds: 75), (timer) async {
       if (_state != TaraAgentState.listening) return;
       try {
         if (await _audioRecorder.isRecording()) {
           final amp = await _audioRecorder.getAmplitude();
           final db = amp.current; // dBFS (-60 to 0)
 
-          // Normalize audio visualizer
-          final normalized = ((db + 45.0) / 35.0).clamp(0.0, 1.0);
-          _audioLevel = normalized > 0.05 ? normalized : 0.0;
+          if (db.isFinite) {
+            // Adaptive ambient noise floor tracking
+            if (_noiseFloor < -50.0 || _noiseFloor > 0.0) {
+              _noiseFloor = db;
+            } else if (db < _noiseFloor) {
+              // Track drops in room noise
+              _noiseFloor = _noiseFloor * 0.70 + db * 0.30;
+            } else if (_consecutiveSilenceMs > 250) {
+              // Slowly adapt to rising background only during silence
+              _noiseFloor = _noiseFloor * 0.95 + db * 0.05;
+            }
 
-          // Check for active speech
-          if (db > -34.0) {
-            _hasUserSpoken = true;
-            _consecutiveSilenceMs = 0;
-          } else if (_hasUserSpoken) {
-            // Speech was detected, user is now silent
-            _consecutiveSilenceMs += 150;
-            if (_consecutiveSilenceMs >= _silenceThresholdMs) {
-              debugPrint('[Tara] 3s silence pause detected! Auto-sending turn...');
-              _levelTimer?.cancel();
-              finishListeningAndSend();
-              return;
+            // Real voice is 6-8 dB above room noise, clamped between -25 and -14 dBFS
+            final speechThreshold = math.max(-25.0, math.min(-14.0, _noiseFloor + 6.5));
+
+            // Normalize audio visualizer for Aura orb
+            final normalized = ((db + 42.0) / 32.0).clamp(0.0, 1.0);
+            _audioLevel = normalized > 0.06 ? normalized : 0.0;
+
+            if (db > speechThreshold) {
+              _speechTicks++;
+              _consecutiveSilenceMs = 0;
+              _speechDurationMs += 75;
+              if (_speechTicks >= 2) {
+                _hasUserSpoken = true;
+              }
+
+              // Maximum speech safety cap: 5 seconds auto-finalizes turn
+              if (_speechDurationMs >= 5000) {
+                debugPrint('[Tara] Max speech cap reached (5s), sending turn...');
+                _levelTimer?.cancel();
+                finishListeningAndSend();
+                return;
+              }
+            } else {
+              _speechTicks = 0;
+              if (_hasUserSpoken && _speechDurationMs >= 350) {
+                _consecutiveSilenceMs += 75;
+                if (_consecutiveSilenceMs >= _silenceThresholdMs) {
+                  debugPrint('[Tara] Fast natural pause detected (${_consecutiveSilenceMs}ms)! Auto-sending turn...');
+                  _levelTimer?.cancel();
+                  finishListeningAndSend();
+                  return;
+                }
+              }
             }
           }
           notifyListeners();
         }
       } catch (e) {
-        _audioLevel = 0.15 + 0.15 * math.sin(timer.tick * 0.3).abs();
+        debugPrint('[Tara] Error in mic level monitor: $e');
+        _audioLevel = 0.0;
         notifyListeners();
       }
     });

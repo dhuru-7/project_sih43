@@ -1972,9 +1972,14 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
   Widget _buildTaraLiveCaptionsCard() {
     final captions = _taraService.captions;
     final state = _taraService.state;
-    final isMuted = _taraService.isMuted;
 
-    // Auto-scroll to bottom whenever captions change so new lines smoothly move up
+    // Do NOT show the card initially or when captions are empty.
+    // The card only pops up when sentences have been spoken.
+    if (captions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Auto-scroll to bottom so latest spoken sentences move smoothly up into view
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_captionScrollController.hasClients) {
         _captionScrollController.animateTo(
@@ -1985,71 +1990,30 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
       }
     });
 
-    IconData stateIcon = Icons.auto_awesome;
-    Color stateIconColor = const Color(0xFF2563EB);
-    Color stateBadgeBg = const Color(0xFFEFF6FF);
-    String liveStatusText = 'TARA Live';
-
-    switch (state) {
-      case TaraAgentState.connecting:
-        stateIcon = Icons.sync_rounded;
-        stateIconColor = const Color(0xFF0284C7);
-        stateBadgeBg = const Color(0xFFE0F2FE);
-        liveStatusText = 'Connecting to TARA...';
-        break;
-      case TaraAgentState.speaking:
-        stateIcon = Icons.graphic_eq_rounded;
-        stateIconColor = const Color(0xFF059669);
-        stateBadgeBg = const Color(0xFFD1FAE5);
-        liveStatusText = 'TARA speaking...';
-        break;
-      case TaraAgentState.listening:
-        if (isMuted) {
-          stateIcon = Icons.mic_off_rounded;
-          stateIconColor = const Color(0xFFDC2626);
-          stateBadgeBg = const Color(0xFFFEE2E2);
-          liveStatusText = 'Microphone Muted';
-        } else {
-          stateIcon = Icons.mic_rounded;
-          stateIconColor = const Color(0xFFD97706);
-          stateBadgeBg = const Color(0xFFFEF3C7);
-          liveStatusText = 'Listening to you...';
-        }
-        break;
-      case TaraAgentState.processing:
-        stateIcon = Icons.auto_awesome;
-        stateIconColor = const Color(0xFF7C3AED);
-        stateBadgeBg = const Color(0xFFEDE9FE);
-        liveStatusText = 'TARA thinking...';
-        break;
-      case TaraAgentState.error:
-        stateIcon = Icons.refresh_rounded;
-        stateIconColor = const Color(0xFFDC2626);
-        stateBadgeBg = const Color(0xFFFEE2E2);
-        liveStatusText = 'Connection failed. Tap to retry';
-        break;
-      case TaraAgentState.idle:
-        liveStatusText = 'TARA Ready';
-        break;
-    }
-
     return ElasticPressable(
       pressedScale: 0.98,
       onTap: () {
-        if (state == TaraAgentState.error) {
+        if (state == TaraAgentState.listening && _taraService.hasUserSpoken) {
+          HapticFeedback.selectionClick();
+          _taraService.finishListeningAndSend();
+        } else if (state == TaraAgentState.error) {
+          HapticFeedback.selectionClick();
           _taraService.startSession(userName: 'Rampal');
         }
       },
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
-            height: 66,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            constraints: const BoxConstraints(
+              minHeight: 48,
+              maxHeight: 76,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: AppleTheme.borderLight,
                 width: 1.0,
@@ -2057,101 +2021,37 @@ class _SetuHomeScreenState extends State<SetuHomeScreen>
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 18,
+                  blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Live state indicator badge
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: stateBadgeBg,
+            child: ListView.builder(
+              controller: _captionScrollController,
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: captions.length,
+              itemBuilder: (context, index) {
+                final item = captions[index];
+                final isYou = item.speaker == 'You';
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                  child: Text(
+                    item.text,
+                    softWrap: true,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13.5,
+                      fontWeight: isYou ? FontWeight.w500 : FontWeight.w600,
+                      color: isYou
+                          ? const Color(0xFF1F2937)
+                          : const Color(0xFF0F766E),
+                      height: 1.32,
+                    ),
                   ),
-                  child: Center(
-                    child: Icon(stateIcon, color: stateIconColor, size: 17),
-                  ),
-                ),
-                const SizedBox(width: 10),
-
-                // 2-Line Moving Captions Area
-                Expanded(
-                  child: captions.isEmpty
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              liveStatusText,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: stateIconColor,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Speak anything... Tara is listening',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF4B5563),
-                              ),
-                            ),
-                          ],
-                        )
-                      : ListView.builder(
-                          controller: _captionScrollController,
-                          physics: const ClampingScrollPhysics(),
-                          padding: EdgeInsets.zero,
-                          itemCount: captions.length,
-                          itemBuilder: (context, index) {
-                            final item = captions[index];
-                            final isYou = item.speaker == 'You';
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2.0),
-                              child: RichText(
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: '${item.speaker}: ',
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: isYou
-                                            ? const Color(0xFFD97706)
-                                            : const Color(0xFF059669),
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: item.text,
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF1F2937),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ),

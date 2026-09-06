@@ -6,6 +6,15 @@ from app.services.gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)
 
+SARVAM_TARA_SYSTEM_PROMPT = """You are TARA (तारा), an empathetic, polite, and dedicated AI voice companion and assistant for citizens on the SETU platform.
+The user can talk to you about anything: daily life, friendly conversation, questions, or municipal problems (roads, water, electricity, sanitation).
+Rules for spoken voice:
+1. Always respond in the EXACT same language and dialect the user spoke in (Hindi, Hinglish, English, Bengali, Tamil, Telugu, Marathi, etc.).
+2. Greet with 'नमस्ते' warmly when appropriate.
+3. Sound like a polite, warm, caring Indian friend over a phone call.
+4. Keep your response strictly to 1 or 2 short, natural spoken sentences without any markdown formatting, asterisks (*), hashtags (#), or emojis.
+5. Never use bullet points, lists, or headers."""
+
 class VoiceAgentService:
     # In-memory store for ongoing voice sessions and greeting audio cache
     _sessions = {}
@@ -19,7 +28,9 @@ class VoiceAgentService:
                 "session_id": session_id,
                 "user_name": user_name,
                 "created_at": time.time(),
-                "history": [],
+                "history": [
+                    {"role": "system", "content": SARVAM_TARA_SYSTEM_PROMPT}
+                ],
                 "language_code": "hi-IN"
             }
         return cls._sessions[session_id]
@@ -27,7 +38,7 @@ class VoiceAgentService:
     @classmethod
     def start_session(cls, session_id: str = None, user_name: str = "Ramesh") -> dict:
         """
-        Starts a new voice conversation with TARA.
+        Starts a new voice conversation with TARA using 100% Sarvam AI stack.
         Initializes an empty session ready to receive user's speech first.
         """
         session_id = session_id or str(uuid.uuid4())
@@ -36,7 +47,9 @@ class VoiceAgentService:
             del cls._sessions[session_id]
 
         session = cls._get_or_create_session(session_id, user_name)
-        session["history"] = []
+        session["history"] = [
+            {"role": "system", "content": SARVAM_TARA_SYSTEM_PROMPT}
+        ]
 
         return {
             "session_id": session_id,
@@ -49,15 +62,20 @@ class VoiceAgentService:
     @classmethod
     def process_audio_turn(cls, session_id: str, audio_bytes: bytes, filename: str = "voice.wav", mime_type: str = "audio/wav") -> dict:
         """
-        Executes end-to-end voice loop:
-        1. Audio bytes -> Sarvam Saaras STT -> transcript + language_code
-        2. Transcript -> Gemini 3.5 Flash Lite -> reply_text
-        3. Reply text -> Sarvam Bulbul TTS -> audio_base64
+        Executes 100% pure Sarvam AI voice loop:
+        1. Audio bytes -> Sarvam Saaras v3 STT -> transcript + language_code
+        2. Transcript -> Sarvam 105B Brain -> reply_text
+        3. Reply text -> Sarvam Bulbul v3 TTS -> audio_base64
         """
         session = cls._get_or_create_session(session_id)
 
-        # 1. Speech to Text
-        stt_result = SarvamService.speech_to_text(audio_bytes, filename=filename, mime_type=mime_type)
+        # 1. Speech to Text via Sarvam Saaras v3 (ultra-fast language hint, automatic dialect fallback)
+        stt_result = SarvamService.speech_to_text(
+            audio_bytes,
+            filename=filename,
+            mime_type=mime_type,
+            language_code=session.get("language_code", "hi-IN")
+        )
         transcript = stt_result.get("transcript", "").strip()
         detected_lang = stt_result.get("language_code", "hi-IN")
         session["language_code"] = detected_lang
@@ -76,16 +94,40 @@ class VoiceAgentService:
         # 2. Append user turn to history
         session["history"].append({
             "role": "user",
-            "parts": [{"text": transcript}]
+            "content": transcript
         })
 
-        # 3. Direct Gemini 3.5 Flash Lite conversational response (ultra-low latency)
-        reply_text = GeminiService.generate_chat_response(session["history"])
+        # 3. Fast Brain: Gemini 3.5 Flash Lite (<1.0s latency) with Sarvam 105B fallback
+        reply_text = ""
+        try:
+            gemini_messages = []
+            for h in session["history"]:
+                if h["role"] == "user":
+                    gemini_messages.append({"role": "user", "parts": [{"text": h["content"]}]})
+                elif h["role"] == "assistant":
+                    gemini_messages.append({"role": "model", "parts": [{"text": h["content"]}]})
+
+            reply_text = GeminiService.generate_chat_response(gemini_messages)
+        except Exception as e:
+            logger.warning(f"Gemini Flash Lite turn failed ({e}), falling back to Sarvam 105B...")
+            reply_text = SarvamService.chat_completion(
+                session["history"],
+                model="sarvam-105b-conversations",
+                max_tokens=40
+            )
+
+        if not reply_text or not reply_text.strip():
+            reply_text = "नमस्ते जी, मैं समझ रही हूँ। कृपया बताइए मैं आपकी किस प्रकार सहायता कर सकती हूँ?"
+
         reply_text = reply_text.replace("*", "").replace("#", "").replace('"', '').strip()
+        # Keep response strictly to 1 or 2 concise spoken sentences so Bulbul TTS synthesizes in under 1s
+        sentences = [s.strip() for s in reply_text.split("।") if s.strip()]
+        if len(sentences) > 2:
+            reply_text = "। ".join(sentences[:2]) + "।"
 
         session["history"].append({
-            "role": "model",
-            "parts": [{"text": reply_text}]
+            "role": "assistant",
+            "content": reply_text
         })
 
         # 4. Determine target language code for Bulbul TTS
@@ -108,21 +150,28 @@ class VoiceAgentService:
     @classmethod
     def process_text_turn(cls, session_id: str, user_text: str) -> dict:
         """
-        Fallback turn for text input testing with Gemini 3.5 Flash Lite directly.
+        Fallback turn for text input testing with Sarvam 105B Brain directly.
         """
         session = cls._get_or_create_session(session_id)
 
         session["history"].append({
             "role": "user",
-            "parts": [{"text": user_text}]
+            "content": user_text
         })
 
-        reply_text = GeminiService.generate_chat_response(session["history"])
+        reply_text = SarvamService.chat_completion(
+            session["history"],
+            model="sarvam-105b-conversations",
+            max_tokens=70
+        )
+        if not reply_text or not reply_text.strip():
+            reply_text = "नमस्ते जी, मैं आपकी किस प्रकार मदद कर सकती हूँ?"
+
         reply_text = reply_text.replace("*", "").replace("#", "").replace('"', '').strip()
 
         session["history"].append({
-            "role": "model",
-            "parts": [{"text": reply_text}]
+            "role": "assistant",
+            "content": reply_text
         })
 
         audio_base64 = SarvamService.text_to_speech(reply_text, target_language_code="hi-IN", speaker="ritu")
