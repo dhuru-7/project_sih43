@@ -141,22 +141,39 @@ export const LandingPage = () => {
             <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> Apple-Fluid Motion & Live Status Tracking</li>
           </ul>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <a
-              href="/downloads/setu-citizen.apk"
-              download="setu-citizen.apk"
+            <Link
+              to="/report"
               className="btn btn-primary"
               style={{
                 width: '100%',
-                backgroundColor: '#10B981',
+                backgroundColor: '#3B82F6',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
                 fontWeight: '700',
-                textDecoration: 'none',
                 padding: '0.875rem',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+              }}
+            >
+              <GoogleIcon name="open_in_browser" size={18} /> Open Web Reporting Portal
+            </Link>
+            <a
+              href="/downloads/setu-citizen.apk"
+              download="setu-citizen.apk"
+              className="btn btn-outline"
+              style={{
+                width: '100%',
+                color: '#10B981',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                fontWeight: '700',
+                textDecoration: 'none',
+                padding: '0.875rem'
               }}
             >
               <GoogleIcon name="download" size={18} /> Download Android APK (v1.0.0)

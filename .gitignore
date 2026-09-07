@@ -29,32 +29,16 @@ venv/
 ENV/
 # Python packaging
 develop-eggs/
-/downloads/
-!apps/web-portal/public/downloads/
 eggs/
 .eggs/
 parts/
 sdist/
 var/
 wheels/
-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 .pytest_cache/
-
-# Flutter / Dart
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-*.apk
-*.aab
-*.ipa
-!apps/web-portal/public/downloads/**
-!apps/web-portal/public/downloads/*.apk
-.pub-cache/
-.pub/
 
 # Environment & Secrets
 .env

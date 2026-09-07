@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: SIH26043 Unified Ecosystem API
-  description: Shared API specification for Citizen Flutter App, Unified React Web Portal, and Flask AI Backend.
+  description: Shared API specification for Unified React Web Portal (Citizen, Gov, University, Industry) and Flask AI Backend.
   version: 1.0.0
 servers:
   - url: http://localhost:5000/api/v1

@@ -54,6 +54,21 @@ export const Navbar = () => {
           </>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Link
+              to="/report"
+              className="btn btn-primary"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.875rem',
+                background: 'linear-gradient(135deg, #059669, #10b981)',
+                border: 'none',
+                color: '#ffffff'
+              }}
+            >
+              <GoogleIcon name="add_circle" size={16} /> Report Challenge
+            </Link>
             <a
               href="/downloads/setu-citizen.apk"
               download="setu-citizen.apk"
@@ -70,7 +85,7 @@ export const Navbar = () => {
             >
               <GoogleIcon name="download" size={16} /> Download APK
             </a>
-            <Link to="/login" className="btn btn-primary">Sign In</Link>
+            <Link to="/login" className="btn btn-outline">Sign In</Link>
           </div>
         )}
       </div>

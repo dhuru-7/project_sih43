@@ -307,5 +307,52 @@ button {
   animation: appleCardFadeScale 0.28s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
+/* Apple Glassmorphism & Fluid Utilities */
+.apple-glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.apple-glass-card-dark {
+  background: rgba(17, 24, 39, 0.78);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.3);
+}
+
+.apple-glass-nav {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* TARA AI Voice Audio Wave Animation */
+@keyframes taraAudioWave {
+  0%, 100% { height: 8px; opacity: 0.5; }
+  50% { height: 32px; opacity: 1; }
+}
+
+.tara-wave-1 { animation: taraAudioWave 0.8s ease-in-out infinite 0.1s; }
+.tara-wave-2 { animation: taraAudioWave 0.8s ease-in-out infinite 0.25s; }
+.tara-wave-3 { animation: taraAudioWave 0.8s ease-in-out infinite 0.4s; }
+.tara-wave-4 { animation: taraAudioWave 0.8s ease-in-out infinite 0.15s; }
+.tara-wave-5 { animation: taraAudioWave 0.8s ease-in-out infinite 0.35s; }
+
+/* Interactive Ripple-free Active State */
+.apple-tap-feedback {
+  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.apple-tap-feedback:active {
+  transform: scale(0.97);
+}
+
+
 
 

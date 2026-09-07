@@ -15,6 +15,9 @@ import { LandingPage } from '../public-pages/LandingPage';
 import { LoginPage } from '../public-pages/LoginPage';
 import { RegisterPage } from '../public-pages/RegisterPage';
 
+// Citizen Portal Pages
+import { ReportPortal } from '../portals/citizen/pages/ReportPortal';
+
 // Government Pages
 import { GovernmentDashboard } from '../portals/government/pages/Dashboard';
 import { GovernmentProblems } from '../portals/government/pages/Problems';
@@ -45,6 +48,11 @@ export const AppRoutes = () => {
       <Route element={<LandingLayout />}>
         <Route path="/" element={<LandingPage />} />
       </Route>
+
+      {/* 📱 Citizen Reporting Portal (Responsive / Apple Fluid Design) */}
+      <Route path="/report" element={<ReportPortal />} />
+      <Route path="/citizen" element={<ReportPortal />} />
+      <Route path="/citizen/report" element={<ReportPortal />} />
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />

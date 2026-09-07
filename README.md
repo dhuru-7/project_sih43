@@ -1,7 +1,6 @@
 # 🇮🇳 SIH26043 - AI-Powered Citizen Grievance & Academic Innovation Ecosystem
 
 [![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel)](https://vercel.com)
-[![Flutter](https://img.shields.io/badge/Flutter-Mobile_App-02569B?logo=flutter)](https://flutter.dev)
 [![React](https://img.shields.io/badge/React-18_Vite-61DAFB?logo=react)](https://react.dev)
 [![Flask](https://img.shields.io/badge/Flask-API_Backend-000000?logo=flask)](https://flask.palletsprojects.com)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth_&_DB-FFCA28?logo=firebase)](https://firebase.google.com)
@@ -14,7 +13,7 @@ A unified, multi-stakeholder ecosystem built for **Smart India Hackathon (SIH)**
 
 ```mermaid
 graph TD
-    Citizen["📱 Citizen App (Flutter)"] -->|Report Grievance & Evidence| Backend["🧠 Flask AI Backend"]
+    Citizen["📱 Citizen Web Portal\n(Mobile-First Responsive & Desktop)"] -->|Report Grievance, Voice & Evidence| Backend["🧠 Flask AI Backend"]
     
     Backend -->|1. Auto Classifier| AI1["NLP Domain Classifier"]
     Backend -->|2. Deduplication| AI2["Deduplicator Engine"]
@@ -26,6 +25,7 @@ graph TD
     WebPortal["🌐 Unified Web Portal (React + Vite)"] -->|Role-Based Access (JWT)| Backend
     
     subgraph Unified Web Experience
+        WebPortal -->|Role: CITIZEN| Cit["📱 Citizen Portal\n(Report, Track, Voice AI)"]
         WebPortal -->|Role: GOVERNMENT| Gov["🏛️ Government Portal\n(Review, Fund, Validate)"]
         WebPortal -->|Role: UNIVERSITY| Uni["🎓 University Portal\n(R&D, Teams, Solve)"]
         WebPortal -->|Role: INDUSTRY| Ind["🏢 Industry Portal\n(CSR Funding, Mentorship)"]
@@ -39,8 +39,7 @@ graph TD
 ```text
 SIH26043/
 ├── apps/
-│   ├── web-portal/          # ⭐ 1 Unified React Web App (Gov + Univ + Industry)
-│   └── citizen-app/         # 📱 Flutter Mobile App for Citizens
+│   └── web-portal/          # ⭐ Unified React Web App (Citizen + Gov + Univ + Industry)
 ├── backend/                 # 🧠 Flask API Backend with 5 AI Pipelines
 ├── shared/                  # 🔄 Shared OpenAPI specs & JSON Constants
 ├── firebase/                # 🔥 Firestore & Storage Security Rules
@@ -68,20 +67,13 @@ python run.py
 ```
 *Backend runs on `http://localhost:5000`*
 
-### 2. Unified Web Portal Setup
+### 2. Unified Web Portal Setup (Citizen + Stakeholders)
 ```bash
 cd apps/web-portal
 npm install
 npm run dev
 ```
 *Web Portal runs on `http://localhost:3000`*
-
-### 3. Citizen Mobile App (Flutter)
-```bash
-cd apps/citizen-app
-flutter pub get
-flutter run
-```
 
 ---
 
@@ -98,7 +90,7 @@ flutter run
 
 | Role | Access URL | Capabilities |
 | :--- | :--- | :--- |
-| **Citizen** | Flutter Mobile App | Voice grievance reporting, geo-tagging, tracking |
+| **Citizen** | `/report` / `/citizen` | Voice grievance reporting (TARA AI), camera evidence, geo-tagging, tracking |
 | **Government** | `/government/dashboard` | Problem review, budget allocation, certificate issuance |
 | **University** | `/university/dashboard` | Challenge adoption, team formation, research milestone submission |
 | **Industry** | `/industry/dashboard` | CSR grant allocation, mentorship, technology adoption |
@@ -106,6 +98,9 @@ flutter run
 ---
 
 ## 📜 Documentation Index
+- 🗺️ [Ecosystem Blueprint & Implementation Plan](file:///docs/PROJECT_BLUEPRINT.md)
+- 📋 [SIH Problem Statement 26043 (Verbatim)](file:///docs/SIH_PROBLEM_STATEMENT.md)
+- 🌳 [Directory Treemap & Inventory](file:///docs/DIRECTORY_TREEMAP.md)
 - 🏗️ [Architecture & Data Flow](file:///docs/architecture.md)
 - 🗄️ [Database & Firestore Schema](file:///docs/database.md)
 - 🤖 [AI & ML Matchmaking Algorithms](file:///docs/ai.md)

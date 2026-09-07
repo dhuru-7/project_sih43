@@ -16,9 +16,3 @@
    - `SECRET_KEY` = `your_production_secret`
    - `CORS_ORIGINS` = `https://your-vercel-domain.vercel.app`
 
-## 3. Flutter Mobile App (Android APK)
-```bash
-cd apps/citizen-app
-flutter build apk --release
-```
-Locate the generated `.apk` in `build/app/outputs/flutter-apk/app-release.apk`.

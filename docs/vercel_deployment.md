@@ -8,9 +8,8 @@ This guide walks you through deploying the complete **SETU Ecosystem** (React We
 
 | Component | Technology | Path | Deployed As |
 |---|---|---|---|
-| **Web Portal** | React + Vite | `apps/web-portal/` | Static Web App on `/` |
+| **Unified Web Portal** | React + Vite | `apps/web-portal/` | Static Web App on `/` (Responsive for Mobile & Desktop) |
 | **Backend & Voice AI** | Flask + Gemini 3.5 + Sarvam | `api/index.py` & `backend/` | Serverless Python Function on `/api/...` |
-| **Citizen Mobile App** | Flutter Android | `apps/citizen-app/` | Static APK Download on `/downloads/setu-citizen.apk` |
 
 ---
 
@@ -78,31 +77,12 @@ Click **Deploy**!
 
 ---
 
-## 📱 How Users Download & Run the Mobile App
+## 📱 How Citizens Access the Platform (Zero-Install PWA & Mobile Web)
 
-1. Visitors go to `https://your-domain.vercel.app`.
-2. On the homepage, they click **"Download Setu APK (v1.0.0)"** or scan the QR code.
-3. The browser downloads `setu-citizen.apk` directly.
-4. When opened on their phone, Android prompts:
-   > *"Do you want to install Setu?"*
-5. Tap **Install** and open!
-
----
-
-## 🔄 How the In-App Auto-Update Works
-
-When you release a new version in the future:
-
-1. In `apps/citizen-app/pubspec.yaml`, increment the version (e.g. `version: 1.0.1+2`).
-2. Run `flutter build apk --release`.
-3. Replace `apps/web-portal/public/downloads/setu-citizen.apk` with the new APK.
-4. On Vercel (or in your backend env), update:
-   - `LATEST_APP_VERSION` = `1.0.1`
-   - `LATEST_BUILD_NUMBER` = `2`
-   - `APP_RELEASE_NOTES` = `Fixed minor UI bugs and improved voice transcription speed.`
-5. Commit and push to GitHub.
-6. When citizens open their installed app, the app detects `1.0.0 < 1.0.1` and displays the **"Update Available"** sheet.
-7. Tapping **Update Now** downloads the new version and updates the app seamlessly!
+1. Visitors navigate to `https://your-domain.vercel.app` on their phone or desktop.
+2. Citizens access the mobile-first Citizen Portal (`/report` or `/citizen`).
+3. On budget Android devices (Chrome), users can tap **"Add to Home Screen"** to install it as an ultra-lightweight (<2MB) Progressive Web App (PWA) with camera, voice input, and GPS access.
+4. No APK downloads or Play Store logins are required, eliminating user friction.
 
 ---
 
