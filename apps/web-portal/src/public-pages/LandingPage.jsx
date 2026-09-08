@@ -142,22 +142,22 @@ export const LandingPage = () => {
           </ul>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <Link
-              to="/report"
+              to="/citizen"
               className="btn btn-primary"
               style={{
                 width: '100%',
-                backgroundColor: '#3B82F6',
-                color: '#FFFFFF',
+                backgroundColor: '#ffffff',
+                color: '#000000',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
                 fontWeight: '700',
                 padding: '0.875rem',
-                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                boxShadow: '0 4px 12px rgba(255, 255, 255, 0.2)'
               }}
             >
-              <GoogleIcon name="open_in_browser" size={18} /> Open Web Reporting Portal
+              <GoogleIcon name="open_in_browser" size={18} color="#000000" /> Open Setu Reporting Portal (Web)
             </Link>
             <a
               href="/downloads/setu-citizen.apk"

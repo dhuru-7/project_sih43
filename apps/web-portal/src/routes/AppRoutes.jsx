@@ -15,8 +15,8 @@ import { LandingPage } from '../public-pages/LandingPage';
 import { LoginPage } from '../public-pages/LoginPage';
 import { RegisterPage } from '../public-pages/RegisterPage';
 
-// Citizen Portal Pages
-import { ReportPortal } from '../portals/citizen/pages/ReportPortal';
+// Citizen Reporting Portal (Dual Desktop & Mobile with Apple Fluid Motion)
+import { CitizenHomePage } from '../portals/citizen/pages/CitizenHomePage';
 
 // Government Pages
 import { GovernmentDashboard } from '../portals/government/pages/Dashboard';
@@ -49,10 +49,16 @@ export const AppRoutes = () => {
         <Route path="/" element={<LandingPage />} />
       </Route>
 
-      {/* 📱 Citizen Reporting Portal (Responsive / Apple Fluid Design) */}
-      <Route path="/report" element={<ReportPortal />} />
-      <Route path="/citizen" element={<ReportPortal />} />
-      <Route path="/citizen/report" element={<ReportPortal />} />
+      {/* 📱 Citizen Civic Reporting Portal (Stitch Design - Dual Desktop/Mobile) */}
+      <Route path="/citizen" element={<CitizenHomePage />} />
+      <Route path="/citizen/home" element={<CitizenHomePage />} />
+      <Route path="/citizen/explore" element={<CitizenHomePage />} />
+      <Route path="/citizen/messages" element={<CitizenHomePage />} />
+      <Route path="/messages" element={<CitizenHomePage />} />
+      <Route path="/citizen/profile" element={<CitizenHomePage />} />
+      <Route path="/profile" element={<CitizenHomePage />} />
+      <Route path="/report" element={<CitizenHomePage />} />
+      <Route path="/citizen/report" element={<CitizenHomePage />} />
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
