@@ -64,13 +64,20 @@
   --danger: #ef4444;
 }
 
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
-body {
+html, body {
   font-family: var(--font-sans);
   font-weight: 400;
   background-color: var(--bg-primary);
@@ -78,6 +85,70 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Global Selection: Suppress native blue text selection highlights across all non-input elements */
+::selection {
+  background-color: transparent;
+  color: inherit;
+}
+::-moz-selection {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* Text inputs, textareas, and contenteditable fields must allow standard typing, text selection, and editing */
+input,
+textarea,
+[contenteditable="true"],
+.selectable-text {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+input::selection,
+textarea::selection {
+  background-color: rgba(59, 130, 246, 0.4) !important;
+  color: inherit !important;
+}
+
+/* Material Symbols, Icons, and Images: Strictly non-selectable and no tap highlight */
+.material-symbols-rounded,
+.material-symbols-outlined,
+svg,
+[class*="lucide-"],
+img {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+}
+
+/* Remove default focus outlines on click/touch for buttons, links, and divs */
+:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none;
+}
+
+button:focus,
+a:focus,
+div:focus,
+span:focus {
+  outline: none !important;
 }
 
 /* Inter Typography Pairing: Bold/Medium Headers, Regular Body */
@@ -93,10 +164,11 @@ p, span, label, input, textarea, select {
   font-weight: 400;
 }
 
-
 a {
   color: inherit;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
 }
 
 button {
@@ -104,6 +176,8 @@ button {
   border: none;
   outline: none;
   font-family: inherit;
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
 }
 
 .btn {
@@ -436,6 +510,24 @@ button {
   animation: appleModalPopIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Snappy Apple Popover Context Menu (Fast 120ms animation, top-right origin) */
+@keyframes applePopoverSnap {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.apple-popover-menu {
+  transform-origin: top right;
+  animation: applePopoverSnap 120ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
 /* Upvote Pop Bounce */
 @keyframes appleUpvoteBounce {
   0% { transform: scale(1); }
@@ -559,29 +651,43 @@ button {
   transition: transform 60ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* 3-Dots Button: Apple HIG Soft Rounded Focus Ring */
+/* 3-Dots Button: Apple HIG Fluid Touch & Circular Feedback */
 .three-dots-btn {
-  border: none;
+  border: none !important;
   background: transparent;
   cursor: pointer;
-  border-radius: 0.5rem;
-  display: flex;
+  border-radius: 50% !important;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: background-color 0.15s ease, transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease;
 }
 
 .three-dots-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.three-dots-btn:focus-visible,
-.three-dots-btn:active,
-.three-dots-btn.active {
-  background-color: rgba(0, 0, 0, 0.07);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.18) !important;
+.three-dots-btn:active {
+  transform: scale(0.88) !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
   outline: none !important;
+  box-shadow: none !important;
+}
+
+.three-dots-btn.active,
+.three-dots-btn[aria-expanded="true"] {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.three-dots-btn:focus-visible {
+  background-color: rgba(0, 0, 0, 0.06);
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 

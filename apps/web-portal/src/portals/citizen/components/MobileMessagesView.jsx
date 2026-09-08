@@ -355,29 +355,108 @@ export const MobileMessagesView = ({
             </div>
           </div>
 
-          {/* 3-dots button with outline on click */}
-          <button
-            title="Options"
-            onClick={() => setIsDetailMenuOpen((prev) => !prev)}
-            className="three-dots-btn"
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: 'none',
-              background: isDetailMenuOpen ? 'rgba(0, 0, 0, 0.07)' : 'transparent',
-              cursor: 'pointer',
-              color: '#5e5e5e',
-              boxShadow: isDetailMenuOpen ? '0 0 0 2px rgba(0, 0, 0, 0.18)' : 'none',
-              outline: 'none',
-              transition: 'box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease'
-            }}
-          >
-            <GoogleIcon name="more_vert" size={20} color="#5e5e5e" />
-          </button>
+          {/* 3-dots button with Apple touch */}
+          <div style={{ position: 'relative' }}>
+            <button
+              title="Options"
+              onClick={() => setIsDetailMenuOpen((prev) => !prev)}
+              className="three-dots-btn"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 'none',
+                background: isDetailMenuOpen ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
+                cursor: 'pointer',
+                color: isDetailMenuOpen ? '#1a1c1c' : '#5e5e5e',
+                outline: 'none',
+                boxShadow: 'none',
+                WebkitTapHighlightColor: 'transparent',
+                transition: 'background-color 0.15s ease, transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1)'
+              }}
+            >
+              <GoogleIcon name="more_vert" size={20} color="currentColor" />
+            </button>
+
+            {/* Apple Contextual Menu Dropdown */}
+            {isDetailMenuOpen && (
+              <>
+                <div
+                  onClick={() => setIsDetailMenuOpen(false)}
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 50
+                  }}
+                />
+                <div
+                  className="apple-popover-menu"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    right: 0,
+                    zIndex: 51,
+                    minWidth: '150px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 8px 24px -2px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
+                    padding: '4px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <button
+                    onClick={() => setIsDetailMenuOpen(false)}
+                    className="apple-tap"
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#1c1c1e',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Case details
+                  </button>
+                  <div style={{ height: '1px', backgroundColor: 'rgba(0, 0, 0, 0.06)', margin: '2px 0' }} />
+                  <button
+                    onClick={() => setIsDetailMenuOpen(false)}
+                    className="apple-tap"
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#ff3b30',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Report concern
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </header>
 
         {/* Scrollable Messages Stream */}
@@ -660,29 +739,89 @@ export const MobileMessagesView = ({
         >
           Messages
         </h1>
-        {/* 3 dots button with outline on click */}
-        <button
-          title="More options"
-          onClick={() => setIsListMenuOpen((prev) => !prev)}
-          className="three-dots-btn"
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '0.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#5e5e5e',
-            border: 'none',
-            background: isListMenuOpen ? 'rgba(0, 0, 0, 0.07)' : 'transparent',
-            cursor: 'pointer',
-            boxShadow: isListMenuOpen ? '0 0 0 2px rgba(0, 0, 0, 0.18)' : 'none',
-            outline: 'none',
-            transition: 'box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease'
-          }}
-        >
-          <GoogleIcon name="more_vert" size={20} color="#5e5e5e" />
-        </button>
+        {/* 3-dots button with Apple touch */}
+        <div style={{ position: 'relative' }}>
+          <button
+            title="More options"
+            onClick={() => setIsListMenuOpen((prev) => !prev)}
+            className="three-dots-btn"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: isListMenuOpen ? '#1a1c1c' : '#5e5e5e',
+              border: 'none',
+              background: isListMenuOpen ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
+              cursor: 'pointer',
+              outline: 'none',
+              boxShadow: 'none',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'background-color 0.15s ease, transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1)'
+            }}
+          >
+            <GoogleIcon name="more_vert" size={20} color="currentColor" />
+          </button>
+
+          {/* Apple Contextual Menu Dropdown */}
+          {isListMenuOpen && (
+            <>
+              <div
+                onClick={() => setIsListMenuOpen(false)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 50
+                }}
+              />
+              <div
+                className="apple-popover-menu"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  zIndex: 51,
+                  minWidth: '160px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(0, 0, 0, 0.08)',
+                  boxShadow: '0 8px 24px -2px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
+                  padding: '4px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <button
+                  onClick={() => {
+                    setChats((prev) => prev.map((c) => ({ ...c, unreadCount: 0 })));
+                    setIsListMenuOpen(false);
+                  }}
+                  className="apple-tap"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: '#1c1c1e',
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Mark all as read
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       {/* 2. Updates / Threads List (NO click to push animations) */}

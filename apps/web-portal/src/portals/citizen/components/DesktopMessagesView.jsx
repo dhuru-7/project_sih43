@@ -521,28 +521,88 @@ export const DesktopMessagesView = ({
           <div style={{ padding: '1.25rem 1.25rem 0.75rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1a1c1c', letterSpacing: '-0.01em' }}>Chats</span>
-              <button
-                title="More options"
-                onClick={() => setIsChatsMenuOpen((prev) => !prev)}
-                className="three-dots-btn"
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#5e5e5e',
-                  border: 'none',
-                  background: isChatsMenuOpen ? 'rgba(0, 0, 0, 0.07)' : 'transparent',
-                  cursor: 'pointer',
-                  boxShadow: isChatsMenuOpen ? '0 0 0 2px rgba(0, 0, 0, 0.18)' : 'none',
-                  outline: 'none',
-                  transition: 'box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease'
-                }}
-              >
-                <GoogleIcon name="more_vert" size={20} color="#5e5e5e" />
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  title="More options"
+                  onClick={() => setIsChatsMenuOpen((prev) => !prev)}
+                  className="three-dots-btn"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: isChatsMenuOpen ? '#1a1c1c' : '#5e5e5e',
+                    border: 'none',
+                    background: isChatsMenuOpen ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    WebkitTapHighlightColor: 'transparent',
+                    transition: 'background-color 0.15s ease, transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                  }}
+                >
+                  <GoogleIcon name="more_vert" size={20} color="currentColor" />
+                </button>
+
+                {/* Apple Contextual Menu Dropdown */}
+                {isChatsMenuOpen && (
+                  <>
+                    <div
+                      onClick={() => setIsChatsMenuOpen(false)}
+                      style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 50
+                      }}
+                    />
+                    <div
+                      className="apple-popover-menu"
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        right: 0,
+                        zIndex: 51,
+                        minWidth: '160px',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(0, 0, 0, 0.08)',
+                        boxShadow: '0 8px 24px -2px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
+                        padding: '4px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          setChats((prev) => prev.map((c) => ({ ...c, unreadCount: 0 })));
+                          setIsChatsMenuOpen(false);
+                        }}
+                        className="apple-tap"
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          color: '#1c1c1e',
+                          textAlign: 'left',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        Mark all as read
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Search Bar */}
@@ -781,8 +841,8 @@ export const DesktopMessagesView = ({
               </div>
             </div>
 
-            {/* Header Actions - 3 dots only, NO Track Unit pill, outline on click */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Header Actions - 3 dots with Apple touch */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
                 title="Options"
                 onClick={() => setIsChatMenuOpen((prev) => !prev)}
@@ -790,21 +850,98 @@ export const DesktopMessagesView = ({
                 style={{
                   width: '36px',
                   height: '36px',
-                  borderRadius: '0.5rem',
+                  borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   border: 'none',
-                  background: isChatMenuOpen ? 'rgba(0, 0, 0, 0.07)' : 'transparent',
+                  background: isChatMenuOpen ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
                   cursor: 'pointer',
-                  color: '#7e7576',
-                  boxShadow: isChatMenuOpen ? '0 0 0 2px rgba(0, 0, 0, 0.18)' : 'none',
+                  color: isChatMenuOpen ? '#1a1c1c' : '#7e7576',
                   outline: 'none',
-                  transition: 'box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease'
+                  boxShadow: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                  transition: 'background-color 0.15s ease, transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }}
               >
-                <GoogleIcon name="more_vert" size={20} color="#7e7576" />
+                <GoogleIcon name="more_vert" size={20} color="currentColor" />
               </button>
+
+              {/* Apple Contextual Menu Dropdown */}
+              {isChatMenuOpen && (
+                <>
+                  <div
+                    onClick={() => setIsChatMenuOpen(false)}
+                    style={{
+                      position: 'fixed',
+                      inset: 0,
+                      zIndex: 50
+                    }}
+                  />
+                  <div
+                    className="apple-popover-menu"
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      right: 0,
+                      zIndex: 51,
+                      minWidth: '150px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      boxShadow: '0 8px 24px -2px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
+                      padding: '4px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <button
+                      onClick={() => setIsChatMenuOpen(false)}
+                      className="apple-tap"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        color: '#1c1c1e',
+                        textAlign: 'left',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Case details
+                    </button>
+                    <div style={{ height: '1px', backgroundColor: 'rgba(0, 0, 0, 0.06)', margin: '2px 0' }} />
+                    <button
+                      onClick={() => setIsChatMenuOpen(false)}
+                      className="apple-tap"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        color: '#ff3b30',
+                        textAlign: 'left',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Report concern
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

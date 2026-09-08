@@ -129,16 +129,32 @@ const PostMediaCarousel = ({ images, isPostHovered }) => {
         marginTop: '0.25rem'
       }}
     >
-      <img
-        src={currentImg.url}
-        alt={currentImg.caption || ''}
+      {/* Sliding image strip */}
+      <div
         style={{
-          width: '100%',
+          display: 'flex',
+          width: `${total * 100}%`,
           height: '100%',
-          objectFit: 'cover',
-          display: 'block'
+          transform: `translateX(-${currentIndex * (100 / total)}%)`,
+          transition: 'transform 0.45s cubic-bezier(0.32, 0.72, 0, 1)',
+          willChange: 'transform'
         }}
-      />
+      >
+        {images.map((img, idx) => (
+          <img
+            key={idx}
+            src={img.url}
+            alt={img.caption || ''}
+            style={{
+              width: `${100 / total}%`,
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+              flexShrink: 0
+            }}
+          />
+        ))}
+      </div>
 
       {total > 1 && (
         <>

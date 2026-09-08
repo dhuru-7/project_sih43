@@ -9,50 +9,56 @@ export const MobileProfileView = ({
     <div
       className="apple-page-enter"
       style={{
-        width: '100%',
-        minHeight: '100vh',
-        backgroundColor: '#f9f9f9',
         display: 'flex',
         flexDirection: 'column',
+        minHeight: '100vh',
+        backgroundColor: '#f9f9f9',
+        color: '#1a1c1c',
+        width: '100%',
+        maxWidth: '480px',
+        margin: '0 auto',
+        position: 'relative',
         boxSizing: 'border-box'
       }}
     >
-      {/* Mobile TopAppBar (Exact Stitch) */}
+      {/* 1. Top App Bar - Exact height, frosted styling & typography matching Explore and Messages */}
       <header
+        className="apple-frosted-nav"
         style={{
-          backgroundColor: '#ffffff',
-          color: '#000000',
-          width: '100%',
           position: 'sticky',
           top: 0,
-          borderBottom: '1px solid #cfc4c5',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '8px 20px',
           zIndex: 40,
+          width: '100%',
+          backgroundColor: 'rgba(255, 255, 255, 0.94)',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          padding: '1rem 1.25rem',
           boxSizing: 'border-box'
         }}
       >
-        <div
+        <h1
           style={{
-            fontSize: '20px',
-            lineHeight: '28px',
-            fontWeight: '600',
+            fontSize: '1.25rem',
+            fontWeight: '800',
+            letterSpacing: '-0.02em',
             color: '#000000',
-            letterSpacing: '-0.01em'
+            margin: 0
           }}
         >
           Profile
-        </div>
+        </h1>
       </header>
 
-      {/* Main Content (Exact Stitch) */}
+      {/* 2. Main Content Canvas */}
       <main
         style={{
-          flexGrow: 1,
-          padding: '20px',
-          paddingBottom: '80px',
+          flex: 1,
+          padding: '1.5rem 1.25rem 6.5rem 1.25rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem',
           boxSizing: 'border-box'
         }}
       >
@@ -62,17 +68,18 @@ export const MobileProfileView = ({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            marginBottom: '32px'
+            padding: '0.25rem 0',
+            gap: '0.75rem'
           }}
         >
           <div
             style={{
-              width: '8rem',
-              height: '8rem',
+              width: '5.5rem',
+              height: '5.5rem',
               borderRadius: '50%',
               overflow: 'hidden',
-              marginBottom: '16px',
-              border: '2px solid #cfc4c5'
+              boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 0 0 3px #ffffff, 0 0 0 4px rgba(0, 0, 0, 0.06)',
+              flexShrink: 0
             }}
           >
             <img
@@ -81,318 +88,379 @@ export const MobileProfileView = ({
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>
-          <h1
+          <h2
             style={{
-              fontSize: '24px',
-              lineHeight: '32px',
-              letterSpacing: '-0.01em',
-              fontWeight: '600',
-              color: '#1a1c1c',
-              marginBottom: '4px',
-              margin: 0
+              fontSize: '1.375rem',
+              lineHeight: '1.75rem',
+              letterSpacing: '-0.02em',
+              fontWeight: '700',
+              color: '#000000',
+              margin: 0,
+              textAlign: 'center'
             }}
           >
             {userName || 'Alex Chen'}
-          </h1>
+          </h2>
         </section>
 
-        {/* Bento Grid for Stats/Actions */}
+        {/* Personal Details Section (Apple Inset Grouped) */}
         <section
           style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            gap: '16px',
-            marginBottom: '32px'
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
           }}
         >
-          {/* Personal Details Card */}
+          <h2
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: '600',
+              letterSpacing: '0.04em',
+              color: '#6e6e73',
+              textTransform: 'uppercase',
+              margin: 0,
+              paddingLeft: '0.25rem'
+            }}
+          >
+            Personal Details
+          </h2>
+
           <div
             style={{
               backgroundColor: '#ffffff',
-              border: '1px solid #cfc4c5',
-              borderRadius: '0.75rem',
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              boxSizing: 'border-box'
+              borderRadius: '1rem',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
+              overflow: 'hidden'
             }}
           >
-            <h2
-              style={{
-                fontSize: '12px',
-                lineHeight: '16px',
-                letterSpacing: '0.05em',
-                fontWeight: '500',
-                color: '#5e5e5e',
-                textTransform: 'uppercase',
-                marginBottom: '8px',
-                margin: 0
-              }}
-            >
-              Personal Details
-            </h2>
-
+            {/* Phone */}
             <div
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '0.75rem',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '24px'
+                alignItems: 'center',
+                gap: '0.875rem',
+                padding: '0.875rem 1rem',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
               }}
             >
-              {/* Phone */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    backgroundColor: '#eeeeee',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  <GoogleIcon name="call" size={24} color="#1a1c1c" />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '12px', lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500', color: '#5e5e5e' }}>
-                    Phone
-                  </span>
-                  <span style={{ fontSize: '20px', lineHeight: '28px', fontWeight: '600', color: '#1a1c1c' }}>
-                    +91 98765 43210
-                  </span>
-                </div>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f2f2f7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <GoogleIcon name="call" size={18} color="#1c1c1e" />
               </div>
-
-              {/* Aadhar Number */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    backgroundColor: '#eeeeee',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#1a1c1c',
-                    flexShrink: 0
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    height="24px"
-                    viewBox="0 -960 960 960"
-                    width="24px"
-                    fill="currentColor"
-                  >
-                    <path d="M560-440h200v-80H560v80Zm0-120h200v-80H560v80ZM200-320h320v-22q0-45-44-71.5T360-440q-72 0-116 26.5T200-342v22Zm216.5-183.5Q440-527 440-560t-23.5-56.5Q393-640 360-640t-56.5 23.5Q280-593 280-560t23.5 56.5Q327-480 360-480t56.5-23.5ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z" />
-                  </svg>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '12px', lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500', color: '#5e5e5e' }}>
-                    Aadhar Number
-                  </span>
-                  <span style={{ fontSize: '20px', lineHeight: '28px', fontWeight: '600', color: '#1a1c1c' }}>
-                    XXXX XXXX 1234
-                  </span>
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
+                  Phone
+                </span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
+                  +91 98765 43210
+                </span>
               </div>
+            </div>
 
-              {/* Location */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    backgroundColor: '#eeeeee',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  <GoogleIcon name="location_on" size={24} color="#1a1c1c" />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '12px', lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500', color: '#5e5e5e' }}>
-                    Location
-                  </span>
-                  <span style={{ fontSize: '20px', lineHeight: '28px', fontWeight: '600', color: '#1a1c1c' }}>
-                    Pattikalyana
-                  </span>
-                </div>
+            {/* Aadhar Number */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.875rem',
+                padding: '0.875rem 1rem',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f2f2f7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <GoogleIcon name="badge" size={18} color="#1c1c1e" />
               </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
+                  Aadhar Number
+                </span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
+                  XXXX XXXX 1234
+                </span>
+              </div>
+            </div>
 
-              {/* Date of Birth */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    backgroundColor: '#eeeeee',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  <GoogleIcon name="calendar_today" size={24} color="#1a1c1c" />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '12px', lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500', color: '#5e5e5e' }}>
-                    Date of Birth
-                  </span>
-                  <span style={{ fontSize: '20px', lineHeight: '28px', fontWeight: '600', color: '#1a1c1c' }}>
-                    26 years old
-                  </span>
-                </div>
+            {/* Location */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.875rem',
+                padding: '0.875rem 1rem',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f2f2f7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <GoogleIcon name="location_on" size={18} color="#1c1c1e" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
+                  Location
+                </span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
+                  Pattikalyana
+                </span>
+              </div>
+            </div>
+
+            {/* Date of Birth */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.875rem',
+                padding: '0.875rem 1rem'
+              }}
+            >
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f2f2f7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <GoogleIcon name="calendar_today" size={18} color="#1c1c1e" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
+                  Date of Birth
+                </span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
+                  26 years old
+                </span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Settings List (Exact Stitch) */}
+        {/* Account Settings Section (Apple Inset Grouped) */}
         <section
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #cfc4c5',
-            borderRadius: '0.75rem',
-            overflow: 'hidden',
-            boxSizing: 'border-box'
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
           }}
         >
-          <h3
+          <h2
             style={{
-              fontSize: '20px',
-              lineHeight: '28px',
+              fontSize: '0.8125rem',
               fontWeight: '600',
-              color: '#1a1c1c',
-              padding: '16px',
-              borderBottom: '1px solid #cfc4c5',
-              backgroundColor: '#f9f9f9',
-              margin: 0
+              letterSpacing: '0.04em',
+              color: '#6e6e73',
+              textTransform: 'uppercase',
+              margin: 0,
+              paddingLeft: '0.25rem'
             }}
           >
             Account Settings
-          </h3>
+          </h2>
 
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
-            {/* My Reports */}
-            <li style={{ borderBottom: '1px solid #cfc4c5' }}>
-              <button
-                onClick={() => setActiveNav && setActiveNav('explore')}
-                className="apple-tap"
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px',
-                  border: 'none',
-                  background: 'transparent',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <GoogleIcon name="assignment" size={24} color="#5e5e5e" />
-                  <span style={{ fontSize: '16px', lineHeight: '24px', fontWeight: '400', color: '#1a1c1c' }}>
-                    My Reports
-                  </span>
-                </div>
-                <GoogleIcon name="chevron_right" size={24} color="#5e5e5e" />
-              </button>
-            </li>
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '1rem',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
+              overflow: 'hidden'
+            }}
+          >
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
+              {/* My Reports */}
+              <li style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                <button
+                  onClick={() => setActiveNav && setActiveNav('explore')}
+                  className="apple-tap"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.875rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f2f2f7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <GoogleIcon name="assignment" size={18} color="#1c1c1e" />
+                    </div>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
+                      My Reports
+                    </span>
+                  </div>
+                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                </button>
+              </li>
 
-            {/* Personal Information */}
-            <li style={{ borderBottom: '1px solid #cfc4c5' }}>
-              <button
-                className="apple-tap"
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px',
-                  border: 'none',
-                  background: 'transparent',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <GoogleIcon name="person_outline" size={24} color="#5e5e5e" />
-                  <span style={{ fontSize: '16px', lineHeight: '24px', fontWeight: '400', color: '#1a1c1c' }}>
-                    Personal Information
-                  </span>
-                </div>
-                <GoogleIcon name="chevron_right" size={24} color="#5e5e5e" />
-              </button>
-            </li>
+              {/* Personal Information */}
+              <li style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                <button
+                  className="apple-tap"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.875rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f2f2f7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <GoogleIcon name="person_outline" size={18} color="#1c1c1e" />
+                    </div>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
+                      Personal Information
+                    </span>
+                  </div>
+                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                </button>
+              </li>
 
-            {/* Notification Preferences */}
-            <li style={{ borderBottom: '1px solid #cfc4c5' }}>
-              <button
-                className="apple-tap"
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px',
-                  border: 'none',
-                  background: 'transparent',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <GoogleIcon name="notifications_none" size={24} color="#5e5e5e" />
-                  <span style={{ fontSize: '16px', lineHeight: '24px', fontWeight: '400', color: '#1a1c1c' }}>
-                    Notification Preferences
-                  </span>
-                </div>
-                <GoogleIcon name="chevron_right" size={24} color="#5e5e5e" />
-              </button>
-            </li>
+              {/* Notification Preferences */}
+              <li style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                <button
+                  className="apple-tap"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.875rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f2f2f7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <GoogleIcon name="notifications_none" size={18} color="#1c1c1e" />
+                    </div>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
+                      Notification Preferences
+                    </span>
+                  </div>
+                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                </button>
+              </li>
 
-            {/* Privacy & Security */}
-            <li style={{ borderBottom: 'none' }}>
-              <button
-                className="apple-tap"
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px',
-                  border: 'none',
-                  background: 'transparent',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <GoogleIcon name="lock_outline" size={24} color="#5e5e5e" />
-                  <span style={{ fontSize: '16px', lineHeight: '24px', fontWeight: '400', color: '#1a1c1c' }}>
-                    Privacy & Security
-                  </span>
-                </div>
-                <GoogleIcon name="chevron_right" size={24} color="#5e5e5e" />
-              </button>
-            </li>
-          </ul>
+              {/* Privacy & Security */}
+              <li>
+                <button
+                  className="apple-tap"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.875rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f2f2f7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <GoogleIcon name="lock_outline" size={18} color="#1c1c1e" />
+                    </div>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
+                      Privacy & Security
+                    </span>
+                  </div>
+                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                </button>
+              </li>
+            </ul>
+          </div>
         </section>
       </main>
     </div>
