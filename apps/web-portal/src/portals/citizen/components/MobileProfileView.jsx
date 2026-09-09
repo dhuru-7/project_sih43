@@ -23,7 +23,6 @@ export const MobileProfileView = ({
   const displayLocation = storedUser.district ? `${storedUser.district}, ${storedUser.state || 'Jharkhand'}` : 'Ranchi, Jharkhand';
   const displayDob = storedUser.dob || '15/08/1996';
   const isDev = !!storedUser.isDevAccount;
-  const designation = storedUser.designation || (isDev ? 'Developer Team' : 'Verified Citizen');
 
   // Swipe / Tap to toggle between Date of Birth and Age with smooth fade animation
   const [showAge, setShowAge] = useState(false);
@@ -174,23 +173,25 @@ export const MobileProfileView = ({
           >
             {displayName}
           </h2>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '9999px',
-              backgroundColor: isDev ? '#000000' : 'rgba(0, 0, 0, 0.05)',
-              color: isDev ? '#ffffff' : '#1c1c1e',
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              letterSpacing: '0.02em'
-            }}
-          >
-            <GoogleIcon name={isDev ? 'terminal' : 'verified_user'} size={14} color={isDev ? '#ffffff' : '#000000'} />
-            <span>{designation}</span>
-          </div>
+          {isDev && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                letterSpacing: '0.02em'
+              }}
+            >
+              <GoogleIcon name="terminal" size={14} color="#ffffff" />
+              <span>Developer Team</span>
+            </div>
+          )}
         </section>
 
         {/* Personal Details Section (Apple Inset Grouped) */}

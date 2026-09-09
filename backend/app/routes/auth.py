@@ -326,7 +326,7 @@ def get_aadhaar_accounts():
             "district": acc["district"],
             "isDevAccount": acc.get("isDevAccount", False),
             "isDefault": acc.get("isDefault", False),
-            "designation": acc.get("designation", "Citizen Participant")
+            "designation": acc.get("designation", "")
         })
     return jsonify({"accounts": accounts}), 200
 
@@ -439,7 +439,7 @@ def verify_aadhaar_otp():
             "pincode": account["pincode"],
             "role": "CITIZEN",
             "isDevAccount": account.get("isDevAccount", False),
-            "designation": account.get("designation", "Citizen Participant"),
+            "designation": account.get("designation", ""),
             "sessionId": new_session_id
         },
         "portalUrl": "/report"
