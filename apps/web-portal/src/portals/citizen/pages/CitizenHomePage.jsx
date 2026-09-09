@@ -16,82 +16,13 @@ import { DesktopReportingModal } from '../components/DesktopReportingModal';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { useAuth } from '../../../context/AuthContext';
 
-const INITIAL_ISSUES = [
-  {
-    id: '#SETU-8821',
-    title: 'High fluoride & iron contamination in village tubewells',
-    status: 'pending',
-    statusBadge: 'Pending',
-    time: '25 mins ago',
-    location: 'Bero Block, Ranchi District',
-    author: 'R. Oraon',
-    assignee: 'Water Quality & Filtration Lab, BIT Mesra',
-    upvotes: 42,
-    image:
-      'https://lh3.googleusercontent.com/aida/AEtjO1Wpl1YDWIe9-OQF9mOpMVkvg7jFIVPX855BQ4SA8mlBN4v_5MihUTCEvZ0ctPYj0loAhhXz35Tk8r3NGMZd44cZkwuVWSYd5VGMH7KYlUoM4aj2Bk3Jn32CQtC6v4A-IA_LdpSHMtD8z95qQzEUVU3j-SxLAlUf-B7Uq2L6P6Xkcdgg5NNLQhFWReSRwUsJyu1Cxxtdcqwb1Evrvpws4zVx4lhaiABnw-3ipYTpB6UbzM6fi4Pv9wIpB7Mk',
-    description:
-      'Groundwater from deep borewells in 3 tolas is yielding yellowish water with high fluoride precipitate, causing dental fluorosis in schoolchildren.'
-  },
-  {
-    id: '#SETU-8819',
-    title: 'Frequent solar micro-grid inverter breakdown at tribal school',
-    status: 'reviewed',
-    statusBadge: 'Reviewed',
-    time: '2 hours ago',
-    location: 'Govindpur Block, Dhanbad',
-    author: 'A. Sharma',
-    assignee: 'Clean Energy Lab, IIT ISM Dhanbad',
-    upvotes: 18,
-    image:
-      'https://lh3.googleusercontent.com/aida/AEtjO1VUEs9qn2Iil82vGxYYMhSyA1RfKXfXZ_GmBbcoZiASw2Mg6cMJ8wAhEh3aenSngPwO4y8lWY10dUUUH3m8DbUB4peZcH9ZbQfWL6daASXdWrlca0EPgpZzYHdizjZsAYWXeQ_VfJwHFTuUOuxS3xSEN4B4ZVlRxs0iVUNq5yzpE-yWgTpTZFJBN-itG7BwCXnRFGp3debdzabJbnb69mB0Fcmy4V0-8W4PjCJrkWrP4uhF1QXAGxkw2YE5',
-    description:
-      'The community solar micro-grid inverter trips repeatedly during peak sunlight hours, leaving the residential school without power for computer lab and water pumping.'
-  },
-  {
-    id: '#SETU-8790',
-    title: 'Low-cost biomass briquetting unit deployed for crop residue',
-    status: 'resolved',
-    statusBadge: 'Resolved',
-    time: 'Yesterday',
-    location: 'Ormanjhi Block, Ranchi',
-    author: 'S. Munda',
-    assignee: 'Birsa Agricultural University Tech Team',
-    upvotes: 63,
-    image:
-      'https://lh3.googleusercontent.com/aida/AEtjO1VWaLlkyPvD1vyDKs0va6U9buDzSDUlwo0MvizG610Bg5ZCE_-zQxG52r-HsySXLfTkjC5o5KK7pmWpcS2dmQ4pCCmIgeu_ZgR9D8hCbs9laGxi9wN0pC7fM9HsXIWLlBDdKut3c3ob53x8X7NT3vGp6q4CkOjPsVEJjwF2zjrqBY4e05KNfeWCjjvelZVeguWrnuu74d4SFxz4IgKWwzaF-1PJ1nHyp2pmK4OGnN1x-OKVkgHi8yfbW2wP',
-    description:
-      'Field testing of decentralized briquette press completed; converting paddy straw into smokeless cooking fuel for 40 local households.'
-  }
-];
-
 const INITIAL_NOTIFICATIONS = [
   {
     id: 1,
     type: 'Status Update',
     time: '10m ago',
-    message: 'Status updated for Water Quality report #SETU-8821 to Under Nodal Review.',
+    message: 'Nodal Cell reviewing recently submitted civic grievances.',
     isNew: true
-  },
-  {
-    id: 2,
-    type: 'Research Team Response',
-    time: '45m ago',
-    message: 'Birsa Agricultural University submitted a field verification report for soil salinity issue.',
-    isNew: true
-  },
-  {
-    id: 3,
-    type: 'Nodal Advisory',
-    time: '2h ago',
-    message: 'DHTE Nodal Cell approved seed grant allocation for community water filtration pilot.',
-    isNew: true
-  },
-  {
-    id: 4,
-    type: 'Community Upvote',
-    time: 'Yesterday',
-    message: '14 residents validated and confirmed your Street Light report.',
-    isNew: false
   }
 ];
 
@@ -100,8 +31,37 @@ export const CitizenHomePage = () => {
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
 
-  const [issues, setIssues] = useState(INITIAL_ISSUES);
+  const [issues, setIssues] = useState([]);
   const [upvotedSet, setUpvotedSet] = useState(new Set());
+
+  // Load real submissions from persistent database
+  useEffect(() => {
+    const fetchLiveIssues = async () => {
+      try {
+        const resp = await fetch('http://localhost:5000/api/v1/problems');
+        if (resp.ok) {
+          const json = await resp.json();
+          const formatted = (json.data || []).map((p) => ({
+            id: p.id,
+            title: p.title,
+            status: p.status || 'pending',
+            statusBadge: p.status === 'RESOLVED' ? 'Resolved' : p.status === 'VERIFIED' ? 'Reviewed' : 'Pending',
+            time: 'Recently',
+            location: p.address || p.villageCity || p.district || 'Ranchi District',
+            author: p.author || 'Citizen',
+            assignee: p.department || 'Nodal Technical Evaluation Desk',
+            upvotes: 1,
+            image: p.thumbnail || (p.evidenceUrls && p.evidenceUrls[0]) || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80',
+            description: p.description
+          }));
+          setIssues(formatted);
+        }
+      } catch (e) {
+        console.warn('Could not fetch problems from database:', e);
+      }
+    };
+    fetchLiveIssues();
+  }, []);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const isProfileInitial = location.pathname.includes('profile') || searchParams.get('tab') === 'profile';

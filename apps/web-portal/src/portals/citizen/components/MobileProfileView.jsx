@@ -1,12 +1,16 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 export const MobileProfileView = ({
   userName: propUserName,
   setActiveNav
 }) => {
   const navigate = useNavigate();
+  const [submissions, setSubmissions] = useState([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
   const storedUser = useMemo(() => {
     try {
@@ -15,6 +19,25 @@ export const MobileProfileView = ({
     } catch (e) {
       return {};
     }
+  }, []);
+
+  // Fetch real submissions from database (no dummy items)
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        setLoadingSubmissions(true);
+        const resp = await fetch(`${API_BASE_URL}/problems`);
+        if (resp.ok) {
+          const json = await resp.json();
+          setSubmissions(json.data || []);
+        }
+      } catch (err) {
+        console.warn('Could not fetch submissions from DB:', err);
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+    fetchSubmissions();
   }, []);
 
   const displayName = storedUser.name || propUserName || 'Rahul Verma';
@@ -392,7 +415,8 @@ export const MobileProfileView = ({
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            marginTop: '0.5rem'
           }}
         >
           <h2
@@ -419,10 +443,10 @@ export const MobileProfileView = ({
             }}
           >
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
-              {/* My Reports */}
+              {/* My Submissions */}
               <li style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
                 <button
-                  onClick={() => setActiveNav && setActiveNav('explore')}
+                  onClick={() => navigate('/my-submissions')}
                   className="apple-tap"
                   style={{
                     width: '100%',
@@ -452,10 +476,26 @@ export const MobileProfileView = ({
                       <GoogleIcon name="assignment" size={18} color="#1c1c1e" />
                     </div>
                     <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
-                      My Reports
+                      My Submissions
                     </span>
                   </div>
-                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {submissions.length > 0 && (
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#f2f2f7',
+                          color: '#3a3a3c'
+                        }}
+                      >
+                        {submissions.length}
+                      </span>
+                    )}
+                    <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                  </div>
                 </button>
               </li>
 

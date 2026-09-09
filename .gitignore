@@ -63,3 +63,9 @@ Thumbs.db
 # Firebase & Vercel
 .firebase/
 .vercel/
+
+# Antigravity / Agent Skills & Local Cache
+.agents/
+skills-lock.json
+backend/data/*.db
+

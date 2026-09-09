@@ -1,5 +1,8 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 export const DesktopProfileView = ({
   activeNav,
@@ -8,6 +11,10 @@ export const DesktopProfileView = ({
   onOpenTara,
   onOpenReportDetail
 }) => {
+  const navigate = useNavigate();
+  const [submissions, setSubmissions] = useState([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(true);
+
   const storedUser = useMemo(() => {
     try {
       const u = localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data');
@@ -15,6 +22,25 @@ export const DesktopProfileView = ({
     } catch (e) {
       return {};
     }
+  }, []);
+
+  // Fetch real submissions from database (no dummy items)
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        setLoadingSubmissions(true);
+        const resp = await fetch(`${API_BASE_URL}/problems`);
+        if (resp.ok) {
+          const json = await resp.json();
+          setSubmissions(json.data || []);
+        }
+      } catch (err) {
+        console.warn('Could not fetch submissions from DB:', err);
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+    fetchSubmissions();
   }, []);
 
   const displayName = storedUser.name || userName || 'Rahul Verma';
@@ -779,7 +805,7 @@ export const DesktopProfileView = ({
                   </div>
                 </div>
 
-                {/* My Reports Card */}
+                {/* My Submissions Card */}
                 <div
                   style={{
                     backgroundColor: '#ffffff',
@@ -802,11 +828,25 @@ export const DesktopProfileView = ({
                           margin: 0
                         }}
                       >
-                        My Reports
+                        My Submissions
                       </h3>
+                      {submissions.length > 0 && (
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            backgroundColor: '#f2f2f7',
+                            color: '#1c1c1e'
+                          }}
+                        >
+                          {submissions.length}
+                        </span>
+                      )}
                     </div>
                     <div
-                      onClick={() => setActiveNav('explore')}
+                      onClick={() => navigate('/my-submissions')}
                       className="apple-tap"
                       style={{
                         display: 'flex',
@@ -828,265 +868,148 @@ export const DesktopProfileView = ({
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.5rem' }}>
-                    {/* Report 1 */}
+                  {submissions.length === 0 ? (
                     <div
+                      onClick={() => navigate('/my-submissions')}
                       className="apple-tap"
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '1rem',
+                        padding: '24px',
+                        textAlign: 'center',
                         borderRadius: '0.75rem',
-                        backgroundColor: '#f3f3f3',
+                        backgroundColor: '#f9f9fb',
                         cursor: 'pointer',
-                        transition: 'background-color 0.15s ease'
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
-                        <div
-                          style={{
-                            width: '3rem',
-                            height: '3rem',
-                            borderRadius: '0.75rem',
-                            backgroundColor: '#e8e8e8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <GoogleIcon name="water_damage" size={24} color="#1a1c1c" />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.75rem', lineHeight: '1rem', fontFamily: 'monospace', color: '#5e5e5e' }}>
-                              #REP-4092
-                            </span>
-                            <span style={{ color: '#cfc4c5' }}>•</span>
-                            <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e' }}>
-                              Yesterday, 14:20
-                            </span>
-                          </div>
-                          <h4
-                            style={{
-                              fontSize: '0.875rem',
-                              lineHeight: '1.25rem',
-                              fontWeight: '600',
-                              color: '#1a1c1c',
-                              margin: 0,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            Broken water drainage pipe near Market Square
-                          </h4>
-                          <p
-                            style={{
-                              fontSize: '0.75rem',
-                              lineHeight: '1rem',
-                              color: '#5e5e5e',
-                              margin: 0,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            Sector 3, Main Junction Road, Pattikalyana
-                          </p>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                        <div
-                          style={{
-                            width: '2rem',
-                            height: '2rem',
-                            borderRadius: '0.5rem',
-                            backgroundColor: '#ffffff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#1a1c1c'
-                          }}
-                        >
-                          <GoogleIcon name="arrow_forward" size={18} />
-                        </div>
-                      </div>
+                      <GoogleIcon name="inbox" size={28} color="#8e8e93" />
+                      <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1c1c1e' }}>
+                        No submissions recorded yet
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#8e8e93' }}>
+                        Tap here to view your submissions hub
+                      </span>
                     </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.5rem' }}>
+                      {submissions.slice(0, 3).map((sub) => {
+                        const thumbnailSrc =
+                          sub.thumbnail ||
+                          sub.image ||
+                          (sub.evidenceUrls && sub.evidenceUrls[0]) ||
+                          'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80';
+                        const hasVideo = sub.evidenceUrls?.some((u) => u.includes('video') || u.endsWith('.mp4') || u.endsWith('.webm'));
 
-                    {/* Report 2 */}
-                    <div
-                      className="apple-tap"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '1rem',
-                        borderRadius: '0.75rem',
-                        backgroundColor: '#f3f3f3',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
-                        <div
-                          style={{
-                            width: '3rem',
-                            height: '3rem',
-                            borderRadius: '0.75rem',
-                            backgroundColor: '#e8e8e8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <GoogleIcon name="streetview" size={24} color="#1a1c1c" />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.75rem', lineHeight: '1rem', fontFamily: 'monospace', color: '#5e5e5e' }}>
-                              #REP-3981
-                            </span>
-                            <span style={{ color: '#cfc4c5' }}>•</span>
-                            <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e' }}>
-                              18 Apr 2024
-                            </span>
+                        return (
+                          <div
+                            key={sub.id}
+                            onClick={() => navigate('/my-submissions')}
+                            className="apple-tap"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '1rem',
+                              borderRadius: '0.75rem',
+                              backgroundColor: '#f3f3f3',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.15s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                              <div
+                                style={{
+                                  width: '3rem',
+                                  height: '3rem',
+                                  borderRadius: '0.75rem',
+                                  overflow: 'hidden',
+                                  position: 'relative',
+                                  backgroundColor: '#111827',
+                                  flexShrink: 0
+                                }}
+                              >
+                                <img
+                                  src={thumbnailSrc}
+                                  alt="Evidence"
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                                {hasVideo && (
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      backgroundColor: 'rgba(0,0,0,0.35)'
+                                    }}
+                                  >
+                                    <GoogleIcon name="play_arrow" size={14} color="#ffffff" />
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span style={{ fontSize: '0.75rem', lineHeight: '1rem', fontFamily: 'monospace', color: '#0071e3', fontWeight: '700' }}>
+                                    {sub.id}
+                                  </span>
+                                  <span style={{ color: '#cfc4c5' }}>•</span>
+                                  <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e' }}>
+                                    {sub.category}
+                                  </span>
+                                </div>
+                                <h4
+                                  style={{
+                                    fontSize: '0.875rem',
+                                    lineHeight: '1.25rem',
+                                    fontWeight: '600',
+                                    color: '#1a1c1c',
+                                    margin: 0,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {sub.title}
+                                </h4>
+                                <p
+                                  style={{
+                                    fontSize: '0.75rem',
+                                    lineHeight: '1rem',
+                                    color: '#5e5e5e',
+                                    margin: 0,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {sub.villageCity || sub.district || sub.address || 'Ranchi'}
+                                </p>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+                              <div
+                                style={{
+                                  width: '2rem',
+                                  height: '2rem',
+                                  borderRadius: '0.5rem',
+                                  backgroundColor: '#ffffff',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#1a1c1c'
+                                }}
+                              >
+                                <GoogleIcon name="arrow_forward" size={18} />
+                              </div>
+                            </div>
                           </div>
-                          <h4
-                            style={{
-                              fontSize: '0.875rem',
-                              lineHeight: '1.25rem',
-                              fontWeight: '600',
-                              color: '#1a1c1c',
-                              margin: 0,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            Unlit streetlamp causing nighttime hazard
-                          </h4>
-                          <p
-                            style={{
-                              fontSize: '0.75rem',
-                              lineHeight: '1rem',
-                              color: '#5e5e5e',
-                              margin: 0,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            North Outer Ring, Lane 4, Ward 4
-                          </p>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                        <div
-                          style={{
-                            width: '2rem',
-                            height: '2rem',
-                            borderRadius: '0.5rem',
-                            backgroundColor: '#ffffff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#1a1c1c'
-                          }}
-                        >
-                          <GoogleIcon name="arrow_forward" size={18} />
-                        </div>
-                      </div>
+                        );
+                      })}
                     </div>
-
-                    {/* Report 3 */}
-                    <div
-                      className="apple-tap"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '1rem',
-                        borderRadius: '0.75rem',
-                        backgroundColor: '#f3f3f3',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
-                        <div
-                          style={{
-                            width: '3rem',
-                            height: '3rem',
-                            borderRadius: '0.75rem',
-                            backgroundColor: '#e8e8e8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <GoogleIcon name="delete" size={24} color="#1a1c1c" />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.75rem', lineHeight: '1rem', fontFamily: 'monospace', color: '#5e5e5e' }}>
-                              #REP-3814
-                            </span>
-                            <span style={{ color: '#cfc4c5' }}>•</span>
-                            <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e' }}>
-                              02 Apr 2024
-                            </span>
-                          </div>
-                          <h4
-                            style={{
-                              fontSize: '0.875rem',
-                              lineHeight: '1.25rem',
-                              fontWeight: '600',
-                              color: '#1a1c1c',
-                              margin: 0,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            Illegal trash accumulation at Community Center park
-                          </h4>
-                          <p
-                            style={{
-                              fontSize: '0.75rem',
-                              lineHeight: '1rem',
-                              color: '#5e5e5e',
-                              margin: 0,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            Parkway West, Pattikalyana
-                          </p>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                        <div
-                          style={{
-                            width: '2rem',
-                            height: '2rem',
-                            borderRadius: '0.5rem',
-                            backgroundColor: '#ffffff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#1a1c1c'
-                          }}
-                        >
-                          <GoogleIcon name="arrow_forward" size={18} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

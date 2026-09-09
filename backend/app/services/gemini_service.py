@@ -87,10 +87,11 @@ class GeminiService:
             raise
 
     @classmethod
-    def generate_issue_description(cls, transcript: str) -> dict:
+    def generate_issue_description(cls, transcript: str, images: list = None, location_info: dict = None, reporter_type: str = None, group_name: str = None) -> dict:
         """
-        Synthesizes a citizen's spoken voice transcript into a clear, formal civic grievance
-        with title, description, category, and severity using Gemini 3.5 Flash Lite.
+        Synthesizes citizen notes, voice transcripts, attached image evidence, and location details
+        into a formal civic grievance with title, description, category (1 of 17), severity,
+        people impacted estimate, reporter type, and group attribution.
         """
         api_key, model = cls._get_api_key_and_model()
         url = f"{GEMINI_BASE_URL}/models/{model}:generateContent?key={api_key}"
@@ -98,33 +99,99 @@ class GeminiService:
             "Content-Type": "application/json"
         }
 
+        official_categories_str = ", ".join([
+            "'Education'",
+            "'Healthcare'",
+            "'Agriculture'",
+            "'Water Resources'",
+            "'Environment'",
+            "'Energy'",
+            "'Urban Development and Infrastructure'",
+            "'Accessibility and Inclusion'",
+            "'Public Administration and Governance'",
+            "'Rural Livelihoods and Development'",
+            "'Disaster Management'",
+            "'Transportation and Mobility'",
+            "'Sanitation and Waste Management'",
+            "'Employment and Entrepreneurship'",
+            "'Housing and Community'",
+            "'Public Safety and Security'",
+            "'Cyber Security'"
+        ])
+
         system_prompt = (
-            "You are an AI Civic Intake Assistant for SETU (India National Grievance Portal). "
-            "A citizen has provided a spoken report or draft about a public problem in their locality. "
-            "Your task is to convert this input into a formal, clear, and actionable civic issue report. "
-            "Output strictly valid JSON with no markdown wrapping, no backticks, containing the following keys: "
-            "'title' (concise string, max 10 words), "
-            "'description' (2-4 sentences explaining what the issue is, the specific hazard/impact, and urgency), "
-            "'category' (one of: 'WATER_SANITATION', 'URBAN_INFRASTRUCTURE', 'ENERGY_ELECTRICITY', 'ENVIRONMENT_WASTE', 'HEALTHCARE', 'AGRICULTURE_RURAL'), "
-            "'severity' (one of: 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL')."
+            "You are TARA, the AI Civic Intelligence Engine for SETU (India National Citizen Grievance & Innovation Ecosystem). "
+            "A citizen, grassroots collective, civil society organization, or community group has provided a grievance statement, "
+            "audio/video transcript, location details, and photographic evidence. "
+            "Your task is to synthesize this input into a formal, clear, actionable, and high-impact civic report. "
+            "Output strictly valid JSON with no markdown wrapping, containing the following keys: "
+            "'title' (concise, formal, max 10 words), "
+            "'description' (2-4 sentences explaining what the issue is, specific hazard/impact, and urgency), "
+            f"'category' (MUST be exactly one of the 17 official categories: {official_categories_str}), "
+            "'severity' (one of: 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'), "
+            "'impact_count' (string estimate of people impacted, e.g. '150-300 residents' or '500+ daily commuters'), "
+            "'impact_description' (1-2 sentences on who is affected and how), "
+            "'reporter_type' (preserve or refine the reporting entity type, e.g. 'Individual Citizen', 'Resident Welfare Association (RWA)', 'Self-Help Group (SHG / Sakhi Mandal)', 'Non-Governmental Organization (NGO / CSO)', 'Gram Sabha / Village Committee', 'Youth Club / Nehru Yuva Kendra', 'Farmers Producer Organization (FPO)', 'ASHA / Anganwadi Frontline Worker', 'Traders / Market Association', or other community body)."
         )
+
+        user_content_parts = []
+        
+        # Add textual information
+        text_context = f"Reported statement/transcript: \"{transcript}\"\n"
+        if location_info:
+            text_context += (
+                f"Location details: Village/Town/City: {location_info.get('villageCity') or location_info.get('village_city') or 'N/A'}, "
+                f"Sub-district: {location_info.get('subdistrict') or 'N/A'}, "
+                f"District: {location_info.get('district') or 'N/A'}, "
+                f"State: {location_info.get('state') or 'N/A'}, "
+                f"Pin Code: {location_info.get('pincode') or 'N/A'}\n"
+            )
+        if reporter_type:
+            text_context += f"Reported by type: {reporter_type}\n"
+        if group_name:
+            text_context += f"Organization/Group name: {group_name}\n"
+
+        user_content_parts.append({"text": text_context})
+
+        # Add image parts if provided (base64 inlineData)
+        if images and isinstance(images, list):
+            for img in images[:3]: # up to 3 images
+                if isinstance(img, dict) and "data" in img:
+                    user_content_parts.append({
+                        "inlineData": {
+                            "mimeType": img.get("mimeType", "image/jpeg"),
+                            "data": img["data"]
+                        }
+                    })
+                elif isinstance(img, str) and img.startswith("data:"):
+                    try:
+                        header, b64_data = img.split(",", 1)
+                        mime = header.split(";")[0].replace("data:", "")
+                        user_content_parts.append({
+                            "inlineData": {
+                                "mimeType": mime or "image/jpeg",
+                                "data": b64_data
+                            }
+                        })
+                    except Exception:
+                        pass
 
         payload = {
             "system_instruction": {
                 "parts": [{"text": system_prompt}]
             },
             "contents": [
-                {"role": "user", "parts": [{"text": f"Citizen voice statement: \"{transcript}\""}]}
+                {"role": "user", "parts": user_content_parts}
             ],
             "generationConfig": {
-                "temperature": 0.3,
-                "maxOutputTokens": 300,
+                "temperature": 0.2,
+                "maxOutputTokens": 450,
                 "responseMimeType": "application/json"
             }
         }
 
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=20)
+            response = requests.post(url, headers=headers, json=payload, timeout=25)
             if response.status_code == 200:
                 res_json = response.json()
                 candidates = res_json.get("candidates", [])
@@ -139,8 +206,11 @@ class GeminiService:
                             return {
                                 "title": parsed.get("title", "Civic Grievance Report"),
                                 "description": parsed.get("description", transcript),
-                                "category": parsed.get("category", "URBAN_INFRASTRUCTURE"),
-                                "severity": parsed.get("severity", "MEDIUM")
+                                "category": parsed.get("category", "Urban Development and Infrastructure"),
+                                "severity": parsed.get("severity", "MEDIUM"),
+                                "impact_count": parsed.get("impact_count", "100-250 local residents"),
+                                "impact_description": parsed.get("impact_description", "Affects daily commuters and nearby residents."),
+                                "reporter_type": parsed.get("reporter_type", reporter_type or "Individual Citizen")
                             }
                         except Exception:
                             logger.warning(f"Could not parse Gemini JSON: {raw_text}")
@@ -148,12 +218,19 @@ class GeminiService:
         except Exception as e:
             logger.exception("Error in generate_issue_description")
 
-        # Fallback if Gemini request fails or response cannot be parsed
+        # NLP Fallback using 17 categories classifier
+        from app.ai.classifier import classify_problem
+        classified = classify_problem(transcript)
         fallback_title = transcript[:50] + "..." if len(transcript) > 50 else transcript
+
         return {
-            "title": fallback_title or "Citizen Civic Report",
+            "title": fallback_title or "Civic Grievance Report",
             "description": transcript,
-            "category": "URBAN_INFRASTRUCTURE",
-            "severity": "MEDIUM"
+            "category": classified.get("category", "Urban Development and Infrastructure"),
+            "severity": "MEDIUM",
+            "impact_count": "50-150 residents",
+            "impact_description": "Local residents facing disruption in civic amenities.",
+            "reporter_type": reporter_type or "Individual Citizen"
         }
+
 

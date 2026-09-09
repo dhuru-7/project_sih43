@@ -733,6 +733,88 @@ button {
   transition: transform 60ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* TARA Full-Screen Apple-Style Glowing Aura Animations */
+@keyframes taraAuraShift {
+  0% {
+    transform: rotate(0deg) scale(1);
+    filter: hue-rotate(0deg) blur(60px);
+  }
+  33% {
+    transform: rotate(120deg) scale(1.15) translate(30px, -20px);
+    filter: hue-rotate(45deg) blur(70px);
+  }
+  66% {
+    transform: rotate(240deg) scale(0.95) translate(-20px, 30px);
+    filter: hue-rotate(90deg) blur(65px);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    filter: hue-rotate(0deg) blur(60px);
+  }
+}
+
+@keyframes taraAuraPulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes taraOrbitalSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tara-aura-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+}
+
+.tara-aura-mesh {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    #38bdf8 0deg,
+    #818cf8 70deg,
+    #c084fc 140deg,
+    #f472b6 200deg,
+    #34d399 280deg,
+    #38bdf8 360deg
+  );
+  animation: taraAuraShift 10s ease-in-out infinite alternate;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.tara-aura-glow-ring {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 50px rgba(129, 140, 248, 0.4), inset 0 0 30px rgba(192, 132, 252, 0.3);
+  animation: taraAuraPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
 /* Accessibility: Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .apple-tap, .apple-pill-tap, .apple-stitch-card, .apple-modal-content, .tara-wave-bar, .apple-pop-animate, .apple-metric-btn:active .apple-icon-push, .apple-send-btn:active, .apple-pin-btn:active {
@@ -749,3 +831,4 @@ button {
     to { opacity: 1; }
   }
 }
+

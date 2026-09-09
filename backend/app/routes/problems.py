@@ -7,7 +7,9 @@ problems_bp = Blueprint("problems", __name__)
 def list_problems():
     category = request.args.get("category")
     status = request.args.get("status")
-    problems = ProblemService.get_all(category, status)
+    author_id = request.args.get("author_id") or request.args.get("authorId")
+    author = request.args.get("author")
+    problems = ProblemService.get_all(category=category, status=status, author_id=author_id, author=author)
     return jsonify({"count": len(problems), "data": problems}), 200
 
 @problems_bp.route("/<problem_id>", methods=["GET"])

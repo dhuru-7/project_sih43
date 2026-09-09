@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
 export const DesktopHomeView = ({
@@ -10,7 +11,11 @@ export const DesktopHomeView = ({
   setActiveNav,
   userName = 'Rahul'
 }) => {
+  const navigate = useNavigate();
   const firstName = (userName || 'Rahul').trim().split(/\s+/)[0];
+
+  // Limit home screen submissions to latest 3
+  const displayedIssues = issues.slice(0, 3);
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '100vh', backgroundColor: '#f9f9f9', color: '#1a1c1c' }}>
       {/* 1. Left Persistent Expanded Sidemenu */}
@@ -338,7 +343,8 @@ export const DesktopHomeView = ({
               </h2>
 
               <a
-                href="#submissions"
+                onClick={(e) => { e.preventDefault(); navigate('/my-submissions'); }}
+                href="/my-submissions"
                 className="apple-tap"
                 style={{
                   display: 'inline-flex',
@@ -348,7 +354,8 @@ export const DesktopHomeView = ({
                   fontWeight: '600',
                   color: '#1a1c1c',
                   textDecoration: 'none',
-                  lineHeight: 1
+                  lineHeight: 1,
+                  cursor: 'pointer'
                 }}
               >
                 <span>View all</span>
@@ -358,17 +365,19 @@ export const DesktopHomeView = ({
 
             {/* Issues Cards List without upvotes */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              {issues.map((issue) => (
+              {displayedIssues.map((issue) => (
                 <div
                   key={issue.id}
-                  className="apple-stitch-card"
+                  className="apple-stitch-card apple-tap"
+                  onClick={() => navigate(`/my-submissions?highlight=${encodeURIComponent(issue.id)}`)}
                   style={{
                     padding: '1rem 1.25rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '1.25rem',
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    cursor: 'pointer'
                   }}
                 >
                   {/* Thumbnail & Info */}
@@ -402,7 +411,7 @@ export const DesktopHomeView = ({
                         {issue.title}
                       </h3>
 
-                      {/* Location & Time (No upvotes, no clock icon) */}
+                      {/* Location & Time */}
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.625rem', color: '#5e5e5e', fontSize: '0.8125rem', lineHeight: 1 }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                           <GoogleIcon name="location_on" size={15} color="#7e7576" />
@@ -416,30 +425,8 @@ export const DesktopHomeView = ({
                     </div>
                   </div>
 
-                  {/* Single Clean Action Button */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.625rem', flexShrink: 0 }}>
-                    <button
-                      onClick={() => onOpenIssueDetail(issue)}
-                      className="apple-tap"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '38px',
-                        padding: '0 1.125rem',
-                        borderRadius: '0.5rem',
-                        backgroundColor: issue.status === 'resolved' ? '#f3f3f3' : '#000000',
-                        color: issue.status === 'resolved' ? '#1a1c1c' : '#ffffff',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '0.8125rem',
-                        fontWeight: '600',
-                        lineHeight: 1
-                      }}
-                    >
-                      {issue.status === 'resolved' ? 'View Summary' : 'View Details'}
-                    </button>
-                  </div>
+                  {/* Minimal forward chevron */}
+                  <GoogleIcon name="chevron_right" size={20} color="#c7c7cc" />
                 </div>
               ))}
             </div>

@@ -18,6 +18,7 @@ import { RegisterPage } from '../public-pages/RegisterPage';
 // Citizen Reporting Portal (Dual Desktop & Mobile with Apple Fluid Motion)
 import { CitizenHomePage } from '../portals/citizen/pages/CitizenHomePage';
 import { OnboardingPage } from '../portals/citizen/pages/OnboardingPage';
+import { MySubmissionsPage } from '../portals/citizen/pages/MySubmissionsPage';
 
 // Government Pages
 import { GovernmentDashboard } from '../portals/government/pages/Dashboard';
@@ -67,6 +68,8 @@ export const AppRoutes = () => {
       <Route path="/citizen/profile" element={<CitizenHomePage />} />
       <Route path="/profile" element={<CitizenHomePage />} />
       <Route path="/citizen/report" element={<CitizenHomePage />} />
+      <Route path="/my-submissions" element={<MySubmissionsPage />} />
+      <Route path="/citizen/my-submissions" element={<MySubmissionsPage />} />
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />

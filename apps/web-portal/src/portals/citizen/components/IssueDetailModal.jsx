@@ -109,8 +109,8 @@ export const IssueDetailModal = ({ issue, isOpen, onClose, onUpvote, isUpvoted }
               </span>
               {issue.author && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <GoogleIcon name="person" size={16} color="#7e7576" />
-                  {issue.author}
+                  <GoogleIcon name={issue.reporterType && issue.reporterType !== 'Individual Citizen' ? 'groups' : 'person'} size={16} color="#7e7576" />
+                  {issue.groupName ? `${issue.author} • ${issue.groupName}` : issue.author}
                 </span>
               )}
             </div>

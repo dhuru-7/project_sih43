@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
 export const MobileHomeView = ({
@@ -13,7 +14,11 @@ export const MobileHomeView = ({
   userName = 'Rahul',
   hideNav = false
 }) => {
+  const navigate = useNavigate();
   const firstName = (userName || 'Rahul').trim().split(/\s+/)[0];
+
+  // Limit home screen submissions to latest 3
+  const displayedIssues = issues.slice(0, 3);
   return (
     <div
       style={{
@@ -196,6 +201,7 @@ export const MobileHomeView = ({
             </h2>
             <button
               className="apple-tap"
+              onClick={() => navigate('/my-submissions')}
               style={{
                 width: '32px',
                 height: '32px',
@@ -216,93 +222,64 @@ export const MobileHomeView = ({
 
           {/* Issues List Items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {issues.map((issue) => {
-              const isUpvoted = upvotedSet.has(issue.id);
-
-              // Status chip styles matching Stitch design
-              const getBadgeStyle = () => {
-                if (issue.status === 'pending') {
-                  return { bg: '#fef3c7', text: '#92400e', label: 'Pending' };
-                }
-                if (issue.status === 'reviewed') {
-                  return { bg: '#e0f2fe', text: '#0369a1', label: 'Reviewed' };
-                }
-                return { bg: '#dcfce7', text: '#15803d', label: 'Resolved' };
-              };
-
-              const badge = getBadgeStyle();
-
-              return (
+            {displayedIssues.map((issue) => (
+              <div
+                key={issue.id}
+                onClick={() => navigate(`/my-submissions?highlight=${encodeURIComponent(issue.id)}`)}
+                className="apple-tap"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.875rem',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid rgba(0, 0, 0, 0.08)',
+                  borderRadius: '0.875rem',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                  cursor: 'pointer',
+                  gap: '0.875rem'
+                }}
+              >
+                {/* Thumbnail */}
                 <div
-                  key={issue.id}
-                  onClick={() => onOpenIssueDetail(issue)}
-                  className="apple-tap"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0.875rem',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid rgba(0, 0, 0, 0.08)',
-                    borderRadius: '0.875rem',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-                    cursor: 'pointer',
-                    gap: '0.875rem'
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '0.625rem',
+                    overflow: 'hidden',
+                    backgroundColor: '#eeeeee',
+                    flexShrink: 0
                   }}
                 >
-                  {/* Thumbnail */}
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '0.625rem',
-                      overflow: 'hidden',
-                      backgroundColor: '#eeeeee',
-                      flexShrink: 0
-                    }}
-                  >
-                    <img
-                      src={issue.image}
-                      alt={issue.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-
-                  {/* Title & Time */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4
-                      style={{
-                        fontSize: '0.875rem',
-                        fontWeight: '700',
-                        color: '#000000',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {issue.title}
-                    </h4>
-                    <p style={{ fontSize: '0.75rem', color: '#5e5e5e', marginTop: '0.15rem' }}>
-                      Reported {issue.time}
-                    </p>
-                  </div>
-
-                  {/* Status Chip */}
-                  <span
-                    style={{
-                      fontSize: '0.6875rem',
-                      fontWeight: '700',
-                      backgroundColor: badge.bg,
-                      color: badge.text,
-                      padding: '0.25rem 0.55rem',
-                      borderRadius: '0.375rem',
-                      flexShrink: 0
-                    }}
-                  >
-                    {badge.label}
-                  </span>
+                  <img
+                    src={issue.image}
+                    alt={issue.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
-              );
-            })}
+
+                {/* Title & Time */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '700',
+                      color: '#000000',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {issue.title}
+                  </h4>
+                  <p style={{ fontSize: '0.75rem', color: '#5e5e5e', marginTop: '0.15rem' }}>
+                    Reported {issue.time}
+                  </p>
+                </div>
+
+                {/* Minimal forward arrow */}
+                <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+              </div>
+            ))}
           </div>
         </section>
       </main>

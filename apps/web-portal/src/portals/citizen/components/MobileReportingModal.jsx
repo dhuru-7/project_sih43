@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { reverseGeocode, extractVideoThumbnail } from '../../../services/geoService';
+import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -9,63 +12,76 @@ export const MobileReportingModal = ({
   onReportSubmitted,
   userName = 'Citizen'
 }) => {
-  // Steps: 'camera' | 'preview' | 'description' | 'submitting' | 'success'
+  const navigate = useNavigate();
+
+  // Steps: 'camera' | 'preview' | 'description' | 'processing' | 'review' | 'success'
   const [step, setStep] = useState('camera');
 
   // Media items: array of { id, type: 'video' | 'image', url, blob, file, name }
   const [mediaItems, setMediaItems] = useState([]);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
-  // Video playback state in preview
+  // Video playback management in preview
   const [isPlaying, setIsPlaying] = useState(true);
   const [showPlayIcon, setShowPlayIcon] = useState(false);
-  const previewVideoRef = useRef(null);
+  const videoRefs = useRef({});
 
   // Camera stream & recording
-  const videoRef = useRef(null);
+  const cameraVideoRef = useRef(null);
   const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const [facingMode, setFacingMode] = useState('environment'); // 'environment' | 'user'
+  const [facingMode, setFacingMode] = useState('environment');
   const [cameraError, setCameraError] = useState(null);
 
-  // Form & Voice state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('URBAN_INFRASTRUCTURE');
-  const [locationName, setLocationName] = useState('Detecting location...');
+  // Notepad Description state (Citizen profile)
+  const [notepadText, setNotepadText] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [locationDetails, setLocationDetails] = useState({
+    formatted: 'Ranchi, Jharkhand',
+    villageCity: 'Ranchi',
+    subdistrict: 'Ranchi Sadar',
+    district: 'Ranchi',
+    state: 'Jharkhand',
+    pincode: '834008'
+  });
   const [coordinates, setCoordinates] = useState(null);
-  const [submittedProblem, setSubmittedProblem] = useState(null);
 
-  // Voice recording (Saaras v3 + Gemini 3.5 Flash Lite)
+  // Voice recording inside Notepad
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [voiceSeconds, setVoiceSeconds] = useState(0);
-  const [isSynthesizing, setIsSynthesizing] = useState(false);
-  const [aiGeneratedBadge, setAiGeneratedBadge] = useState(false);
   const voiceRecorderRef = useRef(null);
   const voiceChunksRef = useRef([]);
 
+  // Synthesized Review data & Final Submission
+  const [reviewData, setReviewData] = useState(null);
+  const [reviewMediaIndex, setReviewMediaIndex] = useState(0);
+  const [isReviewPlaying, setIsReviewPlaying] = useState(true);
+  const reviewVideoRefs = useRef({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedProblem, setSubmittedProblem] = useState(null);
+
   const galleryInputRef = useRef(null);
 
-  // Geolocation
+  // Geolocation & OpenStreetMap reverse geocoding
   useEffect(() => {
-    if (isOpen) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setCoordinates({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-            setLocationName(`Ranchi, Ward 4 (GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`);
-          },
-          () => {
-            setLocationName('Bero Block, Ranchi District');
-          },
-          { timeout: 5000 }
-        );
-      } else {
-        setLocationName('Bero Block, Ranchi District');
-      }
+    if (isOpen && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          setCoordinates({ lat, lng: lon });
+          const geo = await reverseGeocode(lat, lon);
+          setLocationDetails(geo);
+        },
+        async () => {
+          const geo = await reverseGeocode(23.3441, 85.3096);
+          setLocationDetails(geo);
+        },
+        { timeout: 7000 }
+      );
     }
   }, [isOpen]);
 
@@ -97,16 +113,16 @@ export const MobileReportingModal = ({
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (cameraVideoRef.current) {
+        cameraVideoRef.current.srcObject = stream;
       }
     } catch (err) {
       console.warn('Camera error, attempting fallback:', err);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        if (cameraVideoRef.current) {
+          cameraVideoRef.current.srcObject = stream;
         }
       } catch (fallbackErr) {
         console.error('Camera fallback failed:', fallbackErr);
@@ -144,6 +160,49 @@ export const MobileReportingModal = ({
     return () => clearInterval(interval);
   }, [isRecordingVoice]);
 
+  // CRITICAL FIX: PREVENT MULTI-VIDEO AUDIO OVERLAP
+  // Pause & mute all videos except the currently active one
+  useEffect(() => {
+    Object.entries(videoRefs.current).forEach(([indexStr, videoEl]) => {
+      const idx = parseInt(indexStr, 10);
+      if (videoEl) {
+        if (step === 'preview' && idx === activeMediaIndex) {
+          videoEl.muted = false;
+          if (isPlaying) {
+            videoEl.play().catch(() => {});
+          } else {
+            videoEl.pause();
+          }
+        } else {
+          videoEl.pause();
+          videoEl.currentTime = 0;
+          videoEl.muted = true;
+        }
+      }
+    });
+  }, [activeMediaIndex, step, isPlaying]);
+
+  // CRITICAL FIX: PREVENT MULTI-VIDEO AUDIO OVERLAP IN REVIEW CARD
+  useEffect(() => {
+    Object.entries(reviewVideoRefs.current).forEach(([indexStr, videoEl]) => {
+      const idx = parseInt(indexStr, 10);
+      if (videoEl) {
+        if (step === 'review' && idx === reviewMediaIndex) {
+          videoEl.muted = false;
+          if (isReviewPlaying) {
+            videoEl.play().catch(() => {});
+          } else {
+            videoEl.pause();
+          }
+        } else {
+          videoEl.pause();
+          videoEl.currentTime = 0;
+          videoEl.muted = true;
+        }
+      }
+    });
+  }, [reviewMediaIndex, step, isReviewPlaying]);
+
   // Record Video Toggle
   const handleToggleVideoRecord = () => {
     if (!isRecordingVideo) {
@@ -176,8 +235,11 @@ export const MobileReportingModal = ({
             blob: blob,
             name: `Clip_${mediaItems.length + 1}.mp4`
           };
-          setMediaItems((prev) => [...prev, newItem]);
-          setActiveMediaIndex(mediaItems.length);
+          setMediaItems((prev) => {
+            const updated = [...prev, newItem];
+            setActiveMediaIndex(updated.length - 1);
+            return updated;
+          });
           setIsPlaying(true);
           setStep('preview');
         };
@@ -213,8 +275,11 @@ export const MobileReportingModal = ({
       name: file.name
     }));
 
-    setMediaItems((prev) => [...prev, ...newItems]);
-    setActiveMediaIndex(mediaItems.length);
+    setMediaItems((prev) => {
+      const updated = [...prev, ...newItems];
+      setActiveMediaIndex(updated.length - 1);
+      return updated;
+    });
     setIsPlaying(true);
     setStep('preview');
     if (galleryInputRef.current) galleryInputRef.current.value = '';
@@ -227,26 +292,19 @@ export const MobileReportingModal = ({
       setStep('camera');
       setActiveMediaIndex(0);
     } else {
-      setActiveMediaIndex(Math.max(0, activeMediaIndex - 1));
+      setActiveMediaIndex((prev) => Math.min(prev, remaining.length - 1));
     }
   };
 
-  // Toggle Video Play / Pause on Tap (No ugly native scrubber collision)
+  // Toggle Video Play / Pause on Tap
   const handleTogglePreviewPlayback = () => {
-    if (!previewVideoRef.current) return;
-    if (isPlaying) {
-      previewVideoRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      previewVideoRef.current.play();
-      setIsPlaying(true);
-    }
+    setIsPlaying((prev) => !prev);
     setShowPlayIcon(true);
     setTimeout(() => setShowPlayIcon(false), 700);
   };
 
-  // Voice recording & transcription via Saaras + Gemini
-  const handleToggleVoice = async () => {
+  // Voice recording inside Notepad
+  const handleToggleVoiceInNotepad = async () => {
     if (!isRecordingVoice) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -262,7 +320,6 @@ export const MobileReportingModal = ({
         recorder.onstop = async () => {
           stream.getTracks().forEach((t) => t.stop());
           const audioBlob = new Blob(voiceChunksRef.current, { type: 'audio/webm' });
-          setIsSynthesizing(true);
 
           try {
             const formData = new FormData();
@@ -275,20 +332,13 @@ export const MobileReportingModal = ({
 
             const json = await resp.json();
             if (resp.ok && json.status === 'success' && json.data) {
-              const { title: aiTitle, description: aiDesc, category: aiCat } = json.data;
-              if (aiTitle) setTitle(aiTitle);
-              if (aiDesc) setDescription(aiDesc);
-              if (aiCat) setCategory(aiCat);
-              setAiGeneratedBadge(true);
-            } else {
-              throw new Error(json.message || 'Voice transcription failed');
+              const transcribed = json.data.transcript || json.data.description;
+              if (transcribed) {
+                setNotepadText((prev) => (prev ? prev.trim() + '\n\n' + transcribed : transcribed));
+              }
             }
           } catch (err) {
-            console.error('Error synthesizing voice:', err);
-            setDescription((prev) => (prev ? prev + ' ' : '') + 'Pothole damage and overflowing drainage line causing hazards on main road.');
-            setTitle((prev) => prev || 'Urgent Road & Drainage Repair');
-          } finally {
-            setIsSynthesizing(false);
+            console.error('Error transcribing audio:', err);
           }
         };
 
@@ -297,7 +347,7 @@ export const MobileReportingModal = ({
         setIsRecordingVoice(true);
       } catch (err) {
         console.error('Microphone access denied:', err);
-        alert('Microphone access was denied or is unavailable. You can type the description directly.');
+        alert('Microphone access was denied. You can type grievance notes directly.');
       }
     } else {
       if (voiceRecorderRef.current && voiceRecorderRef.current.state !== 'inactive') {
@@ -307,29 +357,153 @@ export const MobileReportingModal = ({
     }
   };
 
-  // Submit report
-  const handleSubmitReport = async () => {
-    if (!title.trim() && !description.trim()) {
-      alert('Please add a description or speak via the mic before submitting.');
+  // Continue from Notepad -> Full-Screen Aura Processing ("Hold on...") -> Transition to Review Card
+  const handleContinueFromNotepad = async () => {
+    if (!notepadText.trim() && mediaItems.length === 0) {
+      alert('Please type or speak your grievance details, or attach media before continuing.');
       return;
     }
 
-    setStep('submitting');
+    setStep('processing');
+
     try {
-      const payload = {
-        title: title.trim() || 'Civic Infrastructure Grievance',
-        description: description.trim() || 'Citizen reported public issue with photographic/video evidence.',
-        category: category,
-        latitude: coordinates?.lat || 28.6139,
-        longitude: coordinates?.lng || 77.2090,
-        address: locationName,
-        evidenceUrls: mediaItems.map((m) => m.url)
+      // 1. Extract thumbnail: first image or first frame of last video
+      let finalThumbnail = null;
+      const firstImage = mediaItems.find((m) => m.type === 'image');
+      const videos = mediaItems.filter((m) => m.type === 'video');
+
+      if (firstImage) {
+        finalThumbnail = firstImage.url;
+      } else if (videos.length > 0) {
+        const lastVideo = videos[videos.length - 1];
+        finalThumbnail = await extractVideoThumbnail(lastVideo.blob || lastVideo.url);
+      }
+
+      // 2. Prepare images payload for multimodal Gemini
+      const imagePayloads = [];
+      for (const item of mediaItems.filter((m) => m.type === 'image').slice(0, 3)) {
+        if (item.file) {
+          const reader = new FileReader();
+          const b64 = await new Promise((res) => {
+            reader.onloadend = () => res(reader.result);
+            reader.readAsDataURL(item.file);
+          });
+          imagePayloads.push(b64);
+        }
+      }
+
+      // 3. Process with AI Engine
+      const aiPayload = {
+        text: notepadText.trim(),
+        images: imagePayloads,
+        locationInfo: locationDetails,
+        reporterType: 'Individual Citizen',
+        groupName: ''
       };
 
+      let aiResult = null;
+      try {
+        const aiResp = await fetch(`${API_BASE_URL}/voice/describe-issue`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(aiPayload)
+        });
+        const aiJson = await aiResp.json();
+        if (aiResp.ok && aiJson.status === 'success' && aiJson.data) {
+          aiResult = aiJson.data;
+        }
+      } catch (err) {
+        console.warn('AI issue description fallback:', err);
+      }
+
+      const generatedTitle = aiResult?.title || notepadText.slice(0, 45) || 'Civic Infrastructure Grievance';
+      const generatedDesc = aiResult?.description || notepadText || 'Citizen reported civic problem with attached evidence.';
+      const generatedCategory = aiResult?.category || 'Urban Development and Infrastructure';
+      const generatedSeverity = aiResult?.severity || 'MEDIUM';
+      const generatedImpactCount = aiResult?.impactCount || '100-250 local residents';
+      const generatedImpactDesc = aiResult?.impactDescription || 'Local residents facing public disruption.';
+
+      const now = new Date();
+      const formattedDateTime =
+        now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) +
+        ', ' +
+        now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+      const preparedData = {
+        title: generatedTitle,
+        description: generatedDesc,
+        category: generatedCategory,
+        severity: generatedSeverity,
+        impactCount: generatedImpactCount,
+        impactDescription: generatedImpactDesc,
+        reporterType: 'Individual Citizen',
+        groupName: '',
+        author: isAnonymous ? 'Verified Citizen (Anonymous)' : userName,
+        authorId: isAnonymous ? 'cit-anonymous' : `cit-${userName.toLowerCase().replace(/\s+/g, '-')}`,
+        address: locationDetails.formatted,
+        villageCity: locationDetails.villageCity,
+        subdistrict: locationDetails.subdistrict,
+        district: locationDetails.district,
+        state: locationDetails.state,
+        pincode: locationDetails.pincode,
+        latitude: coordinates?.lat || 23.3441,
+        longitude: coordinates?.lng || 85.3096,
+        thumbnail: finalThumbnail || (mediaItems[0]?.url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80'),
+        evidenceUrls: mediaItems.map((m) => m.url),
+        dateTime: formattedDateTime
+      };
+
+      setReviewData(preparedData);
+      setReviewMediaIndex(0);
+      setIsReviewPlaying(true);
+
+      // Transition smoothly from aura animation to review card
+      setTimeout(() => {
+        setStep('review');
+      }, 1500);
+    } catch (err) {
+      console.error('Error during continue:', err);
+      const now = new Date();
+      const fallback = {
+        title: notepadText.slice(0, 45) || 'Civic Grievance',
+        description: notepadText || 'Citizen reported civic grievance.',
+        category: 'Urban Development and Infrastructure',
+        severity: 'MEDIUM',
+        impactCount: 'Local community',
+        impactDescription: 'Public disruption reported in locality.',
+        reporterType: 'Individual Citizen',
+        groupName: '',
+        author: userName,
+        authorId: `cit-${userName.toLowerCase().replace(/\s+/g, '-')}`,
+        address: locationDetails.formatted,
+        villageCity: locationDetails.villageCity,
+        subdistrict: locationDetails.subdistrict,
+        district: locationDetails.district,
+        state: locationDetails.state,
+        pincode: locationDetails.pincode,
+        latitude: coordinates?.lat || 23.3441,
+        longitude: coordinates?.lng || 85.3096,
+        thumbnail: mediaItems[0]?.url || null,
+        evidenceUrls: mediaItems.map((m) => m.url),
+        dateTime: now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      };
+      setReviewData(fallback);
+      setReviewMediaIndex(0);
+      setIsReviewPlaying(true);
+      setStep('review');
+    }
+  };
+
+  // Submit Final Report from Review Screen
+  const handleSubmitFinalReport = async () => {
+    if (!reviewData || isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
       const resp = await fetch(`${API_BASE_URL}/problems`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(reviewData)
       });
 
       let createdProblem = null;
@@ -339,17 +513,8 @@ export const MobileReportingModal = ({
       } else {
         createdProblem = {
           id: `SETU-${Math.floor(1000 + Math.random() * 9000)}`,
-          title: payload.title,
-          description: payload.description,
-          category: payload.category,
-          status: 'pending',
-          statusBadge: 'Pending',
-          time: 'Just now',
-          location: locationName,
-          author: userName,
-          assignee: 'Nodal Technical Evaluation Desk',
-          upvotes: 1,
-          image: mediaItems[0]?.url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80'
+          ...reviewData,
+          status: 'SUBMITTED'
         };
       }
 
@@ -357,35 +522,41 @@ export const MobileReportingModal = ({
       if (onReportSubmitted) onReportSubmitted(createdProblem);
       setStep('success');
     } catch (err) {
-      console.error('Error submitting problem:', err);
-      const fallbackProblem = {
+      console.error('Error submitting report:', err);
+      const fallback = {
         id: `SETU-${Math.floor(1000 + Math.random() * 9000)}`,
-        title: title || 'Civic Grievance',
-        description: description,
-        category: category,
-        status: 'pending',
-        statusBadge: 'Pending',
-        time: 'Just now',
-        location: locationName,
-        author: userName,
-        assignee: 'Nodal Technical Evaluation Desk',
-        upvotes: 1,
-        image: mediaItems[0]?.url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80'
+        ...reviewData,
+        status: 'SUBMITTED'
       };
-      setSubmittedProblem(fallbackProblem);
-      if (onReportSubmitted) onReportSubmitted(fallbackProblem);
+      setSubmittedProblem(fallback);
+      if (onReportSubmitted) onReportSubmitted(fallback);
       setStep('success');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const resetAllAndClose = () => {
     stopCamera();
+    Object.values(videoRefs.current).forEach((v) => {
+      if (v) {
+        v.pause();
+        v.muted = true;
+      }
+    });
+    Object.values(reviewVideoRefs.current).forEach((v) => {
+      if (v) {
+        v.pause();
+        v.muted = true;
+      }
+    });
     setStep('camera');
     setMediaItems([]);
     setActiveMediaIndex(0);
-    setTitle('');
-    setDescription('');
-    setAiGeneratedBadge(false);
+    setReviewMediaIndex(0);
+    setNotepadText('');
+    setReviewData(null);
+    setSubmittedProblem(null);
     onClose();
   };
 
@@ -403,17 +574,17 @@ export const MobileReportingModal = ({
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        backgroundColor: step === 'description' || step === 'success' ? '#f2f2f7' : '#000000',
+        backgroundColor: step === 'description' || step === 'processing' ? '#fbfbfa' : step === 'review' ? '#f2f2f7' : '#000000',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         overflow: 'hidden',
-        color: step === 'description' || step === 'success' ? '#1c1c1e' : '#ffffff',
+        color: step === 'description' || step === 'processing' || step === 'review' ? '#1c1c1e' : '#ffffff',
         fontFamily: 'var(--font-sans)',
         transition: 'background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
     >
-      {/* Hidden Gallery Input */}
+      {/* Hidden Gallery Picker */}
       <input
         ref={galleryInputRef}
         type="file"
@@ -424,11 +595,11 @@ export const MobileReportingModal = ({
       />
 
       {/* ========================================================================= */}
-      {/* STEP 1: CAMERA & CAPTURE VIEW */}
+      {/* STEP 1: CAMERA VIEW */}
       {/* ========================================================================= */}
       {step === 'camera' && (
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-          {/* Top Bar: Close, Mode/Timer, Flip */}
+          {/* Top Bar: Close, Recording Indicator, Flip */}
           <div
             style={{
               position: 'absolute',
@@ -440,7 +611,7 @@ export const MobileReportingModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)'
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%)'
             }}
           >
             <button
@@ -453,7 +624,7 @@ export const MobileReportingModal = ({
                 backgroundColor: 'rgba(0, 0, 0, 0.45)',
                 backdropFilter: 'blur(16px)',
                 WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
@@ -501,7 +672,6 @@ export const MobileReportingModal = ({
                   borderRadius: '9999px',
                   fontSize: '0.8125rem',
                   fontWeight: '600',
-                  letterSpacing: '0.04em',
                   color: '#ffffff',
                   border: '1px solid rgba(255, 255, 255, 0.15)'
                 }}
@@ -520,7 +690,7 @@ export const MobileReportingModal = ({
                 backgroundColor: 'rgba(0, 0, 0, 0.45)',
                 backdropFilter: 'blur(16px)',
                 WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
@@ -529,88 +699,63 @@ export const MobileReportingModal = ({
               }}
               aria-label="Flip Camera"
             >
-              <GoogleIcon name="flip_camera_ios" size={22} color="#ffffff" />
+              <GoogleIcon name="flip_camera_ios" size={20} color="#ffffff" />
             </button>
           </div>
 
           {/* Camera Viewfinder */}
-          <div
-            style={{
-              flex: 1,
-              position: 'relative',
-              backgroundColor: '#0a0a0a',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {cameraError ? (
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', backgroundColor: '#000000' }}>
+            <video
+              ref={cameraVideoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+            {cameraError && (
               <div
                 style={{
-                  padding: '32px 24px',
-                  textAlign: 'center',
-                  maxWidth: '320px',
+                  position: 'absolute',
+                  inset: 0,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '18px'
+                  justifyContent: 'center',
+                  padding: '24px',
+                  textAlign: 'center',
+                  backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                  gap: '12px'
                 }}
               >
-                <div
-                  style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <GoogleIcon name="videocam_off" size={32} color="#f87171" />
-                </div>
-                <p style={{ fontSize: '0.9375rem', color: '#d1d5db', lineHeight: 1.5, margin: 0 }}>
+                <GoogleIcon name="videocam_off" size={36} color="#f87171" />
+                <p style={{ color: '#ffffff', fontSize: '0.9375rem', margin: 0, maxWidth: '280px' }}>
                   {cameraError}
                 </p>
                 <button
                   onClick={() => galleryInputRef.current && galleryInputRef.current.click()}
-                  className="apple-tap"
                   style={{
+                    marginTop: '8px',
+                    padding: '10px 18px',
+                    borderRadius: '9999px',
                     backgroundColor: '#ffffff',
                     color: '#000000',
                     fontWeight: '700',
-                    fontSize: '0.9375rem',
-                    padding: '13px 26px',
-                    borderRadius: '9999px',
+                    fontSize: '0.875rem',
                     border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 14px rgba(255, 255, 255, 0.2)'
+                    cursor: 'pointer'
                   }}
                 >
-                  <GoogleIcon name="photo_library" size={20} color="#000000" />
-                  <span>Choose from Gallery</span>
+                  Open Gallery
                 </button>
               </div>
-            ) : (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
             )}
           </div>
 
-          {/* Bottom Bar: Gallery Square (Left) & Record Button (Center) */}
+          {/* Bottom Bar: Gallery, Shutter/Record, Preview Arrow */}
           <div
             style={{
               position: 'absolute',
@@ -618,38 +763,35 @@ export const MobileReportingModal = ({
               left: 0,
               right: 0,
               zIndex: 30,
-              padding: '24px 32px calc(28px + env(safe-area-inset-bottom, 0px)) 32px',
+              padding: '20px 24px calc(24px + env(safe-area-inset-bottom, 0px)) 24px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)'
+              background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%)'
             }}
           >
-            {/* Square on the Left: Gallery Picker */}
             <button
               onClick={() => galleryInputRef.current && galleryInputRef.current.click()}
               className="apple-tap"
               style={{
-                width: '52px',
-                height: '52px',
+                width: '50px',
+                height: '50px',
                 borderRadius: '14px',
                 backgroundColor: 'rgba(255, 255, 255, 0.18)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '2px solid rgba(255, 255, 255, 0.85)',
+                backdropFilter: 'blur(16px)',
+                border: '1.5px solid rgba(255, 255, 255, 0.35)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+                cursor: 'pointer'
               }}
-              aria-label="Gallery"
+              aria-label="Open Gallery"
             >
-              <GoogleIcon name="photo_library" size={26} color="#ffffff" />
+              <GoogleIcon name="photo_library" size={24} color="#ffffff" />
             </button>
 
-            {/* Middle: Apple Camera Record Button */}
+            {/* Red Shutter/Record Button */}
             <button
               onClick={handleToggleVideoRecord}
               className="apple-tap"
@@ -663,12 +805,7 @@ export const MobileReportingModal = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                padding: 0,
-                outline: 'none',
-                boxShadow: isRecordingVideo
-                  ? '0 0 24px rgba(255, 59, 48, 0.85)'
-                  : '0 4px 16px rgba(0,0,0,0.45)',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                padding: '4px'
               }}
               aria-label={isRecordingVideo ? 'Stop Recording' : 'Start Recording'}
             >
@@ -676,49 +813,46 @@ export const MobileReportingModal = ({
                 style={{
                   width: isRecordingVideo ? '28px' : '60px',
                   height: isRecordingVideo ? '28px' : '60px',
-                  borderRadius: isRecordingVideo ? '8px' : '50%',
+                  borderRadius: isRecordingVideo ? '6px' : '50%',
                   backgroundColor: '#ff3b30',
                   transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}
               />
             </button>
 
-            {/* Right: Shortcut to preview if items exist, or empty spacer */}
             {mediaItems.length > 0 ? (
               <button
                 onClick={() => setStep('preview')}
                 className="apple-tap"
                 style={{
-                  width: '52px',
-                  height: '52px',
+                  width: '50px',
+                  height: '50px',
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.22)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.5)',
-                  color: '#ffffff',
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
+                  border: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer'
                 }}
-                aria-label="Preview"
+                aria-label="Preview Media"
               >
-                <GoogleIcon name="arrow_forward" size={24} color="#ffffff" />
+                <GoogleIcon name="arrow_forward" size={24} color="#000000" />
               </button>
             ) : (
-              <div style={{ width: '52px' }} />
+              <div style={{ width: '50px' }} />
             )}
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 2: PREVIEW & SWIPEABLE MEDIA VIEW */}
+      {/* STEP 2: PREVIEW WITH FIXED NON-OVERLAPPING VIDEO AUDIO */}
       {/* ========================================================================= */}
       {step === 'preview' && (
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#000000' }}>
-          {/* Top Bar: Retake/Back, Counter, Delete */}
+          {/* Top Bar */}
           <div
             style={{
               position: 'absolute',
@@ -742,7 +876,6 @@ export const MobileReportingModal = ({
                 borderRadius: '50%',
                 backgroundColor: 'rgba(0, 0, 0, 0.45)',
                 backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 color: '#ffffff',
                 display: 'flex',
@@ -755,17 +888,15 @@ export const MobileReportingModal = ({
               <GoogleIcon name="arrow_back" size={22} color="#ffffff" />
             </button>
 
-            {/* Apple Carousel Indicator Pill */}
             <div
               style={{
                 backgroundColor: 'rgba(0, 0, 0, 0.55)',
                 backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
                 padding: '6px 14px',
                 borderRadius: '9999px',
                 fontSize: '0.875rem',
                 fontWeight: '700',
-                letterSpacing: '0.02em',
+                color: '#ffffff',
                 border: '1px solid rgba(255, 255, 255, 0.18)'
               }}
             >
@@ -781,7 +912,6 @@ export const MobileReportingModal = ({
                 borderRadius: '50%',
                 backgroundColor: 'rgba(255, 59, 48, 0.3)',
                 backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255, 59, 48, 0.6)',
                 color: '#ff453a',
                 display: 'flex',
@@ -789,13 +919,13 @@ export const MobileReportingModal = ({
                 justifyContent: 'center',
                 cursor: 'pointer'
               }}
-              aria-label="Delete Item"
+              aria-label="Delete Clip"
             >
               <GoogleIcon name="delete" size={20} color="#ff453a" />
             </button>
           </div>
 
-          {/* Swipeable Media Carousel */}
+          {/* Swipeable Carousel */}
           <div
             style={{
               flex: 1,
@@ -837,34 +967,34 @@ export const MobileReportingModal = ({
               >
                 {item.type === 'video' ? (
                   <>
-                    {/* Seamless Loop Video without Colliding Browser Native Scrub Bar */}
                     <video
-                      ref={idx === activeMediaIndex ? previewVideoRef : null}
+                      ref={(el) => {
+                        videoRefs.current[idx] = el;
+                      }}
                       src={item.url}
-                      autoPlay
+                      autoPlay={idx === activeMediaIndex}
                       loop
                       playsInline
+                      muted={idx !== activeMediaIndex}
                       style={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'contain'
                       }}
                     />
-                    {/* Gentle Center Play / Pause Indicator */}
                     {showPlayIcon && (
                       <div
                         style={{
                           position: 'absolute',
-                          width: '72px',
-                          height: '72px',
+                          width: '70px',
+                          height: '70px',
                           borderRadius: '50%',
                           backgroundColor: 'rgba(0, 0, 0, 0.65)',
                           backdropFilter: 'blur(12px)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          pointerEvents: 'none',
-                          animation: 'popIn 0.2s ease'
+                          pointerEvents: 'none'
                         }}
                       >
                         <GoogleIcon
@@ -890,7 +1020,7 @@ export const MobileReportingModal = ({
             ))}
           </div>
 
-          {/* Bottom Controls Bar: Left (+) Button & Right (>) Button ONLY - Symmetrical & Clean */}
+          {/* Bottom Bar: Plus (+) to Add More & Arrow (>) to Continue to Notepad */}
           <div
             style={{
               position: 'absolute',
@@ -906,7 +1036,6 @@ export const MobileReportingModal = ({
               pointerEvents: 'none'
             }}
           >
-            {/* Left Bottom: Plus (+) Button to Add More Media (No "Add more" text!) */}
             <button
               onClick={() => setStep('camera')}
               className="apple-tap"
@@ -917,22 +1046,19 @@ export const MobileReportingModal = ({
                 borderRadius: '50%',
                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
                 border: '1.5px solid rgba(255, 255, 255, 0.45)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-                transition: 'transform 0.15s cubic-bezier(0.16, 1, 0.3, 1)'
+                boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
               }}
               aria-label="Add More Media"
             >
               <GoogleIcon name="add" size={30} color="#ffffff" />
             </button>
 
-            {/* Right Bottom: Arrow Button (>) ONLY (No "Next" text!) */}
             <button
               onClick={() => setStep('description')}
               className="apple-tap"
@@ -948,10 +1074,9 @@ export const MobileReportingModal = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: '0 8px 24px rgba(255, 255, 255, 0.35)',
-                transition: 'transform 0.15s cubic-bezier(0.16, 1, 0.3, 1)'
+                boxShadow: '0 8px 24px rgba(255, 255, 255, 0.35)'
               }}
-              aria-label="Continue to Description"
+              aria-label="Continue to Notepad"
             >
               <GoogleIcon name="arrow_forward" size={26} color="#000000" />
             </button>
@@ -960,7 +1085,7 @@ export const MobileReportingModal = ({
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 3: DESCRIBE ISSUE (APPLE LIGHT THEME MATCHING SETU DESIGN SYSTEM) */}
+      {/* STEP 3: NOTEPAD DESCRIPTION CANVAS (CLEAN EMPTY SCREEN, 2 BUTTONS: MIC & CONTINUE) */}
       {/* ========================================================================= */}
       {step === 'description' && (
         <div
@@ -971,25 +1096,22 @@ export const MobileReportingModal = ({
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#f8f9fa',
-            overflowY: 'auto',
+            backgroundColor: '#ffffff',
+            overflow: 'hidden',
             color: '#1c1c1e'
           }}
         >
-          {/* Frosted iOS Navigation Bar */}
+          {/* Minimal Frosted Header */}
           <header
             style={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 50,
-              padding: 'calc(14px + env(safe-area-inset-top, 0px)) 16px 14px 16px',
+              padding: 'calc(14px + env(safe-area-inset-top, 0px)) 16px 12px 16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(24px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-              borderBottom: '1px solid rgba(0, 0, 0, 0.08)'
+              borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              zIndex: 30
             }}
           >
             <button
@@ -1001,7 +1123,6 @@ export const MobileReportingModal = ({
                 borderRadius: '50%',
                 backgroundColor: '#f2f2f7',
                 border: 'none',
-                color: '#1c1c1e',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1012,17 +1133,9 @@ export const MobileReportingModal = ({
               <GoogleIcon name="arrow_back" size={20} color="#1c1c1e" />
             </button>
 
-            <h1
-              style={{
-                fontSize: '1.125rem',
-                fontWeight: '800',
-                margin: 0,
-                color: '#000000',
-                letterSpacing: '-0.02em'
-              }}
-            >
-              Describe Issue
-            </h1>
+            <span style={{ fontSize: '1rem', fontWeight: '700', color: '#1c1c1e' }}>
+              Grievance Notes
+            </span>
 
             <button
               onClick={resetAllAndClose}
@@ -1033,7 +1146,6 @@ export const MobileReportingModal = ({
                 borderRadius: '50%',
                 backgroundColor: '#f2f2f7',
                 border: 'none',
-                color: '#1c1c1e',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1045,333 +1157,588 @@ export const MobileReportingModal = ({
             </button>
           </header>
 
-          {/* Body Canvas */}
-          <main style={{ flex: 1, padding: '18px 16px 32px 16px', display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '480px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-            {/* Attached Media Tray */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6e6e73' }}>
-                  Attached Media ({mediaItems.length})
-                </span>
-                <button
-                  onClick={() => setStep('preview')}
-                  style={{ background: 'none', border: 'none', color: '#0071e3', fontSize: '0.8125rem', fontWeight: '600', cursor: 'pointer' }}
-                >
-                  Edit / View
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
-                {mediaItems.map((m, idx) => (
-                  <div
-                    key={m.id || idx}
-                    onClick={() => {
-                      setActiveMediaIndex(idx);
-                      setStep('preview');
-                    }}
-                    className="apple-tap"
-                    style={{
-                      width: '66px',
-                      height: '66px',
-                      borderRadius: '14px',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      position: 'relative',
-                      border: '1px solid rgba(0, 0, 0, 0.08)',
-                      backgroundColor: '#ffffff',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {m.type === 'video' ? (
-                      <div style={{ width: '100%', height: '100%', backgroundColor: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <GoogleIcon name="play_arrow" size={24} color="#ffffff" />
-                      </div>
-                    ) : (
-                      <img src={m.url} alt="thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Voice Dictation Card: Apple / Setu Clean Style */}
-            <div
+          {/* Full Notepad Typing Area */}
+          <main
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '16px 20px',
+              overflowY: 'auto'
+            }}
+          >
+            <textarea
+              autoFocus
+              value={notepadText}
+              onChange={(e) => setNotepadText(e.target.value)}
+              placeholder="Describe your grievance in detail here... or tap the Mic below to speak."
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                padding: '20px 18px',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                gap: '12px'
+                flex: 1,
+                width: '100%',
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                fontSize: '1.125rem',
+                lineHeight: 1.6,
+                color: '#1c1c1e',
+                backgroundColor: 'transparent',
+                fontFamily: 'var(--font-sans)',
+                padding: '8px 0',
+                boxSizing: 'border-box'
               }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <GoogleIcon name="auto_awesome" size={18} color="#0071e3" />
-                <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: '#0071e3', letterSpacing: '0.04em' }}>
-                  VOICE AI • SAARAS & GEMINI
-                </span>
-              </div>
+            />
 
-              <p style={{ fontSize: '0.875rem', color: '#6e6e73', margin: 0, maxWidth: '300px', lineHeight: 1.45 }}>
-                Tap the mic to speak in Hindi or any local dialect. Gemini Flash 3.5 Lite will write the formal grievance.
-              </p>
-
-              {/* Mic Action Button */}
-              <button
-                type="button"
-                onClick={handleToggleVoice}
-                disabled={isSynthesizing}
-                className="apple-tap"
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: isRecordingVoice ? '#ff3b30' : '#000000',
-                  border: isRecordingVoice ? '4px solid #fecaca' : 'none',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  boxShadow: isRecordingVoice
-                    ? '0 0 24px rgba(255, 59, 48, 0.6)'
-                    : '0 8px 20px rgba(0, 0, 0, 0.18)',
-                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                  marginTop: '4px'
-                }}
-                aria-label={isRecordingVoice ? 'Stop Speaking' : 'Start Speaking'}
-              >
-                {isRecordingVoice ? (
-                  <GoogleIcon name="stop" size={28} color="#ffffff" />
-                ) : (
-                  <GoogleIcon name="mic" size={28} color="#ffffff" />
-                )}
-              </button>
-
-              {/* Live Voice Status Indicator */}
-              {isRecordingVoice && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ff3b30', fontWeight: '700', fontSize: '0.875rem' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff3b30', animation: 'pulse 1s infinite' }} />
-                  Listening... {formatTimer(voiceSeconds)} (Tap to Stop)
-                </div>
-              )}
-
-              {isSynthesizing && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0071e3', fontSize: '0.875rem', fontWeight: '600' }}>
-                  <div style={{ width: '16px', height: '16px', border: '2px solid #0071e3', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  Formulating grievance with Gemini 3.5 Flash Lite...
-                </div>
-              )}
-
-              {aiGeneratedBadge && (
-                <div
-                  style={{
-                    backgroundColor: '#e0f2fe',
-                    color: '#0369a1',
-                    border: '1px solid #bae6fd',
-                    padding: '4px 12px',
-                    borderRadius: '9999px',
-                    fontSize: '0.75rem',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  <GoogleIcon name="check_circle" size={14} color="#0369a1" />
-                  Written by Gemini 3.5 Flash Lite
-                </div>
-              )}
-            </div>
-
-            {/* Clean Form Card */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                padding: '20px 18px',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px'
-              }}
-            >
-              {/* Title Field */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '700', color: '#1c1c1e', marginBottom: '6px' }}>
-                  Issue Title
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Major sewage overflow flooding street"
-                  style={{
-                    width: '100%',
-                    padding: '13px 14px',
-                    borderRadius: '12px',
-                    backgroundColor: '#f9f9fb',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    color: '#1c1c1e',
-                    fontSize: '0.9375rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              {/* Category Field */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '700', color: '#1c1c1e', marginBottom: '6px' }}>
-                  Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '13px 14px',
-                    borderRadius: '12px',
-                    backgroundColor: '#f9f9fb',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    color: '#1c1c1e',
-                    fontSize: '0.9375rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <option value="WATER_SANITATION">Water & Sanitation</option>
-                  <option value="URBAN_INFRASTRUCTURE">Urban Infrastructure & Roads</option>
-                  <option value="ENERGY_ELECTRICITY">Energy & Power Distribution</option>
-                  <option value="ENVIRONMENT_WASTE">Environment & Waste Management</option>
-                  <option value="HEALTHCARE">Public Health & Sanitation</option>
-                  <option value="AGRICULTURE_RURAL">Agriculture & Rural Development</option>
-                </select>
-              </div>
-
-              {/* Description Field */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '700', color: '#1c1c1e', marginBottom: '6px' }}>
-                  Detailed Description (or dictate above)
-                </label>
-                <textarea
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe the issue, landmarks, and severity in detail..."
-                  style={{
-                    width: '100%',
-                    padding: '13px 14px',
-                    borderRadius: '12px',
-                    backgroundColor: '#f9f9fb',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    color: '#1c1c1e',
-                    fontSize: '0.9375rem',
-                    lineHeight: 1.5,
-                    outline: 'none',
-                    resize: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              {/* Location Tag */}
+            {/* Subtle Voice Recording Live Feedback Banner */}
+            {isRecordingVoice && (
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '11px 14px',
-                  backgroundColor: '#f2f2f7',
+                  padding: '8px 14px',
                   borderRadius: '12px',
-                  fontSize: '0.8125rem',
-                  color: '#3a3a3c'
+                  backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                  color: '#dc2626',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  marginBottom: '12px'
                 }}
               >
-                <GoogleIcon name="location_on" size={18} color="#ff3b30" />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
-                  {locationName}
-                </span>
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: '#dc2626',
+                    animation: 'pulse 1s infinite'
+                  }}
+                />
+                <span>Listening ({formatTimer(voiceSeconds)})... Tap mic again to finish</span>
               </div>
-            </div>
+            )}
+          </main>
 
-            {/* Apple Solid Action Button */}
+          {/* Fixed Bottom Bar: ONLY 2 BUTTONS (MIC & CONTINUE) */}
+          <footer
+            style={{
+              padding: '14px 20px calc(20px + env(safe-area-inset-bottom, 0px)) 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              zIndex: 30
+            }}
+          >
+            {/* 1. Mic Button */}
             <button
               type="button"
-              onClick={handleSubmitReport}
+              onClick={handleToggleVoiceInNotepad}
+              className="apple-tap"
+              style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '50%',
+                backgroundColor: isRecordingVoice ? '#ff3b30' : '#1c1c1e',
+                border: isRecordingVoice ? '3px solid #fca5a5' : 'none',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: isRecordingVoice
+                  ? '0 0 20px rgba(255, 59, 48, 0.5)'
+                  : '0 4px 14px rgba(0, 0, 0, 0.12)',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+              aria-label={isRecordingVoice ? 'Stop Speaking' : 'Record Speech'}
+            >
+              {isRecordingVoice ? (
+                <GoogleIcon name="stop" size={26} color="#ffffff" />
+              ) : (
+                <GoogleIcon name="mic" size={26} color="#ffffff" />
+              )}
+            </button>
+
+            {/* 2. Continue Button */}
+            <button
+              type="button"
+              onClick={handleContinueFromNotepad}
+              className="apple-tap"
+              style={{
+                height: '54px',
+                padding: '0 28px',
+                borderRadius: '9999px',
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '1rem',
+                fontWeight: '700',
+                letterSpacing: '-0.01em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)'
+              }}
+            >
+              <span>Continue</span>
+              <GoogleIcon name="arrow_forward" size={20} color="#ffffff" />
+            </button>
+          </footer>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STEP 4: FULL-SCREEN GLOWING AURA ANIMATION ("Hold on...") */}
+      {/* ========================================================================= */}
+      {step === 'processing' && <TaraAuraProcessingScreen />}
+
+      {/* ========================================================================= */}
+      {/* STEP 5: REPORT REVIEW CARD (MEDIA ON TOP, SWIPEABLE, TITLE, CATEGORY, LOCATION, DATE/TIME, DESCRIPTION, IMPACT SUMMARY, SEVERITY BRIEF, SUBMIT BUTTON) */}
+      {/* ========================================================================= */}
+      {step === 'review' && reviewData && (
+        <div
+          className="apple-page-enter"
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#f2f2f7',
+            overflow: 'hidden',
+            color: '#1c1c1e'
+          }}
+        >
+          {/* Top Bar */}
+          <header
+            style={{
+              padding: 'calc(14px + env(safe-area-inset-top, 0px)) 16px 12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+              zIndex: 30
+            }}
+          >
+            <button
+              onClick={() => setStep('description')}
+              className="apple-tap"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                backgroundColor: '#f2f2f7',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              aria-label="Back to Notes"
+            >
+              <GoogleIcon name="arrow_back" size={20} color="#1c1c1e" />
+            </button>
+
+            <span style={{ fontSize: '1.0625rem', fontWeight: '700', color: '#000000', letterSpacing: '-0.02em' }}>
+              Review Grievance
+            </span>
+
+            <button
+              onClick={resetAllAndClose}
+              className="apple-tap"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                backgroundColor: '#f2f2f7',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              aria-label="Close"
+            >
+              <GoogleIcon name="close" size={20} color="#1c1c1e" />
+            </button>
+          </header>
+
+          {/* Scrollable Body */}
+          <main
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '16px 16px calc(90px + env(safe-area-inset-bottom, 0px)) 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+          >
+            {/* The Main Report Card */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+                border: '1px solid rgba(0, 0, 0, 0.06)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {/* Media Carousel on top of card */}
+              {mediaItems.length > 0 && (
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '240px',
+                    backgroundColor: '#000000',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      overflowX: 'auto',
+                      scrollSnapType: 'x mandatory',
+                      WebkitOverflowScrolling: 'touch',
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none'
+                    }}
+                    onScroll={(e) => {
+                      const scrollLeft = e.currentTarget.scrollLeft;
+                      const width = e.currentTarget.offsetWidth;
+                      if (width > 0) {
+                        const index = Math.round(scrollLeft / width);
+                        if (index !== reviewMediaIndex && index >= 0 && index < mediaItems.length) {
+                          setReviewMediaIndex(index);
+                        }
+                      }
+                    }}
+                  >
+                    {mediaItems.map((item, idx) => (
+                      <div
+                        key={item.id || idx}
+                        onClick={item.type === 'video' ? () => setIsReviewPlaying((p) => !p) : undefined}
+                        style={{
+                          flex: '0 0 100%',
+                          width: '100%',
+                          height: '100%',
+                          scrollSnapAlign: 'start',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'relative',
+                          backgroundColor: '#000000',
+                          cursor: item.type === 'video' ? 'pointer' : 'default'
+                        }}
+                      >
+                        {item.type === 'video' ? (
+                          <video
+                            ref={(el) => {
+                              reviewVideoRefs.current[idx] = el;
+                            }}
+                            src={item.url}
+                            autoPlay={idx === reviewMediaIndex}
+                            loop
+                            playsInline
+                            muted={idx !== reviewMediaIndex}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={item.url}
+                            alt="Attached Evidence"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain'
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Indicator Pill: e.g. "1 of 3" */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      padding: '4px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255, 255, 255, 0.2)'
+                    }}
+                  >
+                    {reviewMediaIndex + 1} of {mediaItems.length}
+                  </div>
+
+                  {/* Dots Indicator */}
+                  {mediaItems.length > 1 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        left: 0,
+                        right: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      {mediaItems.map((_, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            width: idx === reviewMediaIndex ? '18px' : '6px',
+                            height: '6px',
+                            borderRadius: '9999px',
+                            backgroundColor: idx === reviewMediaIndex ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
+                            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Card Content Body */}
+              <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Category Badge & Severity Brief Row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '5px 12px',
+                      borderRadius: '9999px',
+                      backgroundColor: '#eff6ff',
+                      color: '#1d4ed8',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      letterSpacing: '-0.01em'
+                    }}
+                  >
+                    <GoogleIcon name="category" size={14} color="#1d4ed8" />
+                    <span>{reviewData.category}</span>
+                  </span>
+
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '5px 12px',
+                      borderRadius: '9999px',
+                      backgroundColor:
+                        reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
+                          ? '#fee2e2'
+                          : reviewData.severity === 'LOW'
+                          ? '#dcfce7'
+                          : '#fef3c7',
+                      color:
+                        reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
+                          ? '#b91c1c'
+                          : reviewData.severity === 'LOW'
+                          ? '#15803d'
+                          : '#b45309',
+                      fontSize: '0.75rem',
+                      fontWeight: '700'
+                    }}
+                  >
+                    <GoogleIcon
+                      name="priority_high"
+                      size={14}
+                      color={
+                        reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
+                          ? '#b91c1c'
+                          : reviewData.severity === 'LOW'
+                          ? '#15803d'
+                          : '#b45309'
+                      }
+                    />
+                    <span>{reviewData.severity} Severity</span>
+                  </span>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <h2
+                    style={{
+                      fontSize: '1.25rem',
+                      fontWeight: '800',
+                      lineHeight: 1.35,
+                      margin: 0,
+                      color: '#000000',
+                      letterSpacing: '-0.02em'
+                    }}
+                  >
+                    {reviewData.title}
+                  </h2>
+                </div>
+
+                {/* Location & Date/Time Strip */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '12px 14px',
+                    borderRadius: '14px',
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: '#1c1c1e' }}>
+                    <GoogleIcon name="location_on" size={17} color="#0071e3" />
+                    <span style={{ fontWeight: '600' }}>
+                      {reviewData.address || reviewData.villageCity || 'Ranchi, Jharkhand'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: '#6e6e73' }}>
+                    <GoogleIcon name="schedule" size={16} color="#8e8e93" />
+                    <span>{reviewData.dateTime}</span>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      color: '#8e8e93',
+                      marginBottom: '6px'
+                    }}
+                  >
+                    Description
+                  </div>
+                  <p
+                    style={{
+                      fontSize: '0.9375rem',
+                      lineHeight: 1.55,
+                      color: '#3a3a3c',
+                      margin: 0,
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    {reviewData.description}
+                  </p>
+                </div>
+
+                {/* Impact Summary */}
+                <div
+                  style={{
+                    padding: '14px',
+                    borderRadius: '16px',
+                    backgroundColor: '#f0fdf4',
+                    border: '1px solid rgba(22, 163, 74, 0.15)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GoogleIcon name="groups" size={17} color="#16a34a" />
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#15803d', textTransform: 'uppercase' }}>
+                      Impact Summary
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#14532d', marginTop: '2px' }}>
+                    {reviewData.impactCount}
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: '#166534', lineHeight: 1.45 }}>
+                    {reviewData.impactDescription}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          {/* Sticky Submit Bar */}
+          <footer
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 40,
+              padding: '12px 18px calc(16px + env(safe-area-inset-bottom, 0px)) 18px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmitFinalReport}
               className="apple-tap"
               style={{
                 width: '100%',
-                padding: '16px',
-                borderRadius: '14px',
+                height: '52px',
+                borderRadius: '9999px',
                 backgroundColor: '#000000',
                 color: '#ffffff',
-                fontWeight: '700',
-                fontSize: '1rem',
-                letterSpacing: '-0.01em',
                 border: 'none',
-                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '700',
+                letterSpacing: '-0.01em',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.18)',
-                marginTop: '4px'
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
+                opacity: isSubmitting ? 0.7 : 1
               }}
             >
-              <GoogleIcon name="send" size={20} color="#ffffff" />
-              <span>Send Grievance Report</span>
+              {isSubmitting ? (
+                <span>Submitting...</span>
+              ) : (
+                <>
+                  <span>Submit Report</span>
+                  <GoogleIcon name="arrow_forward" size={20} color="#ffffff" />
+                </>
+              )}
             </button>
-          </main>
+          </footer>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 4: SUBMITTING STATE */}
-      {/* ========================================================================= */}
-      {step === 'submitting' && (
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '20px',
-            padding: '24px',
-            textAlign: 'center',
-            backgroundColor: '#f8f9fa'
-          }}
-        >
-          <div
-            style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              border: '3px solid rgba(0, 0, 0, 0.1)',
-              borderTopColor: '#000000',
-              animation: 'spin 0.8s linear infinite'
-            }}
-          />
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: '#000000' }}>
-              Submitting Report...
-            </h3>
-            <p style={{ fontSize: '0.875rem', color: '#6e6e73', marginTop: '6px' }}>
-              Running duplicate detection and routing to Nodal Technical Desk.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* STEP 5: SUCCESS STATE (MATCHES SETU AESTHETIC) */}
+      {/* STEP 6: SUCCESS STATE (CLEAN, NO NATIONAL DATABASE JARGON) */}
       {/* ========================================================================= */}
       {step === 'success' && (
         <div
@@ -1421,7 +1788,7 @@ export const MobileReportingModal = ({
               {submittedProblem?.id || '#SETU-LIVE'}
             </h2>
             <p style={{ fontSize: '0.9375rem', color: '#6e6e73', margin: 0, maxWidth: '290px', lineHeight: 1.45 }}>
-              Your grievance has been logged and assigned to the Nodal Technical Evaluation Desk.
+              Your grievance has been submitted successfully and assigned for field review.
             </p>
           </div>
 
@@ -1439,34 +1806,60 @@ export const MobileReportingModal = ({
           >
             <div style={{ fontSize: '0.75rem', color: '#8e8e93', fontWeight: '600', textTransform: 'uppercase' }}>Title</div>
             <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#000000', marginTop: '2px' }}>
-              {submittedProblem?.title || title}
+              {submittedProblem?.title}
+            </div>
+
+            <div style={{ fontSize: '0.75rem', color: '#8e8e93', fontWeight: '600', textTransform: 'uppercase', marginTop: '10px' }}>Category</div>
+            <div style={{ fontSize: '0.875rem', color: '#16a34a', fontWeight: '600', marginTop: '2px' }}>
+              {submittedProblem?.category}
             </div>
 
             <div style={{ fontSize: '0.75rem', color: '#8e8e93', fontWeight: '600', textTransform: 'uppercase', marginTop: '10px' }}>Location</div>
             <div style={{ fontSize: '0.875rem', color: '#3c3c43', marginTop: '2px' }}>
-              {locationName}
+              {submittedProblem?.address || locationDetails.formatted}
             </div>
           </div>
 
-          <button
-            onClick={resetAllAndClose}
-            className="apple-tap"
-            style={{
-              width: '100%',
-              maxWidth: '340px',
-              padding: '16px',
-              borderRadius: '14px',
-              backgroundColor: '#000000',
-              color: '#ffffff',
-              fontWeight: '700',
-              fontSize: '1rem',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)'
-            }}
-          >
-            Done & View Submissions
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '340px' }}>
+            <button
+              onClick={() => {
+                resetAllAndClose();
+                navigate('/my-submissions');
+              }}
+              className="apple-tap"
+              style={{
+                width: '100%',
+                padding: '16px',
+                borderRadius: '14px',
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                fontWeight: '700',
+                fontSize: '1rem',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)'
+              }}
+            >
+              View in My Submissions
+            </button>
+            <button
+              onClick={resetAllAndClose}
+              className="apple-tap"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '14px',
+                backgroundColor: 'transparent',
+                color: '#6e6e73',
+                fontWeight: '600',
+                fontSize: '0.9375rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Done
+            </button>
+          </div>
         </div>
       )}
     </div>

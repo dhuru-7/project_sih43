@@ -123,15 +123,20 @@ def end_voice():
 @voice_agent_bp.route("/describe-issue", methods=["POST"])
 def describe_issue():
     """
-    Accepts spoken audio (multipart or base64) or direct text.
-    Transcribes voice using Sarvam Saaras v3 STT -> formats a formal civic report
-    using Gemini 3.5 Flash Lite -> returns title, description, category, and severity.
+    Accepts spoken audio (multipart or base64) or direct text, along with optional images,
+    location details, and reporter type.
+    Transcribes voice using STT -> formats a formal civic report
+    using AI Engine -> returns title, description, category (1 of 17), severity,
+    impact estimate, and reporter type.
     """
     from app.services.sarvam_service import SarvamService
     from app.services.gemini_service import GeminiService
 
     transcript = ""
     detected_lang = "hi-IN"
+    images = []
+    location_info = None
+    reporter_type = None
 
     # 1. Handle multipart audio file
     if "audio" in request.files or "file" in request.files:
@@ -139,6 +144,16 @@ def describe_issue():
         audio_bytes = audio_file.read()
         filename = audio_file.filename or "recording.webm"
         mime_type = audio_file.mimetype or "audio/webm"
+
+        # Check for location / reporter in form
+        reporter_type = request.form.get("reporter_type") or request.form.get("reporterType")
+        loc_str = request.form.get("location_info") or request.form.get("locationInfo")
+        if loc_str:
+            import json
+            try:
+                location_info = json.loads(loc_str)
+            except Exception:
+                pass
 
         try:
             stt_res = SarvamService.speech_to_text(
@@ -159,6 +174,11 @@ def describe_issue():
     # 2. Handle JSON payload (audio_base64 or direct text)
     else:
         data = request.get_json(silent=True) or {}
+        images = data.get("images", [])
+        location_info = data.get("locationInfo") or data.get("location_info")
+        reporter_type = data.get("reporterType") or data.get("reporter_type")
+        group_name = data.get("groupName") or data.get("group_name") or ""
+
         if "audio_base64" in data and data["audio_base64"]:
             try:
                 raw_b64 = data["audio_base64"]
@@ -182,38 +202,53 @@ def describe_issue():
         elif "text" in data and data["text"].strip():
             transcript = data["text"].strip()
 
-    if not transcript:
+    if not transcript and not images:
         return jsonify({
             "status": "error",
-            "message": "No voice audio or text received for grievance description."
+            "message": "No voice audio, text, or images received for grievance description."
         }), 400
 
-    # 3. Formulate structured grievance using Gemini 3.5 Flash Lite
+    # 3. Formulate structured grievance using Gemini AI Engine
     try:
-        issue_meta = GeminiService.generate_issue_description(transcript)
+        issue_meta = GeminiService.generate_issue_description(
+            transcript=transcript or "Visual civic problem reported by citizen.",
+            images=images,
+            location_info=location_info,
+            reporter_type=reporter_type,
+            group_name=group_name
+        )
         return jsonify({
             "status": "success",
             "data": {
                 "transcript": transcript,
                 "title": issue_meta.get("title", "Civic Grievance Report"),
                 "description": issue_meta.get("description", transcript),
-                "category": issue_meta.get("category", "URBAN_INFRASTRUCTURE"),
+                "category": issue_meta.get("category", "Urban Development and Infrastructure"),
                 "severity": issue_meta.get("severity", "MEDIUM"),
+                "impactCount": issue_meta.get("impact_count", "100-250 local residents"),
+                "impactDescription": issue_meta.get("impact_description", "Affects local residents and daily commuters."),
+                "reporterType": issue_meta.get("reporter_type", reporter_type or "Individual Citizen"),
+                "groupName": group_name,
                 "language": detected_lang
             }
         }), 200
     except Exception as e:
-        logger.exception("Gemini issue description generation failed")
-        # Return transcript as fallback description so citizen flow is never blocked
+        logger.exception("AI issue description generation failed")
+        from app.ai.classifier import classify_problem
+        classified = classify_problem(transcript)
         return jsonify({
             "status": "success",
             "data": {
                 "transcript": transcript,
-                "title": transcript[:40] + ("..." if len(transcript) > 40 else ""),
-                "description": transcript,
-                "category": "URBAN_INFRASTRUCTURE",
+                "title": transcript[:40] + ("..." if len(transcript) > 40 else "") if transcript else "Civic Grievance Report",
+                "description": transcript or "Civic issue reported with evidence.",
+                "category": classified.get("category", "Urban Development and Infrastructure"),
                 "severity": "MEDIUM",
+                "impactCount": "50-150 residents",
+                "impactDescription": "Local residents facing civic disruption.",
+                "reporterType": reporter_type or "Individual Citizen",
                 "language": detected_lang
             }
         }), 200
+
 
