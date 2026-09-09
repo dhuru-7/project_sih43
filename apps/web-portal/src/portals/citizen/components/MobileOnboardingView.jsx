@@ -54,7 +54,7 @@ export const MobileOnboardingView = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {currentStep > 0 && (
+          {currentStep > 0 && currentStep !== 3 && (
             <button
               onClick={onPrev}
               style={{
@@ -95,7 +95,7 @@ export const MobileOnboardingView = ({
             style={{
               fontSize: '0.875rem',
               fontWeight: '600',
-              color: '#71717a',
+              color: '#8e8e93',
               background: 'none',
               border: 'none',
               padding: '0.35rem 0.75rem',
@@ -177,9 +177,10 @@ export const MobileOnboardingView = ({
           </div>
         ) : currentStep === 3 ? (
           /* ===================================================================
-             STAGE 2: Mobile Intent Selection Screen (NO 3 DOTS)
+             STAGE 2: Mobile Intent Selection Screen (NO 3 DOTS, NO Back Before Setu)
              =================================================================== */
           <div
+            className="apple-fade-enter"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -200,12 +201,12 @@ export const MobileOnboardingView = ({
               >
                 What brings you to Setu?
               </h1>
-              <p style={{ fontSize: '0.8125rem', color: '#71717a', margin: 0, fontWeight: '500' }}>
+              <p style={{ fontSize: '0.8125rem', color: '#636366', margin: 0, fontWeight: '500' }}>
                 Select your focus area to access the right portal workflow.
               </p>
             </div>
 
-            {/* 4 Intent Cards */}
+            {/* 4 Intent Cards with Apple Spacing & Uncrowded Squircles */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {intents.map((intent) => {
                 const isSelected = selectedIntent === intent.id;
@@ -213,41 +214,44 @@ export const MobileOnboardingView = ({
                   <div
                     key={intent.id}
                     onClick={() => setSelectedIntent(intent.id)}
+                    className="apple-select-card"
                     style={{
-                      padding: '1rem 1.15rem',
+                      padding: '1.1rem 1.25rem',
                       borderRadius: '18px',
-                      border: isSelected ? '2px solid #000000' : '1px solid #e5e7eb',
-                      backgroundColor: isSelected ? 'rgba(250, 250, 250, 0.9)' : '#ffffff',
-                      cursor: 'pointer',
+                      border: isSelected ? '2px solid #000000' : '1px solid rgba(0, 0, 0, 0.08)',
+                      backgroundColor: '#ffffff',
                       boxShadow: isSelected
-                        ? '0 4px 16px rgba(0, 0, 0, 0.05)'
+                        ? '0 4px 16px rgba(0, 0, 0, 0.06)'
                         : '0 1px 3px rgba(0, 0, 0, 0.02)',
-                      transition: 'all 0.2s ease',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between'
+                      justifyContent: 'space-between',
+                      gap: '1rem'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
                       <div
                         style={{
-                          width: '40px',
-                          height: '40px',
+                          width: '44px',
+                          height: '44px',
+                          minWidth: '44px',
                           borderRadius: '12px',
-                          backgroundColor: isSelected ? '#000000' : '#f4f4f5',
-                          color: isSelected ? '#ffffff' : '#111111',
+                          backgroundColor: isSelected ? '#000000' : '#f2f2f7',
+                          color: isSelected ? '#ffffff' : '#1c1c1e',
+                          border: 'none',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       >
-                        <GoogleIcon name={intent.icon} size={20} />
+                        <GoogleIcon name={intent.icon} size={22} />
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#111111' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#111111', lineHeight: 1.3 }}>
                           {intent.title}
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: '500', display: 'block' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#636366', fontWeight: '400', display: 'block', marginTop: '0.2rem', lineHeight: 1.35 }}>
                           {intent.subtitle}
                         </span>
                       </div>
@@ -255,14 +259,16 @@ export const MobileOnboardingView = ({
 
                     <div
                       style={{
-                        width: '18px',
-                        height: '18px',
+                        width: '20px',
+                        height: '20px',
+                        minWidth: '20px',
                         borderRadius: '50%',
-                        border: isSelected ? '2px solid #000000' : '1.5px solid #d1d5db',
-                        backgroundColor: isSelected ? '#000000' : '#ffffff',
+                        border: isSelected ? '2px solid #000000' : '1.5px solid #d1d1d6',
+                        backgroundColor: isSelected ? '#000000' : 'transparent',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       {isSelected && (
@@ -276,9 +282,10 @@ export const MobileOnboardingView = ({
           </div>
         ) : (
           /* ===================================================================
-             STAGE 3: Mobile Reporting Portal Sub-Role Selection (NO 3 DOTS)
+             STAGE 3: Mobile Reporting Portal Sub-Role Selection (Static Heading, Concise)
              =================================================================== */
           <div
+            className="apple-fade-enter"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -297,14 +304,14 @@ export const MobileOnboardingView = ({
                   margin: 0
                 }}
               >
-                I'm an {currentRoleObj.title}
+                Choose your role
               </h1>
-              <p style={{ fontSize: '0.8125rem', color: '#71717a', margin: '0.35rem 0 0', fontWeight: '500' }}>
-                Choose how you will represent issues in the Reporting Portal.
+              <p style={{ fontSize: '0.8125rem', color: '#636366', margin: '0.35rem 0 0', fontWeight: '500' }}>
+                Select how you will participate in the Reporting Portal.
               </p>
             </div>
 
-            {/* Bento Role Cards */}
+            {/* Apple Role Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {roles.map((role) => {
                 const isSelected = selectedRole === role.id;
@@ -312,70 +319,74 @@ export const MobileOnboardingView = ({
                   <article
                     key={role.id}
                     onClick={() => setSelectedRole(role.id)}
+                    className="apple-select-card"
                     style={{
                       padding: '1.15rem 1.25rem',
-                      borderRadius: '20px',
-                      border: isSelected ? '2px solid #000000' : '1px solid #e5e7eb',
-                      backgroundColor: isSelected ? 'rgba(250, 250, 250, 0.8)' : '#ffffff',
-                      cursor: 'pointer',
+                      borderRadius: '18px',
+                      border: isSelected ? '2px solid #000000' : '1px solid rgba(0, 0, 0, 0.08)',
+                      backgroundColor: '#ffffff',
                       boxShadow: isSelected
-                        ? '0 4px 16px rgba(0, 0, 0, 0.05)'
+                        ? '0 4px 16px rgba(0, 0, 0, 0.06)'
                         : '0 1px 3px rgba(0, 0, 0, 0.02)',
-                      transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)'
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <div
-                          style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '12px',
-                            backgroundColor: isSelected ? '#ffffff' : '#f4f4f5',
-                            border: '1px solid #e5e7eb',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#111111'
-                          }}
-                        >
-                          <GoogleIcon name={role.icon} size={22} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#111111' }}>
-                            {role.title}
-                          </div>
-                          <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: '500' }}>
-                            {role.subtitle}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Radio Indicator */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
                       <div
                         style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          border: isSelected ? '2px solid #000000' : '1.5px solid #d1d5db',
-                          backgroundColor: isSelected ? '#000000' : '#ffffff',
+                          width: '44px',
+                          height: '44px',
+                          minWidth: '44px',
+                          borderRadius: '12px',
+                          backgroundColor: isSelected ? '#000000' : '#f2f2f7',
+                          border: 'none',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          transition: 'all 0.2s ease'
+                          color: isSelected ? '#ffffff' : '#1c1c1e',
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       >
-                        {isSelected && (
-                          <div
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#ffffff'
-                            }}
-                          />
-                        )}
+                        <GoogleIcon name={role.icon} size={22} />
                       </div>
+                      <div>
+                        <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#111111' }}>
+                          {role.title}
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: '#636366', fontWeight: '400', display: 'block', marginTop: '0.2rem' }}>
+                          {role.subtitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Radio Indicator */}
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        minWidth: '20px',
+                        borderRadius: '50%',
+                        border: isSelected ? '2px solid #000000' : '1.5px solid #d1d1d6',
+                        backgroundColor: isSelected ? '#000000' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {isSelected && (
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: '#ffffff'
+                          }}
+                        />
+                      )}
                     </div>
                   </article>
                 );
@@ -418,33 +429,21 @@ export const MobileOnboardingView = ({
           </div>
         )}
 
-        {/* Primary Action Button (NO ARROWS!) */}
+        {/* Primary Action Button (NO ARROWS, Concise Text) */}
         <button
           onClick={onNext}
+          className="apple-btn-primary"
           style={{
             width: '100%',
-            height: '54px',
-            backgroundColor: '#000000',
-            color: '#ffffff',
+            height: '52px',
             borderRadius: '16px',
-            fontWeight: '600',
             fontSize: '0.9375rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
-            transition: 'all 0.2s ease'
+            fontWeight: '600'
           }}
         >
           <span>
             {currentStep === 2
               ? 'Get Started'
-              : currentStep === 3
-              ? 'Continue'
-              : currentStep === 4
-              ? `Continue as ${currentRoleObj.title}`
               : 'Continue'}
           </span>
         </button>

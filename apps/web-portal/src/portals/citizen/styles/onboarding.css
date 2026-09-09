@@ -514,6 +514,104 @@
   border-color: rgba(0, 0, 0, 0.2);
 }
 
+/* ==========================================================================
+   APPLE DESIGN TOKENS & MICRO-INTERACTIONS
+   ========================================================================== */
+
+@keyframes appleSpringEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.apple-fade-enter {
+  animation: appleSpringEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Apple Primary Button */
+.apple-btn-primary {
+  height: 48px;
+  padding: 0 1.85rem;
+  background-color: #000000;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.apple-btn-primary:hover {
+  background-color: #1a1a1a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.apple-btn-primary:active {
+  transform: scale(0.975);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: transform 0.08s ease-out;
+}
+
+/* Apple Secondary / Back Button */
+.apple-btn-secondary {
+  height: 48px;
+  padding: 0 1.35rem;
+  background-color: #f2f2f7;
+  color: #1c1c1e;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.apple-btn-secondary:hover {
+  background-color: #e5e5ea;
+  color: #000000;
+}
+
+.apple-btn-secondary:active {
+  transform: scale(0.975);
+  transition: transform 0.08s ease-out;
+}
+
+/* Apple Selection Card */
+.apple-select-card {
+  border-radius: 18px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  position: relative;
+}
+
+.apple-select-card:hover {
+  transform: translateY(-1px);
+}
+
+.apple-select-card:active {
+  transform: scale(0.985);
+  transition: transform 0.08s ease-out;
+}
+
 /* Native Mobile Safe Container */
 .setu-mobile-card {
   width: 100%;
@@ -573,3 +671,4 @@
     gap: 2rem;
   }
 }
+
