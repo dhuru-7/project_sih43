@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../styles/onboarding.css';
 import { MobileOnboardingView } from '../components/MobileOnboardingView';
 import { DesktopOnboardingView } from '../components/DesktopOnboardingView';
 
@@ -231,22 +232,54 @@ export const OnboardingPage = () => {
 
   const isMobile = windowWidth < 1024 || forceMobilePreview;
 
-  if (isMobile) {
-    return (
-      <div className="w-full min-h-screen bg-neutral-100 flex items-center justify-center p-0 md:p-6">
-        {/* If user explicitly toggled mobile preview on desktop, wrap in realistic iPhone frame */}
-        {windowWidth >= 1024 ? (
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-neutral-600">Simulating Mobile Viewport (390px)</span>
+  return (
+    <div
+      style={{
+        width: '100%',
+        minHeight: '100vh',
+        backgroundColor: '#F8F9FA',
+        position: 'relative',
+        boxSizing: 'border-box'
+      }}
+    >
+      {isMobile ? (
+        windowWidth >= 1024 ? (
+          /* Desktop with Mobile Viewport Simulation */
+          <div
+            style={{
+              width: '100%',
+              minHeight: '100vh',
+              backgroundColor: '#F2F2F7',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem 1rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#555555' }}>
+                Simulating Mobile Viewport (410px)
+              </span>
               <button
                 onClick={() => setForceMobilePreview(false)}
-                className="text-xs font-bold text-neutral-900 bg-white border border-neutral-300 px-3 py-1 rounded-full hover:bg-neutral-50 shadow-2xs"
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  color: '#111111',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #d1d5db',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '9999px',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}
               >
                 Switch to Full Desktop View
               </button>
             </div>
-            <div className="w-[412px] h-[860px] rounded-[48px] overflow-hidden border-8 border-neutral-900 shadow-2xl bg-white flex flex-col relative">
+
+            <div className="setu-simulated-iphone">
               <MobileOnboardingView
                 currentStep={currentStep}
                 setCurrentStep={setCurrentStep}
@@ -266,6 +299,7 @@ export const OnboardingPage = () => {
             </div>
           </div>
         ) : (
+          /* Real Mobile Device Screen */
           <MobileOnboardingView
             currentStep={currentStep}
             setCurrentStep={setCurrentStep}
@@ -282,28 +316,27 @@ export const OnboardingPage = () => {
             districts={DISTRICTS}
             onComplete={handleComplete}
           />
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <DesktopOnboardingView
-      currentStep={currentStep}
-      setCurrentStep={setCurrentStep}
-      totalSteps={ONBOARDING_SLIDES.length}
-      slides={ONBOARDING_SLIDES}
-      selectedRole={selectedRole}
-      setSelectedRole={setSelectedRole}
-      roles={ROLES}
-      selectedLang={selectedLang}
-      setSelectedLang={setSelectedLang}
-      selectedDistrict={selectedDistrict}
-      setSelectedDistrict={setSelectedDistrict}
-      languages={LANGUAGES}
-      districts={DISTRICTS}
-      onComplete={handleComplete}
-      onSwitchToMobile={() => setForceMobilePreview(true)}
-    />
+        )
+      ) : (
+        /* Real Desktop Widescreen */
+        <DesktopOnboardingView
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          totalSteps={ONBOARDING_SLIDES.length}
+          slides={ONBOARDING_SLIDES}
+          selectedRole={selectedRole}
+          setSelectedRole={setSelectedRole}
+          roles={ROLES}
+          selectedLang={selectedLang}
+          setSelectedLang={setSelectedLang}
+          selectedDistrict={selectedDistrict}
+          setSelectedDistrict={setSelectedDistrict}
+          languages={LANGUAGES}
+          districts={DISTRICTS}
+          onComplete={handleComplete}
+          onSwitchToMobile={() => setForceMobilePreview(true)}
+        />
+      )}
+    </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
@@ -40,46 +40,107 @@ export const MobileOnboardingView = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#FCFCFD] text-[#111111] font-sans flex flex-col justify-between select-none relative overflow-x-hidden">
-      {/* iOS Ambient Background Glow */}
-      <div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] h-[340px] pointer-events-none opacity-40 blur-3xl -z-10"
+    <div
+      style={{
+        width: '100%',
+        maxWidth: '430px',
+        minHeight: '100vh',
+        margin: '0 auto',
+        backgroundColor: '#FCFCFD',
+        color: '#111111',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        position: 'relative',
+        boxSizing: 'border-box',
+        boxShadow: '0 0 40px rgba(0, 0, 0, 0.06)'
+      }}
+    >
+      {/* Top iOS Navigation Bar */}
+      <header
         style={{
-          background: 'radial-gradient(circle at 50% 20%, rgba(220, 235, 252, 0.8), rgba(240, 245, 250, 0.4) 60%, transparent 80%)'
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+          padding: '1rem 1.25rem 0.75rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
         }}
-      />
-
-      {/* Top Navigation Bar - Apple Translucent Capsule */}
-      <header className="sticky top-0 z-30 px-5 pt-4 pb-3 flex items-center justify-between backdrop-blur-xl bg-white/80 border-b border-neutral-200/50 transition-all">
-        <div className="flex items-center gap-2">
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           {currentStep > 0 && (
             <button
               onClick={handlePrev}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-600 hover:text-black hover:bg-neutral-100 active:scale-95 transition-all -ml-1 mr-0.5"
-              aria-label="Back"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'none',
+                border: 'none',
+                color: '#333333',
+                cursor: 'pointer',
+                marginRight: '0.2rem'
+              }}
             >
               <GoogleIcon name="arrow_back" size={20} />
             </button>
           )}
-          <span className="text-xl font-bold tracking-tight text-black flex items-center">
-            Setu<span className="w-1.5 h-1.5 rounded-full bg-black ml-0.5 self-baseline mb-0.5 inline-block"></span>
+          <span style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.03em', color: '#000000' }}>
+            Setu<span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#000000', display: 'inline-block', marginLeft: '1px' }} />
           </span>
-          <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-200/60 ml-1">
-            DHTE Jharkhand
+          <span
+            style={{
+              fontSize: '0.625rem',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              padding: '0.2rem 0.5rem',
+              borderRadius: '9999px',
+              backgroundColor: '#f1f3f5',
+              color: '#555555',
+              marginLeft: '0.35rem'
+            }}
+          >
+            DHTE
           </span>
         </div>
 
         {currentStep < totalSteps - 1 ? (
           <button
             onClick={handleSkip}
-            className="text-xs font-semibold text-neutral-500 hover:text-black px-3 py-1.5 rounded-full hover:bg-neutral-100 active:scale-95 transition-all"
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: '600',
+              color: '#666666',
+              background: 'none',
+              border: 'none',
+              padding: '0.35rem 0.75rem',
+              borderRadius: '9999px',
+              cursor: 'pointer'
+            }}
           >
             Skip
           </button>
         ) : (
           <button
             onClick={() => navigate('/login')}
-            className="text-xs font-semibold text-neutral-500 hover:text-black px-3 py-1.5 rounded-full hover:bg-neutral-100 active:scale-95 transition-all"
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: '600',
+              color: '#111111',
+              backgroundColor: '#f1f3f5',
+              border: 'none',
+              padding: '0.35rem 0.75rem',
+              borderRadius: '9999px',
+              cursor: 'pointer'
+            }}
           >
             Login
           </button>
@@ -87,132 +148,202 @@ export const MobileOnboardingView = ({
       </header>
 
       {/* Main Viewport Content */}
-      <main className="flex-1 flex flex-col justify-start px-5 py-4 overflow-y-auto">
+      <main style={{ flex: 1, padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflowY: 'auto' }}>
         {currentStep < 3 ? (
-          /* Step 1, 2, 3: Informational Slides */
-          <div className="flex flex-col items-center text-center animate-fade-in my-auto py-2">
-            {/* Step Counter Pill */}
-            <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200/80 text-[11px] font-bold tracking-wider text-neutral-700 uppercase shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-black"></span>
+          /* Step 1, 2, 3 */
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', margin: 'auto 0' }}>
+            {/* Step Badge */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.3rem 0.75rem',
+                borderRadius: '9999px',
+                backgroundColor: '#f1f3f5',
+                border: '1px solid #e5e7eb',
+                fontSize: '0.6875rem',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: '#444444',
+                marginBottom: '1rem'
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#000000', display: 'inline-block' }} />
               Step {currentStep + 1} of {totalSteps}
             </div>
 
-            {/* Editorial Illustration Card */}
-            <div className="w-full max-w-[360px] aspect-[4/3] rounded-3xl overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100/70 border border-neutral-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] mb-5 p-3 flex items-center justify-center group relative">
+            {/* Illustration Container */}
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '340px',
+                aspectRatio: '4 / 3',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '1.25rem'
+              }}
+            >
               <img
                 src={slide.image}
                 alt={slide.title}
-                className="w-full h-full object-contain rounded-2xl transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                loading="eager"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '16px' }}
               />
-              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-black/5 pointer-events-none" />
             </div>
 
-            {/* Feature Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3.5 max-w-sm">
+            {/* Tag Pills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.4rem', marginBottom: '1rem' }}>
               {slide.tags.map((tag, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center text-[11px] font-semibold text-neutral-700 bg-neutral-100/90 border border-neutral-200 px-2.5 py-1 rounded-full shadow-2xs"
+                  style={{
+                    fontSize: '0.6875rem',
+                    fontWeight: '600',
+                    color: '#333333',
+                    backgroundColor: '#f1f3f5',
+                    border: '1px solid #e5e7eb',
+                    padding: '0.25rem 0.65rem',
+                    borderRadius: '9999px'
+                  }}
                 >
                   {tag}
                 </span>
               ))}
             </div>
 
-            {/* Main Headline */}
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 leading-snug mb-2.5 max-w-xs">
+            {/* Title */}
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.03em', color: '#111111', lineHeight: 1.25, margin: '0 0 0.5rem' }}>
               {slide.title} <br />
-              <span className="text-black bg-gradient-to-r from-neutral-950 to-neutral-700 bg-clip-text text-transparent">
-                {slide.highlight}
-              </span>
+              <span style={{ color: '#000000' }}>{slide.highlight}</span>
             </h1>
 
-            {/* Subtitle / Description */}
-            <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed max-w-sm mb-3">
+            {/* Subtitle */}
+            <p style={{ fontSize: '0.8125rem', color: '#555555', lineHeight: 1.5, margin: '0 0 1rem', maxWidth: '320px' }}>
               {slide.subtitle}
             </p>
 
-            {/* Social Proof / Impact Callout */}
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 bg-white border border-neutral-200/70 px-3 py-1 rounded-full shadow-2xs">
-              <GoogleIcon name="verified" size={14} className="text-emerald-600" />
+            {/* Stat Chip */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.6875rem',
+                fontWeight: '600',
+                color: '#444444',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e5e7eb',
+                padding: '0.35rem 0.8rem',
+                borderRadius: '9999px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+              }}
+            >
+              <GoogleIcon name="verified" size={14} color="#10b981" />
               <span>{slide.stat}</span>
             </div>
           </div>
         ) : (
-          /* Step 4: Role Selection & Localization Preferences */
-          <div className="flex flex-col space-y-5 animate-fade-in pb-4">
-            {/* Header Tag */}
-            <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200/80 text-[11px] font-bold tracking-wider text-neutral-700 uppercase shadow-2xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-black"></span>
+          /* Step 4: Role Selection & Preferences */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.3rem 0.75rem',
+                  borderRadius: '9999px',
+                  backgroundColor: '#f1f3f5',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '0.6875rem',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  color: '#444444'
+                }}
+              >
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#000000', display: 'inline-block' }} />
                 Step 4 of {totalSteps}
               </div>
-              <span className="text-[11px] font-medium text-neutral-500">
-                Setup your profile
-              </span>
+              <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: '500' }}>Setup your identity</span>
             </div>
 
-            {/* Screen Title */}
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-neutral-950 leading-tight">
+              <h1 style={{ fontSize: '1.4rem', fontWeight: '800', letterSpacing: '-0.03em', color: '#111111', margin: '0 0 0.25rem' }}>
                 How will you use Setu?
               </h1>
-              <p className="text-xs text-neutral-500 mt-1">
-                Choose your identity to customize reporting feeds and dashboards.
+              <p style={{ fontSize: '0.75rem', color: '#666666', margin: 0 }}>
+                Choose your role to customize feeds and reporting permissions.
               </p>
             </div>
 
-            {/* Bento Role Cards */}
-            <div className="space-y-3" role="radiogroup" aria-label="Select role">
+            {/* 4 Bento Role Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {roles.map((role) => {
                 const isSelected = selectedRole === role.id;
                 return (
                   <article
                     key={role.id}
                     onClick={() => setSelectedRole(role.id)}
-                    className={`relative rounded-2xl p-4 border transition-all duration-200 cursor-pointer active:scale-[0.985] ${
-                      isSelected
-                        ? 'border-neutral-950 bg-neutral-50/80 shadow-[0_4px_16px_rgba(0,0,0,0.06)]'
-                        : 'border-neutral-200/90 bg-white hover:border-neutral-300 shadow-2xs'
-                    }`}
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderRadius: '16px',
+                      border: isSelected ? '2px solid #000000' : '1px solid #e5e7eb',
+                      backgroundColor: isSelected ? '#fbfbfc' : '#ffffff',
+                      cursor: 'pointer',
+                      boxShadow: isSelected ? '0 4px 14px rgba(0,0,0,0.06)' : '0 1px 3px rgba(0,0,0,0.02)',
+                      transition: 'all 0.2s ease'
+                    }}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shadow-2xs ${
-                            isSelected
-                              ? 'bg-neutral-950 text-white'
-                              : 'bg-neutral-100 text-neutral-700 border border-neutral-200/60'
-                          }`}
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '10px',
+                            backgroundColor: isSelected ? '#000000' : '#f1f3f5',
+                            color: isSelected ? '#ffffff' : '#333333',
+                            border: isSelected ? 'none' : '1px solid #e5e7eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
                         >
-                          <GoogleIcon name={role.icon} size={20} />
+                          <GoogleIcon name={role.icon} size={18} />
                         </div>
                         <div>
-                          <h2 className="text-sm font-semibold text-neutral-950 leading-tight">
-                            {role.title}
-                          </h2>
-                          <span className="text-[11px] text-neutral-500 font-medium">
-                            {role.subtitle}
-                          </span>
+                          <div style={{ fontSize: '0.8125rem', fontWeight: '700', color: '#111111' }}>{role.title}</div>
+                          <span style={{ fontSize: '0.6875rem', color: '#777777', fontWeight: '500' }}>{role.subtitle}</span>
                         </div>
                       </div>
 
-                      {/* Apple Radio Indicator */}
                       <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center mt-1 transition-all ${
-                          isSelected
-                            ? 'border-neutral-950 bg-neutral-950'
-                            : 'border-neutral-300 bg-white'
-                        }`}
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: isSelected ? '1.5px solid #000000' : '1.5px solid #cccccc',
+                          backgroundColor: isSelected ? '#000000' : '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
                       >
                         {isSelected && (
-                          <div className="w-2 h-2 rounded-full bg-white"></div>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff' }} />
                         )}
                       </div>
                     </div>
 
-                    <p className="text-xs text-neutral-600 mt-2.5 pl-1 leading-relaxed">
+                    <p style={{ fontSize: '0.6875rem', color: '#555555', margin: '0.5rem 0 0', lineHeight: 1.35 }}>
                       {role.detail}
                     </p>
                   </article>
@@ -220,41 +351,68 @@ export const MobileOnboardingView = ({
               })}
             </div>
 
-            {/* Quick Preferences: Language & District */}
-            <div className="rounded-2xl p-4 bg-white border border-neutral-200 shadow-2xs space-y-3.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-700 flex items-center gap-1.5">
-                  <GoogleIcon name="translate" size={15} /> Preferred Language
-                </span>
-                <span className="text-[10px] text-neutral-400 font-medium">Can change anytime</span>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2">
-                {languages.map((lang) => (
-                  <button
-                    key={lang.id}
-                    type="button"
-                    onClick={() => setSelectedLang(lang.id)}
-                    className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-left flex items-center justify-between active:scale-95 ${
-                      selectedLang === lang.id
-                        ? 'border-black bg-black text-white'
-                        : 'border-neutral-200 bg-neutral-50/70 text-neutral-700 hover:bg-neutral-100'
-                    }`}
-                  >
-                    <span>{lang.label}</span>
-                    <span className="text-[10px] opacity-70">{lang.sub}</span>
-                  </button>
-                ))}
+            {/* Language & District Card */}
+            <div
+              style={{
+                borderRadius: '16px',
+                padding: '1rem',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e5e7eb',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}
+            >
+              <div>
+                <label style={{ fontSize: '0.6875rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#333333', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.45rem' }}>
+                  <GoogleIcon name="translate" size={14} /> Language
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.id}
+                      type="button"
+                      onClick={() => setSelectedLang(lang.id)}
+                      style={{
+                        padding: '0.45rem 0.65rem',
+                        borderRadius: '10px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        border: selectedLang === lang.id ? '1px solid #000000' : '1px solid #e5e7eb',
+                        backgroundColor: selectedLang === lang.id ? '#000000' : '#f9f9f9',
+                        color: selectedLang === lang.id ? '#ffffff' : '#333333',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <span>{lang.label}</span>
+                      <span style={{ fontSize: '0.5625rem', opacity: 0.7 }}>{lang.sub}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="pt-2 border-t border-neutral-100">
-                <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 flex items-center gap-1.5 mb-2">
-                  <GoogleIcon name="location_on" size={15} /> Primary District
+              <div style={{ paddingTop: '0.5rem', borderTop: '1px solid #f1f3f5' }}>
+                <label style={{ fontSize: '0.6875rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#333333', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.45rem' }}>
+                  <GoogleIcon name="location_on" size={14} /> Primary District
                 </label>
                 <select
                   value={selectedDistrict}
                   onChange={(e) => setSelectedDistrict(e.target.value)}
-                  className="w-full h-11 px-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-medium text-neutral-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 0.75rem',
+                    backgroundColor: '#f9f9f9',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '10px',
+                    fontSize: '0.75rem',
+                    fontWeight: '500',
+                    color: '#111111',
+                    outline: 'none'
+                  }}
                 >
                   {districts.map((dist) => (
                     <option key={dist} value={dist}>
@@ -268,28 +426,62 @@ export const MobileOnboardingView = ({
         )}
       </main>
 
-      {/* Bottom Interactive Safe Area & Navigation Controls */}
-      <footer className="sticky bottom-0 z-30 px-5 pt-3 pb-6 bg-white/95 backdrop-blur-md border-t border-neutral-200/60 flex flex-col items-center gap-3.5 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-        {/* Animated Apple Pill Indicators */}
-        <div className="flex items-center justify-center gap-2" id="dots-container">
+      {/* Bottom Action Footer with Apple Capsule Indicator */}
+      <footer
+        style={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 30,
+          padding: '0.75rem 1.25rem 1.5rem',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.85rem'
+        }}
+      >
+        {/* Animated Pill Dots */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}>
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentStep(idx)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                idx === currentStep
-                  ? 'w-8 bg-black'
-                  : 'w-2 bg-neutral-300 hover:bg-neutral-400'
-              }`}
+              style={{
+                height: '8px',
+                width: idx === currentStep ? '28px' : '8px',
+                backgroundColor: idx === currentStep ? '#000000' : '#d1d5db',
+                borderRadius: '9999px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
               aria-label={`Go to step ${idx + 1}`}
             />
           ))}
         </div>
 
-        {/* Primary Action Button */}
+        {/* Primary CTA Button */}
         <button
           onClick={handleNext}
-          className="w-full h-13 py-3.5 bg-black text-white rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 hover:bg-neutral-900 active:scale-[0.985] transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+          style={{
+            width: '100%',
+            height: '48px',
+            backgroundColor: '#000000',
+            color: '#ffffff',
+            borderRadius: '14px',
+            fontWeight: '600',
+            fontSize: '0.875rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}
         >
           <span>
             {currentStep === totalSteps - 1
@@ -299,8 +491,8 @@ export const MobileOnboardingView = ({
           <GoogleIcon name="arrow_forward" size={18} />
         </button>
 
-        {/* Authentic iOS Home Indicator */}
-        <div className="w-32 h-1 bg-neutral-300 rounded-full mt-1"></div>
+        {/* iOS Home Indicator */}
+        <div style={{ width: '120px', height: '4px', backgroundColor: '#d1d5db', borderRadius: '9999px', marginTop: '0.25rem' }} />
       </footer>
     </div>
   );
