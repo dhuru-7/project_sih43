@@ -105,8 +105,12 @@ export const OnboardingPage = () => {
       // Reporting role chosen
       localStorage.setItem('setu_onboarded', 'true');
       localStorage.setItem('setu_user_role', selectedRole);
-      const matched = REPORTING_ROLES.find((r) => r.id === selectedRole);
-      navigate(matched ? matched.route : '/report');
+      if (selectedRole === 'citizen') {
+        setCurrentStep(5);
+      } else {
+        const matched = REPORTING_ROLES.find((r) => r.id === selectedRole);
+        navigate(matched ? matched.route : '/report?role=spoc');
+      }
     }
   };
 
@@ -119,6 +123,12 @@ export const OnboardingPage = () => {
   const handleSkip = () => {
     // Jump straight to Intent Selection
     setCurrentStep(3);
+  };
+
+  const handleAadhaarSuccess = (user) => {
+    localStorage.setItem('setu_onboarded', 'true');
+    localStorage.setItem('setu_user_role', 'citizen');
+    navigate('/report');
   };
 
   const isMobile = windowWidth < 1024;
@@ -146,6 +156,7 @@ export const OnboardingPage = () => {
           onNext={handleNext}
           onPrev={handlePrev}
           onSkip={handleSkip}
+          onAadhaarSuccess={handleAadhaarSuccess}
         />
       ) : (
         <DesktopOnboardingView
@@ -161,6 +172,7 @@ export const OnboardingPage = () => {
           onNext={handleNext}
           onPrev={handlePrev}
           onSkip={handleSkip}
+          onAadhaarSuccess={handleAadhaarSuccess}
         />
       )}
     </div>

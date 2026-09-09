@@ -1,5 +1,6 @@
 import React from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { AadhaarOnboardingStep } from './AadhaarOnboardingStep';
 
 export const MobileOnboardingView = ({
   currentStep,
@@ -13,7 +14,8 @@ export const MobileOnboardingView = ({
   roles,
   onNext,
   onPrev,
-  onSkip
+  onSkip,
+  onAadhaarSuccess
 }) => {
   const isSlideshow = currentStep < 3;
   const slide = slides[currentStep] || slides[0];
@@ -38,7 +40,7 @@ export const MobileOnboardingView = ({
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Valley Sans', sans-serif"
       }}
     >
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar: Clean Setu. Logo on left (NO back button), Skip on right */}
       <header
         style={{
           position: 'sticky',
@@ -54,28 +56,6 @@ export const MobileOnboardingView = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {currentStep > 3 && (
-            <button
-              onClick={onPrev}
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                color: '#111111',
-                cursor: 'pointer',
-                marginRight: '0.4rem',
-                padding: 0
-              }}
-              aria-label="Back"
-            >
-              <GoogleIcon name="arrow_back" size={20} />
-            </button>
-          )}
           <span
             style={{
               fontSize: '1.5rem',
@@ -280,7 +260,7 @@ export const MobileOnboardingView = ({
               })}
             </div>
           </div>
-        ) : (
+        ) : currentStep === 4 ? (
           /* ===================================================================
              STAGE 3: Mobile Reporting Portal Sub-Role Selection (Static Heading, Concise)
              =================================================================== */
@@ -393,72 +373,100 @@ export const MobileOnboardingView = ({
               })}
             </div>
           </div>
+        ) : (
+          /* ===================================================================
+             STAGE 4: Mobile Aadhaar Verification & OTP Screen (Step 5)
+             =================================================================== */
+          <AadhaarOnboardingStep
+            isMobile={true}
+            onPrev={onPrev}
+            onSuccess={onAadhaarSuccess}
+          />
         )}
       </main>
 
-      {/* Bottom Interactive Safe Area & Navigation Controls */}
-      <footer
-        style={{
-          padding: '1rem 1.5rem 1.75rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1.25rem'
-        }}
-      >
-        {/* 3 Animated Apple Pill Indicators - ONLY during Slideshow */}
-        {isSlideshow && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-            {[0, 1, 2].map((idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentStep(idx)}
-                style={{
-                  height: '8px',
-                  width: idx === currentStep ? '32px' : '8px',
-                  backgroundColor: idx === currentStep ? '#000000' : '#d1d5db',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                  padding: 0
-                }}
-                aria-label={`Slide ${idx + 1}`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Primary Action Button (NO ARROWS, Concise Text) */}
-        <button
-          onClick={onNext}
-          className="apple-btn-primary"
+      {/* Bottom Interactive Safe Area & Navigation Controls (Only for Steps 0-4) */}
+      {currentStep < 5 && (
+        <footer
           style={{
-            width: '100%',
-            height: '52px',
-            borderRadius: '16px',
-            fontSize: '0.9375rem',
-            fontWeight: '600'
+            padding: '1rem 1.5rem 1.75rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.85rem'
           }}
         >
-          <span>
-            {currentStep === 2
-              ? 'Get Started'
-              : 'Continue'}
-          </span>
-        </button>
+          {/* 3 Animated Apple Pill Indicators - ONLY during Slideshow */}
+          {isSlideshow && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+              {[0, 1, 2].map((idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentStep(idx)}
+                  style={{
+                    height: '8px',
+                    width: idx === currentStep ? '32px' : '8px',
+                    backgroundColor: idx === currentStep ? '#000000' : '#d1d5db',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    padding: 0
+                  }}
+                  aria-label={`Slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
 
-        {/* iOS Home Indicator */}
-        <div
-          style={{
-            width: '128px',
-            height: '4px',
-            backgroundColor: '#d1d5db',
-            borderRadius: '9999px',
-            marginTop: '0.25rem'
-          }}
-        />
-      </footer>
+          {/* Primary Action Button (NO ARROWS, Concise Text) */}
+          <button
+            onClick={onNext}
+            className="apple-btn-primary"
+            style={{
+              width: '100%',
+              height: '52px',
+              borderRadius: '16px',
+              fontSize: '0.9375rem',
+              fontWeight: '600'
+            }}
+          >
+            <span>
+              {currentStep === 2
+                ? 'Get Started'
+                : 'Continue'}
+            </span>
+          </button>
+
+          {/* Back Button POPS DIRECTLY UNDER Continue Button on Role / Intent Screen */}
+          {(currentStep === 3 || currentStep === 4) && (
+            <button
+              onClick={onPrev}
+              className="apple-btn-secondary"
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '16px',
+                fontSize: '0.9375rem',
+                fontWeight: '600'
+              }}
+            >
+              Back
+            </button>
+          )}
+
+          {/* iOS Home Indicator */}
+          <div
+            style={{
+              width: '128px',
+              height: '4px',
+              backgroundColor: '#d1d5db',
+              borderRadius: '9999px',
+              marginTop: '0.25rem'
+            }}
+          />
+        </footer>
+      )}
     </div>
   );
 };

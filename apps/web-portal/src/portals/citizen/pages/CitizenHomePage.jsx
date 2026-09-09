@@ -219,8 +219,66 @@ export const CitizenHomePage = () => {
     setUpvotedSet((prev) => new Set(prev).add(formatted.id));
   };
 
+  // Single-session concurrency validation heartbeat
+  useEffect(() => {
+    const checkSession = async () => {
+      const sessionId = localStorage.getItem('setu_session_id');
+      const userStr = localStorage.getItem('setu_user');
+      if (!sessionId || !userStr) return;
+
+      try {
+        const u = JSON.parse(userStr);
+        const rawAadhaar = u.aadhaar ? u.aadhaar.replace(/\D/g, '') : null;
+        if (!rawAadhaar) return;
+
+        const res = await fetch('http://localhost:5000/api/v1/auth/aadhaar/validate-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aadhaarNumber: rawAadhaar, sessionId })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.valid === false) {
+            alert(
+              '⚠️ Session Terminated: This Aadhaar account was signed into from another device or window. Setu enforces strict single-session concurrency.'
+            );
+            localStorage.removeItem('setu_user');
+            localStorage.removeItem('setu_session_id');
+            localStorage.removeItem('setu_token');
+            localStorage.removeItem('sih_auth_token');
+            localStorage.removeItem('sih_user_data');
+            window.location.href = '/onboarding';
+          }
+        }
+      } catch (e) {
+        // Silent catch for network hiccups
+      }
+    };
+
+    const interval = setInterval(checkSession, 8000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
   const { user } = useAuth();
-  const userName = user?.name || user?.full_name || user?.username || 'Rampal';
+  const storedSetuUser = React.useMemo(() => {
+    try {
+      const u = localStorage.getItem('setu_user');
+      return u ? JSON.parse(u) : null;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+  const userName = storedSetuUser?.name || user?.name || user?.full_name || user?.username || 'Rahul Verma';
 
   return (
     <div className="setu-portal" style={{ position: 'relative', width: '100%', minHeight: '100vh', backgroundColor: '#f9f9f9' }}>

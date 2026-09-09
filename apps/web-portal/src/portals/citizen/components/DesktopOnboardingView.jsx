@@ -1,5 +1,6 @@
 import React from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { AadhaarOnboardingStep } from './AadhaarOnboardingStep';
 
 export const DesktopOnboardingView = ({
   currentStep,
@@ -13,7 +14,8 @@ export const DesktopOnboardingView = ({
   roles,
   onNext,
   onPrev,
-  onSkip
+  onSkip,
+  onAadhaarSuccess
 }) => {
   const isSlideshow = currentStep < 3;
   const slide = slides[currentStep] || slides[0];
@@ -384,7 +386,7 @@ export const DesktopOnboardingView = ({
                 </button>
               </div>
             </div>
-          ) : (
+          ) : currentStep === 4 ? (
             /* ===================================================================
                STAGE 3: Reporting Portal Sub-Role Selection (Static Title, NO Scroll)
                =================================================================== */
@@ -517,6 +519,17 @@ export const DesktopOnboardingView = ({
                   Continue
                 </button>
               </div>
+            </div>
+          ) : (
+            /* ===================================================================
+               STAGE 4: Desktop Aadhaar Verification & OTP Screen (Step 5)
+               =================================================================== */
+            <div style={{ width: '100%', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+              <AadhaarOnboardingStep
+                isMobile={false}
+                onPrev={onPrev}
+                onSuccess={onAadhaarSuccess}
+              />
             </div>
           )}
         </div>
