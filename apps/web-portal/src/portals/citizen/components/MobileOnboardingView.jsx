@@ -419,41 +419,68 @@ export const MobileOnboardingView = ({
             </div>
           )}
 
-          {/* Primary Action Button (NO ARROWS, Concise Text) */}
-          <button
-            onClick={onNext}
-            className="apple-btn-primary"
+          {/* Action Buttons Row with Smooth Apple Squeeze Animation */}
+          <div
             style={{
+              display: 'flex',
+              alignItems: 'center',
               width: '100%',
-              height: '52px',
-              borderRadius: '16px',
-              fontSize: '0.9375rem',
-              fontWeight: '600'
+              gap: currentStep >= 3 ? '0.75rem' : '0px',
+              transition: 'gap 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
           >
-            <span>
-              {currentStep === 2
-                ? 'Get Started'
-                : 'Continue'}
-            </span>
-          </button>
-
-          {/* Back Button POPS DIRECTLY UNDER Continue Button on Role / Intent Screen */}
-          {(currentStep === 3 || currentStep === 4) && (
+            {/* Back Button on Left: Smoothly Expands and Slides in, Squeezing Continue Button */}
             <button
               onClick={onPrev}
               className="apple-btn-secondary"
+              aria-hidden={currentStep < 3}
+              tabIndex={currentStep < 3 ? -1 : 0}
               style={{
-                width: '100%',
-                height: '48px',
+                height: '52px',
                 borderRadius: '16px',
                 fontSize: '0.9375rem',
-                fontWeight: '600'
+                fontWeight: '600',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                width: currentStep >= 3 ? '100px' : '0px',
+                minWidth: currentStep >= 3 ? '100px' : '0px',
+                maxWidth: currentStep >= 3 ? '100px' : '0px',
+                opacity: currentStep >= 3 ? 1 : 0,
+                padding: currentStep >= 3 ? '0 1rem' : '0px',
+                border: currentStep >= 3 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+                pointerEvents: currentStep >= 3 ? 'auto' : 'none',
+                transform: currentStep >= 3 ? 'translateX(0) scale(1)' : 'translateX(-16px) scale(0.9)',
+                transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxSizing: 'border-box'
               }}
             >
               Back
             </button>
-          )}
+
+            {/* Primary Action Button (Smoothly Squeezes to Accommodate Back Button) */}
+            <button
+              onClick={onNext}
+              className="apple-btn-primary"
+              style={{
+                flex: 1,
+                height: '52px',
+                borderRadius: '16px',
+                fontSize: '0.9375rem',
+                fontWeight: '600',
+                transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxSizing: 'border-box'
+              }}
+            >
+              <span>
+                {currentStep === 2
+                  ? 'Get Started'
+                  : 'Continue'}
+              </span>
+            </button>
+          </div>
 
           {/* iOS Home Indicator */}
           <div
