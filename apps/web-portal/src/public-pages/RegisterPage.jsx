@@ -8,7 +8,14 @@ export const RegisterPage = () => {
       <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
         Government agencies, universities, and industry CSR entities are verified via institutional onboarding.
       </p>
-      <Link to="/login" className="btn btn-primary" style={{ width: '100%' }}>Back to Login</Link>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
+        <Link to="/onboarding" className="btn btn-primary" style={{ width: '100%' }}>
+          Start Interactive Onboarding
+        </Link>
+        <Link to="/login" className="btn btn-secondary" style={{ width: '100%' }}>
+          Back to Login
+        </Link>
+      </div>
     </div>
   );
 };

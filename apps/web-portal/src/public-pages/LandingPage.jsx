@@ -41,6 +41,9 @@ export const LandingPage = () => {
           >
             <GoogleIcon name="download" size={20} /> Download Setu APK (v1.0.0)
           </a>
+          <Link to="/onboarding" className="btn btn-secondary" style={{ padding: '0.875rem 1.75rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <GoogleIcon name="explore" size={20} /> Experience Onboarding
+          </Link>
           <Link to="/login" className="btn btn-outline" style={{ padding: '0.875rem 1.75rem', fontSize: '1rem' }}>
             Access Portals
           </Link>

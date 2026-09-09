@@ -119,3 +119,101 @@ def end_voice():
 
     VoiceAgentService.end_session(session_id)
     return jsonify({"status": "success", "message": "Session ended"}), 200
+
+@voice_agent_bp.route("/describe-issue", methods=["POST"])
+def describe_issue():
+    """
+    Accepts spoken audio (multipart or base64) or direct text.
+    Transcribes voice using Sarvam Saaras v3 STT -> formats a formal civic report
+    using Gemini 3.5 Flash Lite -> returns title, description, category, and severity.
+    """
+    from app.services.sarvam_service import SarvamService
+    from app.services.gemini_service import GeminiService
+
+    transcript = ""
+    detected_lang = "hi-IN"
+
+    # 1. Handle multipart audio file
+    if "audio" in request.files or "file" in request.files:
+        audio_file = request.files.get("audio") or request.files.get("file")
+        audio_bytes = audio_file.read()
+        filename = audio_file.filename or "recording.webm"
+        mime_type = audio_file.mimetype or "audio/webm"
+
+        try:
+            stt_res = SarvamService.speech_to_text(
+                audio_bytes=audio_bytes,
+                filename=filename,
+                mime_type=mime_type,
+                language_code="hi-IN"
+            )
+            transcript = stt_res.get("transcript", "").strip()
+            detected_lang = stt_res.get("language_code", "hi-IN")
+        except Exception as e:
+            logger.exception("Sarvam STT failed in describe_issue")
+            return jsonify({
+                "status": "error",
+                "message": f"Speech transcription error: {str(e)}"
+            }), 500
+
+    # 2. Handle JSON payload (audio_base64 or direct text)
+    else:
+        data = request.get_json(silent=True) or {}
+        if "audio_base64" in data and data["audio_base64"]:
+            try:
+                raw_b64 = data["audio_base64"]
+                if "," in raw_b64:
+                    raw_b64 = raw_b64.split(",", 1)[1]
+                audio_bytes = base64.b64decode(raw_b64)
+                stt_res = SarvamService.speech_to_text(
+                    audio_bytes=audio_bytes,
+                    filename="recording.webm",
+                    mime_type="audio/webm",
+                    language_code="hi-IN"
+                )
+                transcript = stt_res.get("transcript", "").strip()
+                detected_lang = stt_res.get("language_code", "hi-IN")
+            except Exception as e:
+                logger.exception("Sarvam STT failed on base64 audio")
+                return jsonify({
+                    "status": "error",
+                    "message": f"Speech transcription error: {str(e)}"
+                }), 500
+        elif "text" in data and data["text"].strip():
+            transcript = data["text"].strip()
+
+    if not transcript:
+        return jsonify({
+            "status": "error",
+            "message": "No voice audio or text received for grievance description."
+        }), 400
+
+    # 3. Formulate structured grievance using Gemini 3.5 Flash Lite
+    try:
+        issue_meta = GeminiService.generate_issue_description(transcript)
+        return jsonify({
+            "status": "success",
+            "data": {
+                "transcript": transcript,
+                "title": issue_meta.get("title", "Civic Grievance Report"),
+                "description": issue_meta.get("description", transcript),
+                "category": issue_meta.get("category", "URBAN_INFRASTRUCTURE"),
+                "severity": issue_meta.get("severity", "MEDIUM"),
+                "language": detected_lang
+            }
+        }), 200
+    except Exception as e:
+        logger.exception("Gemini issue description generation failed")
+        # Return transcript as fallback description so citizen flow is never blocked
+        return jsonify({
+            "status": "success",
+            "data": {
+                "transcript": transcript,
+                "title": transcript[:40] + ("..." if len(transcript) > 40 else ""),
+                "description": transcript,
+                "category": "URBAN_INFRASTRUCTURE",
+                "severity": "MEDIUM",
+                "language": detected_lang
+            }
+        }), 200
+

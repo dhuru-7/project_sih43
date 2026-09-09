@@ -17,6 +17,7 @@ import { RegisterPage } from '../public-pages/RegisterPage';
 
 // Citizen Reporting Portal (Dual Desktop & Mobile with Apple Fluid Motion)
 import { CitizenHomePage } from '../portals/citizen/pages/CitizenHomePage';
+import { OnboardingPage } from '../portals/citizen/pages/OnboardingPage';
 
 // Government Pages
 import { GovernmentDashboard } from '../portals/government/pages/Dashboard';
@@ -48,6 +49,11 @@ export const AppRoutes = () => {
       <Route element={<LandingLayout />}>
         <Route path="/" element={<LandingPage />} />
       </Route>
+
+      {/* 🚀 SETU Onboarding Experience (Stitch Design & Apple Polish - Desktop + Mobile) */}
+      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/welcome" element={<OnboardingPage />} />
+      <Route path="/intro" element={<OnboardingPage />} />
 
       {/* 📱 Citizen Civic Reporting Portal (Stitch Design - Dual Desktop/Mobile) */}
       <Route path="/citizen" element={<CitizenHomePage />} />

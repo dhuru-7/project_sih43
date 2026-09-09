@@ -6,6 +6,7 @@ export const MobileHomeView = ({
   upvotedSet,
   handleUpvote,
   onOpenTara,
+  onOpenReport,
   onOpenIssueDetail,
   activeNav,
   setActiveNav,
@@ -137,7 +138,7 @@ export const MobileHomeView = ({
               </div>
 
               <button
-                onClick={onOpenTara}
+                onClick={onOpenReport || onOpenTara}
                 className="apple-tap"
                 style={{
                   width: '38px',
@@ -159,7 +160,7 @@ export const MobileHomeView = ({
 
             {/* Single Prominent Action Button: Record Video */}
             <button
-              onClick={onOpenTara}
+              onClick={onOpenReport || onOpenTara}
               className="apple-tap"
               style={{
                 position: 'relative',

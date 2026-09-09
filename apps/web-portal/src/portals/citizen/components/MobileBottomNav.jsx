@@ -1,7 +1,7 @@
 import React from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
-export const MobileBottomNav = ({ activeNav, setActiveNav, onOpenTara }) => {
+export const MobileBottomNav = ({ activeNav, setActiveNav, onOpenTara, onOpenReport }) => {
   return (
     <div
       style={{
@@ -97,7 +97,7 @@ export const MobileBottomNav = ({ activeNav, setActiveNav, onOpenTara }) => {
 
         {/* 3. Center Elevated Action Button (+) */}
         <button
-          onClick={onOpenTara}
+          onClick={onOpenReport || onOpenTara}
           className="apple-tap"
           style={{
             width: '48px',

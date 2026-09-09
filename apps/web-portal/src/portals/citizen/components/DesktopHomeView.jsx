@@ -4,6 +4,7 @@ import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 export const DesktopHomeView = ({
   issues,
   onOpenTara,
+  onOpenReport,
   onOpenIssueDetail,
   activeNav,
   setActiveNav,
@@ -70,7 +71,10 @@ export const DesktopHomeView = ({
                   key={item.id}
                   onClick={() => {
                     setActiveNav(item.id);
-                    if (item.id === 'report') onOpenTara();
+                    if (item.id === 'report') {
+                      if (onOpenReport) onOpenReport();
+                      else onOpenTara();
+                    }
                   }}
                   className="apple-tap"
                   style={{
@@ -276,7 +280,7 @@ export const DesktopHomeView = ({
                 </div>
 
                 <button
-                  onClick={onOpenTara}
+                  onClick={onOpenReport || onOpenTara}
                   className="apple-tap"
                   style={{
                     width: '38px',
@@ -299,7 +303,7 @@ export const DesktopHomeView = ({
               {/* Single White Action Button: Upload Media */}
               <div style={{ position: 'relative', zIndex: 1, width: '100%' }}>
                 <button
-                  onClick={onOpenTara}
+                  onClick={onOpenReport || onOpenTara}
                   className="apple-tap"
                   style={{
                     width: '100%',

@@ -11,6 +11,8 @@ import { MobileProfileView } from '../components/MobileProfileView';
 import { MobileBottomNav } from '../components/MobileBottomNav';
 import { TaraCopilotModal } from '../components/TaraCopilotModal';
 import { IssueDetailModal } from '../components/IssueDetailModal';
+import { MobileReportingModal } from '../components/MobileReportingModal';
+import { DesktopReportingModal } from '../components/DesktopReportingModal';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -125,8 +127,15 @@ export const CitizenHomePage = () => {
 
   // Modals
   const [isTaraOpen, setIsTaraOpen] = useState(false);
+  const [isReportingOpen, setIsReportingOpen] = useState(false);
   const [detailIssue, setDetailIssue] = useState(null);
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname === '/report' || location.pathname === '/citizen/report') {
+      setIsReportingOpen(true);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (activeNav !== 'messages') {
@@ -191,6 +200,25 @@ export const CitizenHomePage = () => {
     setUpvotedSet((prev) => new Set(prev).add(newIssue.id));
   };
 
+  const handleReportSubmitted = (newProblem) => {
+    if (!newProblem) return;
+    const formatted = {
+      id: newProblem.id || `#SETU-${Math.floor(1000 + Math.random() * 9000)}`,
+      title: newProblem.title,
+      status: 'pending',
+      statusBadge: 'Pending',
+      time: 'Just now',
+      location: newProblem.address || 'Bero Block, Ranchi District',
+      author: userName || 'Citizen (You)',
+      assignee: 'Nodal Technical Evaluation Desk',
+      upvotes: 1,
+      image: (newProblem.evidenceUrls && newProblem.evidenceUrls[0]) || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80',
+      description: newProblem.description
+    };
+    setIssues((prev) => [formatted, ...prev]);
+    setUpvotedSet((prev) => new Set(prev).add(formatted.id));
+  };
+
   const { user } = useAuth();
   const userName = user?.name || user?.full_name || user?.username || 'Rampal';
 
@@ -241,6 +269,7 @@ export const CitizenHomePage = () => {
               upvotedSet={upvotedSet}
               handleUpvote={handleUpvote}
               onOpenTara={() => setIsTaraOpen(true)}
+              onOpenReport={() => setIsReportingOpen(true)}
               onOpenIssueDetail={(issue) => setDetailIssue(issue)}
               activeNav={activeNav}
               setActiveNav={setActiveNav}
@@ -255,6 +284,7 @@ export const CitizenHomePage = () => {
               activeNav={activeNav}
               setActiveNav={setActiveNav}
               onOpenTara={() => setIsTaraOpen(true)}
+              onOpenReport={() => setIsReportingOpen(true)}
             />
           )}
         </div>
@@ -289,12 +319,29 @@ export const CitizenHomePage = () => {
           key="desktop-home"
           issues={issues}
           onOpenTara={() => setIsTaraOpen(true)}
+          onOpenReport={() => setIsReportingOpen(true)}
           onOpenIssueDetail={(issue) => setDetailIssue(issue)}
           activeNav={activeNav}
           setActiveNav={setActiveNav}
           userName={userName}
         />
       )}
+
+      {/* 📱 Mobile Reporting Modal (In-App Camera, Gallery, Swipe Preview, Saaras + Gemini Description) */}
+      <MobileReportingModal
+        isOpen={isReportingOpen && isViewportMobile}
+        onClose={() => setIsReportingOpen(false)}
+        onReportSubmitted={handleReportSubmitted}
+        userName={userName}
+      />
+
+      {/* 💻 Desktop Reporting Modal (Multi-File Select, + Add More, Saaras + Gemini Description) */}
+      <DesktopReportingModal
+        isOpen={isReportingOpen && !isViewportMobile}
+        onClose={() => setIsReportingOpen(false)}
+        onReportSubmitted={handleReportSubmitted}
+        userName={userName}
+      />
 
       {/* TARA AI Civic Assistant Modal */}
       <TaraCopilotModal

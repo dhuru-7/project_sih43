@@ -85,3 +85,75 @@ class GeminiService:
         except Exception as e:
             logger.exception("Error during Gemini response generation")
             raise
+
+    @classmethod
+    def generate_issue_description(cls, transcript: str) -> dict:
+        """
+        Synthesizes a citizen's spoken voice transcript into a clear, formal civic grievance
+        with title, description, category, and severity using Gemini 3.5 Flash Lite.
+        """
+        api_key, model = cls._get_api_key_and_model()
+        url = f"{GEMINI_BASE_URL}/models/{model}:generateContent?key={api_key}"
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        system_prompt = (
+            "You are an AI Civic Intake Assistant for SETU (India National Grievance Portal). "
+            "A citizen has provided a spoken report or draft about a public problem in their locality. "
+            "Your task is to convert this input into a formal, clear, and actionable civic issue report. "
+            "Output strictly valid JSON with no markdown wrapping, no backticks, containing the following keys: "
+            "'title' (concise string, max 10 words), "
+            "'description' (2-4 sentences explaining what the issue is, the specific hazard/impact, and urgency), "
+            "'category' (one of: 'WATER_SANITATION', 'URBAN_INFRASTRUCTURE', 'ENERGY_ELECTRICITY', 'ENVIRONMENT_WASTE', 'HEALTHCARE', 'AGRICULTURE_RURAL'), "
+            "'severity' (one of: 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL')."
+        )
+
+        payload = {
+            "system_instruction": {
+                "parts": [{"text": system_prompt}]
+            },
+            "contents": [
+                {"role": "user", "parts": [{"text": f"Citizen voice statement: \"{transcript}\""}]}
+            ],
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 300,
+                "responseMimeType": "application/json"
+            }
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=20)
+            if response.status_code == 200:
+                res_json = response.json()
+                candidates = res_json.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        raw_text = parts[0].get("text", "").strip()
+                        import json
+                        try:
+                            clean_text = raw_text.replace("```json", "").replace("```", "").strip()
+                            parsed = json.loads(clean_text)
+                            return {
+                                "title": parsed.get("title", "Civic Grievance Report"),
+                                "description": parsed.get("description", transcript),
+                                "category": parsed.get("category", "URBAN_INFRASTRUCTURE"),
+                                "severity": parsed.get("severity", "MEDIUM")
+                            }
+                        except Exception:
+                            logger.warning(f"Could not parse Gemini JSON: {raw_text}")
+            logger.warning(f"Gemini generate_issue_description non-200 status {response.status_code}: {response.text}")
+        except Exception as e:
+            logger.exception("Error in generate_issue_description")
+
+        # Fallback if Gemini request fails or response cannot be parsed
+        fallback_title = transcript[:50] + "..." if len(transcript) > 50 else transcript
+        return {
+            "title": fallback_title or "Citizen Civic Report",
+            "description": transcript,
+            "category": "URBAN_INFRASTRUCTURE",
+            "severity": "MEDIUM"
+        }
+
