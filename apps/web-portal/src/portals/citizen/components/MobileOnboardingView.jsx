@@ -1,38 +1,22 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
 export const MobileOnboardingView = ({
   currentStep,
   setCurrentStep,
-  totalSteps,
   slides,
+  selectedIntent,
+  setSelectedIntent,
+  intents,
   selectedRole,
   setSelectedRole,
   roles,
-  onComplete
+  onNext,
+  onPrev,
+  onSkip
 }) => {
-  const navigate = useNavigate();
+  const isSlideshow = currentStep < 3;
   const slide = slides[currentStep] || slides[0];
-
-  const handleNext = () => {
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      onComplete();
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    setCurrentStep(totalSteps - 1);
-  };
-
   const currentRoleObj = roles.find((r) => r.id === selectedRole) || roles[0];
 
   return (
@@ -50,10 +34,11 @@ export const MobileOnboardingView = ({
         position: 'relative',
         boxSizing: 'border-box',
         boxShadow: '0 0 40px rgba(0, 0, 0, 0.06)',
-        userSelect: 'none'
+        userSelect: 'none',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Valley Sans', sans-serif"
       }}
     >
-      {/* Top Navigation Bar: Setu. on left, Skip on right (NO DHTE tag) */}
+      {/* Top Navigation Bar */}
       <header
         style={{
           position: 'sticky',
@@ -71,7 +56,7 @@ export const MobileOnboardingView = ({
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {currentStep > 0 && (
             <button
-              onClick={handlePrev}
+              onClick={onPrev}
               style={{
                 width: '32px',
                 height: '32px',
@@ -104,9 +89,9 @@ export const MobileOnboardingView = ({
           </span>
         </div>
 
-        {currentStep < totalSteps - 1 ? (
+        {isSlideshow && (
           <button
-            onClick={handleSkip}
+            onClick={onSkip}
             style={{
               fontSize: '0.875rem',
               fontWeight: '600',
@@ -119,22 +104,6 @@ export const MobileOnboardingView = ({
             }}
           >
             Skip
-          </button>
-        ) : (
-          <button
-            onClick={() => navigate('/login')}
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: '600',
-              color: '#71717a',
-              background: 'none',
-              border: 'none',
-              padding: '0.35rem 0.75rem',
-              borderRadius: '9999px',
-              cursor: 'pointer'
-            }}
-          >
-            Sign In
           </button>
         )}
       </header>
@@ -149,8 +118,10 @@ export const MobileOnboardingView = ({
           justifyContent: 'center'
         }}
       >
-        {currentStep < 3 ? (
-          /* Steps 1, 2, 3: Pure Stitch Editorial Slides (No tags, no paragraphs, no stat badges) */
+        {isSlideshow ? (
+          /* ===================================================================
+             SLIDESHOW STAGE: Pure Stitch Editorial Slides
+             =================================================================== */
           <div
             style={{
               display: 'flex',
@@ -204,8 +175,109 @@ export const MobileOnboardingView = ({
               <span style={{ color: '#000000' }}>{slide.highlight}</span>
             </h1>
           </div>
+        ) : currentStep === 3 ? (
+          /* ===================================================================
+             STAGE 2: Mobile Intent Selection Screen (NO 3 DOTS)
+             =================================================================== */
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+              margin: 'auto 0'
+            }}
+          >
+            <div>
+              <h1
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '800',
+                  letterSpacing: '-0.025em',
+                  color: '#111111',
+                  lineHeight: 1.25,
+                  margin: '0 0 0.35rem'
+                }}
+              >
+                What brings you to Setu?
+              </h1>
+              <p style={{ fontSize: '0.8125rem', color: '#71717a', margin: 0, fontWeight: '500' }}>
+                Select your focus area to access the right portal workflow.
+              </p>
+            </div>
+
+            {/* 4 Intent Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {intents.map((intent) => {
+                const isSelected = selectedIntent === intent.id;
+                return (
+                  <div
+                    key={intent.id}
+                    onClick={() => setSelectedIntent(intent.id)}
+                    style={{
+                      padding: '1rem 1.15rem',
+                      borderRadius: '18px',
+                      border: isSelected ? '2px solid #000000' : '1px solid #e5e7eb',
+                      backgroundColor: isSelected ? 'rgba(250, 250, 250, 0.9)' : '#ffffff',
+                      cursor: 'pointer',
+                      boxShadow: isSelected
+                        ? '0 4px 16px rgba(0, 0, 0, 0.05)'
+                        : '0 1px 3px rgba(0, 0, 0, 0.02)',
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '12px',
+                          backgroundColor: isSelected ? '#000000' : '#f4f4f5',
+                          color: isSelected ? '#ffffff' : '#111111',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <GoogleIcon name={intent.icon} size={20} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#111111' }}>
+                          {intent.title}
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: '500', display: 'block' }}>
+                          {intent.subtitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        border: isSelected ? '2px solid #000000' : '1.5px solid #d1d5db',
+                        backgroundColor: isSelected ? '#000000' : '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {isSelected && (
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff' }} />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         ) : (
-          /* Step 4: Role Selection (Faithful to Stitch Setu - Role Selection) */
+          /* ===================================================================
+             STAGE 3: Mobile Reporting Portal Sub-Role Selection (NO 3 DOTS)
+             =================================================================== */
           <div
             style={{
               display: 'flex',
@@ -227,6 +299,9 @@ export const MobileOnboardingView = ({
               >
                 I'm an {currentRoleObj.title}
               </h1>
+              <p style={{ fontSize: '0.8125rem', color: '#71717a', margin: '0.35rem 0 0', fontWeight: '500' }}>
+                Choose how you will represent issues in the Reporting Portal.
+              </p>
             </div>
 
             {/* Bento Role Cards */}
@@ -320,30 +395,32 @@ export const MobileOnboardingView = ({
           gap: '1.25rem'
         }}
       >
-        {/* Animated Apple Pill Indicators */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentStep(idx)}
-              style={{
-                height: '8px',
-                width: idx === currentStep ? '32px' : '8px',
-                backgroundColor: idx === currentStep ? '#000000' : '#d1d5db',
-                borderRadius: '9999px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                padding: 0
-              }}
-              aria-label={`Go to step ${idx + 1}`}
-            />
-          ))}
-        </div>
+        {/* 3 Animated Apple Pill Indicators - ONLY during Slideshow */}
+        {isSlideshow && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+            {[0, 1, 2].map((idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentStep(idx)}
+                style={{
+                  height: '8px',
+                  width: idx === currentStep ? '32px' : '8px',
+                  backgroundColor: idx === currentStep ? '#000000' : '#d1d5db',
+                  borderRadius: '9999px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  padding: 0
+                }}
+                aria-label={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
 
-        {/* Primary Action Button */}
+        {/* Primary Action Button (NO ARROWS!) */}
         <button
-          onClick={handleNext}
+          onClick={onNext}
           style={{
             width: '100%',
             height: '54px',
@@ -355,7 +432,6 @@ export const MobileOnboardingView = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.5rem',
             border: 'none',
             cursor: 'pointer',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
@@ -363,13 +439,14 @@ export const MobileOnboardingView = ({
           }}
         >
           <span>
-            {currentStep === totalSteps - 1
-              ? `Continue as ${currentRoleObj.title}`
-              : currentStep === totalSteps - 2
+            {currentStep === 2
               ? 'Get Started'
+              : currentStep === 3
+              ? 'Continue'
+              : currentStep === 4
+              ? `Continue as ${currentRoleObj.title}`
               : 'Continue'}
           </span>
-          <GoogleIcon name="arrow_forward" size={18} />
         </button>
 
         {/* iOS Home Indicator */}

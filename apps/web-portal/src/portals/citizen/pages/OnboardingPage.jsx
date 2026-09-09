@@ -6,182 +6,74 @@ import { DesktopOnboardingView } from '../components/DesktopOnboardingView';
 
 const ONBOARDING_SLIDES = [
   {
-    stepLabel: '01. Voice Intake',
-    stepName: 'Frictionless Reporting',
     title: 'See a problem?',
     highlight: 'Just record or speak.',
-    subtitle:
-      'Report drinking water issues, power cuts, or infrastructure bottlenecks in your village or town in simple words. TARA AI structures the challenge instantly—no bureaucratic paperwork needed.',
-    image: '/illustrations/onboarding-step-1.png',
-    tags: ['🎙️ Voice-First', '⚡ Instant AI Intake', '📍 Auto-GPS Tag'],
-    stat: 'Average voice report intake: 40 seconds',
-    floatingBadge: 'TARA AI Voice Active',
-    highlightIcon: '🎙️',
-    features: [
-      {
-        icon: 'mic',
-        title: 'Multi-Lingual Voice',
-        desc: 'Speak naturally in Hindi, Santhali, Kurukh, or English without typing.'
-      },
-      {
-        icon: 'my_location',
-        title: 'Zero-Friction GPS',
-        desc: 'Automatic block & panchayat geotagging without complex ward codes.'
-      },
-      {
-        icon: 'psychology',
-        title: 'TARA AI Triage',
-        desc: 'Transforms spoken complaints into structured engineering challenge statements.'
-      }
-    ]
+    image: '/illustrations/onboarding-step-1.png'
   },
   {
-    stepLabel: '02. Academic R&D',
-    stepName: 'University Solving',
     title: 'Jharkhand’s brightest youth',
     highlight: 'will solve it.',
-    subtitle:
-      'Your reported issue is matched with engineering colleges and research labs at IIT ISM Dhanbad, BIT Mesra, and Birsa Agricultural University to build physical and digital prototypes.',
-    image: '/illustrations/onboarding-step-2.png',
-    tags: ['🎓 120+ HEI Labs', '🔬 Prototyping Teams', '🌱 Local Tech Solutions'],
-    stat: 'Over 320 prototypes built across Jharkhand districts',
-    floatingBadge: 'Academic R&D Bridge',
-    highlightIcon: '🎓',
-    features: [
-      {
-        icon: 'school',
-        title: 'HEI Matchmaking',
-        desc: 'Assigned to university engineering teams with domain expertise.'
-      },
-      {
-        icon: 'handyman',
-        title: 'Real Prototyping',
-        desc: 'Water filtration, solar telemetry, and agritech hardware built for the ground.'
-      },
-      {
-        icon: 'verified',
-        title: 'Academic Credits',
-        desc: 'Students and faculty earn SIH curriculum credits for societal impact.'
-      }
-    ]
+    image: '/illustrations/onboarding-step-2.png'
   },
   {
-    stepLabel: '03. Funding & Delivery',
-    stepName: 'State & CSR Backing',
     title: 'Funded by Industry.',
     highlight: 'Delivered to you.',
-    subtitle:
-      'Sanctioned by the Department of Higher & Technical Education (DHTE) and sponsored via industry CSR partnerships. Track milestones live on your phone until field testing is completed.',
-    image: '/illustrations/onboarding-step-3.png',
-    tags: ['🤝 CSR Co-Funding', '🏛️ State Nodal Grants', '✅ Field Verification'],
-    stat: '₹4.2 Cr sanctioned in prototyping grants',
-    floatingBadge: 'Verified Field Delivery',
-    highlightIcon: '🤝',
-    features: [
-      {
-        icon: 'payments',
-        title: 'Direct Seed Grants',
-        desc: 'Milestone-based funding released straight to student lab teams.'
-      },
-      {
-        icon: 'policy',
-        title: 'DHTE Nodal Oversight',
-        desc: 'Government technical cells monitor quality and approve field trials.'
-      },
-      {
-        icon: 'task_alt',
-        title: 'Citizen Sign-Off',
-        desc: 'The citizen who reported the problem confirms resolution on the ground.'
-      }
-    ]
-  },
-  {
-    stepLabel: '04. Stakeholder Role',
-    stepName: 'Personalization',
-    title: 'Choose your identity on',
-    highlight: 'Setu.',
-    subtitle:
-      'Select how you will participate in Jharkhand’s societal innovation ecosystem to access tailored dashboards and workflows.',
-    image: '/illustrations/onboarding-step-1.png',
-    tags: ['👤 Citizen', '🏢 Local SPOC', '🎓 University', '🏛️ Govt Nodal'],
-    stat: 'Active across all 24 districts of Jharkhand',
-    floatingBadge: 'Identity Setup',
-    highlightIcon: '🏛️',
-    features: []
+    image: '/illustrations/onboarding-step-3.png'
   }
 ];
 
-const ROLES = [
+const INTENTS = [
+  {
+    id: 'report',
+    title: 'Report or track a problem',
+    subtitle: 'Reporting Portal for civic, water, and local community issues',
+    icon: 'campaign'
+  },
+  {
+    id: 'university',
+    title: 'Research & Student Innovation',
+    subtitle: 'For universities, students & faculty prototyping solutions',
+    icon: 'school'
+  },
+  {
+    id: 'government',
+    title: 'Review & Allocate Grants',
+    subtitle: 'For DHTE state officers & administrative nodal cells',
+    icon: 'account_balance'
+  },
+  {
+    id: 'industry',
+    title: 'Sponsor & Deploy via CSR',
+    subtitle: 'For corporate industry partners & CSR funding heads',
+    icon: 'apartment'
+  }
+];
+
+const REPORTING_ROLES = [
   {
     id: 'citizen',
     title: 'Individual Citizen',
     subtitle: 'Resident, commuter, student',
     icon: 'person',
-    detail: 'Report local community problems with voice or photo, upvote nearby issues, and track verified lab fixes.',
-    route: '/citizen'
+    route: '/report'
   },
   {
     id: 'spoc',
     title: 'Organization / Local Body',
     subtitle: 'Panchayat, NGO, SPOC, Councillor',
     icon: 'corporate_fare',
-    detail: 'Verify village issue clusters, coordinate field tests with university researchers, and endorse solutions.',
-    route: '/citizen?role=spoc'
-  },
-  {
-    id: 'university',
-    title: 'University & Research Lab',
-    subtitle: 'Faculty, student innovator, lab lead',
-    icon: 'school',
-    detail: 'Adopt accredited societal challenges, submit prototyping proposals, unlock seed grants, and deploy solutions.',
-    route: '/university/dashboard'
+    route: '/report?role=spoc'
   }
-];
-
-const LANGUAGES = [
-  { id: 'en', label: 'English', sub: 'Default' },
-  { id: 'hi', label: 'हिन्दी', sub: 'Hindi' },
-  { id: 'sat', label: 'ᱥᱟᱱᱛᱟᱲᱤ', sub: 'Santhali' },
-  { id: 'kru', label: 'कुड़ुख़', sub: 'Kurukh' }
-];
-
-const DISTRICTS = [
-  'Ranchi',
-  'Dhanbad',
-  'East Singhbhum (Jamshedpur)',
-  'Bokaro',
-  'Hazaribagh',
-  'Deoghar',
-  'Giridih',
-  'Ramgarh',
-  'Palamu',
-  'Gumla',
-  'Dumka',
-  'West Singhbhum (Chaibasa)',
-  'Latehar',
-  'Simdega',
-  'Koderma',
-  'Khunti',
-  'Garhwa',
-  'Chatra',
-  'Godda',
-  'Sahebganj',
-  'Pakur',
-  'Jamtara',
-  'Lohardaga',
-  'Seraikela Kharsawan'
 ];
 
 export const OnboardingPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [selectedIntent, setSelectedIntent] = useState('report');
   const [selectedRole, setSelectedRole] = useState('citizen');
-  const [selectedLang, setSelectedLang] = useState('en');
-  const [selectedDistrict, setSelectedDistrict] = useState('Ranchi');
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
-  const [forceMobilePreview, setForceMobilePreview] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -189,144 +81,86 @@ export const OnboardingPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowRight' && currentStep < ONBOARDING_SLIDES.length - 1) {
-        setCurrentStep((prev) => prev + 1);
-      } else if (e.key === 'ArrowLeft' && currentStep > 0) {
-        setCurrentStep((prev) => prev - 1);
-      } else if (e.key === 'Enter') {
-        if (currentStep < ONBOARDING_SLIDES.length - 1) {
-          setCurrentStep((prev) => prev + 1);
-        } else {
-          handleComplete();
-        }
+  const handleNext = () => {
+    if (currentStep < 2) {
+      setCurrentStep((prev) => prev + 1);
+    } else if (currentStep === 2) {
+      // Finished slideshow, move to Intent Selection
+      setCurrentStep(3);
+    } else if (currentStep === 3) {
+      // Intent chosen
+      if (selectedIntent === 'report') {
+        setCurrentStep(4);
+      } else if (selectedIntent === 'university') {
+        localStorage.setItem('setu_user_intent', 'university');
+        navigate('/university/dashboard');
+      } else if (selectedIntent === 'government') {
+        localStorage.setItem('setu_user_intent', 'government');
+        navigate('/government/dashboard');
+      } else if (selectedIntent === 'industry') {
+        localStorage.setItem('setu_user_intent', 'industry');
+        navigate('/industry/dashboard');
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, selectedRole, selectedLang, selectedDistrict]);
-
-  const handleComplete = () => {
-    try {
+    } else if (currentStep === 4) {
+      // Reporting role chosen
       localStorage.setItem('setu_onboarded', 'true');
       localStorage.setItem('setu_user_role', selectedRole);
-      localStorage.setItem('setu_user_lang', selectedLang);
-      localStorage.setItem('setu_user_district', selectedDistrict);
-    } catch (e) {
-      console.warn('Could not save to localStorage', e);
+      const matched = REPORTING_ROLES.find((r) => r.id === selectedRole);
+      navigate(matched ? matched.route : '/report');
     }
-
-    const matchedRole = ROLES.find((r) => r.id === selectedRole);
-    navigate(matchedRole ? matchedRole.route : '/citizen');
   };
 
-  const isMobile = windowWidth < 1024 || forceMobilePreview;
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
+
+  const handleSkip = () => {
+    // Jump straight to Intent Selection
+    setCurrentStep(3);
+  };
+
+  const isMobile = windowWidth < 1024;
 
   return (
     <div
       style={{
         width: '100%',
         minHeight: '100vh',
-        backgroundColor: '#F8F9FA',
-        position: 'relative',
+        backgroundColor: '#f9f9f9',
         boxSizing: 'border-box'
       }}
     >
       {isMobile ? (
-        windowWidth >= 1024 ? (
-          /* Desktop with Mobile Viewport Simulation */
-          <div
-            style={{
-              width: '100%',
-              minHeight: '100vh',
-              backgroundColor: '#F2F2F7',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '2rem 1rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#555555' }}>
-                Simulating Mobile Viewport (410px)
-              </span>
-              <button
-                onClick={() => setForceMobilePreview(false)}
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  color: '#111111',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #d1d5db',
-                  padding: '0.35rem 0.85rem',
-                  borderRadius: '9999px',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}
-              >
-                Switch to Full Desktop View
-              </button>
-            </div>
-
-            <div className="setu-simulated-iphone">
-              <MobileOnboardingView
-                currentStep={currentStep}
-                setCurrentStep={setCurrentStep}
-                totalSteps={ONBOARDING_SLIDES.length}
-                slides={ONBOARDING_SLIDES}
-                selectedRole={selectedRole}
-                setSelectedRole={setSelectedRole}
-                roles={ROLES}
-                selectedLang={selectedLang}
-                setSelectedLang={setSelectedLang}
-                selectedDistrict={selectedDistrict}
-                setSelectedDistrict={setSelectedDistrict}
-                languages={LANGUAGES}
-                districts={DISTRICTS}
-                onComplete={handleComplete}
-              />
-            </div>
-          </div>
-        ) : (
-          /* Real Mobile Device Screen */
-          <MobileOnboardingView
-            currentStep={currentStep}
-            setCurrentStep={setCurrentStep}
-            totalSteps={ONBOARDING_SLIDES.length}
-            slides={ONBOARDING_SLIDES}
-            selectedRole={selectedRole}
-            setSelectedRole={setSelectedRole}
-            roles={ROLES}
-            selectedLang={selectedLang}
-            setSelectedLang={setSelectedLang}
-            selectedDistrict={selectedDistrict}
-            setSelectedDistrict={setSelectedDistrict}
-            languages={LANGUAGES}
-            districts={DISTRICTS}
-            onComplete={handleComplete}
-          />
-        )
+        <MobileOnboardingView
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          slides={ONBOARDING_SLIDES}
+          selectedIntent={selectedIntent}
+          setSelectedIntent={setSelectedIntent}
+          intents={INTENTS}
+          selectedRole={selectedRole}
+          setSelectedRole={setSelectedRole}
+          roles={REPORTING_ROLES}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onSkip={handleSkip}
+        />
       ) : (
-        /* Real Desktop Widescreen */
         <DesktopOnboardingView
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-          totalSteps={ONBOARDING_SLIDES.length}
           slides={ONBOARDING_SLIDES}
+          selectedIntent={selectedIntent}
+          setSelectedIntent={setSelectedIntent}
+          intents={INTENTS}
           selectedRole={selectedRole}
           setSelectedRole={setSelectedRole}
-          roles={ROLES}
-          selectedLang={selectedLang}
-          setSelectedLang={setSelectedLang}
-          selectedDistrict={selectedDistrict}
-          setSelectedDistrict={setSelectedDistrict}
-          languages={LANGUAGES}
-          districts={DISTRICTS}
-          onComplete={handleComplete}
-          onSwitchToMobile={() => setForceMobilePreview(true)}
+          roles={REPORTING_ROLES}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onSkip={handleSkip}
         />
       )}
     </div>

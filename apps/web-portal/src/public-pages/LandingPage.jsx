@@ -124,19 +124,19 @@ export const LandingPage = () => {
           <Link to="/login" className="btn btn-outline" style={{ width: '100%' }}>Login as Industry</Link>
         </div>
 
-        {/* Setu Citizen Mobile App Card */}
+        {/* Setu Reporting Portal Card */}
         <div className="card" style={{ borderTop: '4px solid #121417', background: 'linear-gradient(180deg, rgba(18, 20, 23, 0.95), rgba(11, 15, 25, 0.95))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', color: '#FFFFFF', display: 'flex' }}>
-              <GoogleIcon name="smartphone" size={28} />
+              <GoogleIcon name="campaign" size={28} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#FFFFFF' }}>Setu. Citizen App</h3>
-              <span style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>Public & Civic Reporting</span>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#FFFFFF' }}>Setu. Reporting Portal</h3>
+              <span style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>Public & Community Reporting</span>
             </div>
           </div>
           <p style={{ color: '#D1D5DB', fontSize: '0.9rem', marginBottom: '1.5rem', minHeight: '60px' }}>
-            Report civic problems with photo evidence, automatic GPS geo-tagging, voice notes, and live resolution tracking.
+            Report civic, water, and infrastructure problems with photo evidence, automatic GPS geo-tagging, voice notes, and live resolution tracking.
           </p>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#9CA3AF' }}>
             <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><GoogleIcon name="check_circle" size={18} color="#10B981" /> 1-Tap Camera & Video Issue Capture</li>
@@ -145,7 +145,7 @@ export const LandingPage = () => {
           </ul>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <Link
-              to="/citizen"
+              to="/report"
               className="btn btn-primary"
               style={{
                 width: '100%',
@@ -160,7 +160,8 @@ export const LandingPage = () => {
                 boxShadow: '0 4px 12px rgba(255, 255, 255, 0.2)'
               }}
             >
-              <GoogleIcon name="open_in_browser" size={18} color="#000000" /> Open Setu Reporting Portal (Web)
+              <GoogleIcon name="arrow_forward" size={18} color="#000000" />
+              <span>Launch Reporting Portal</span>
             </Link>
             <a
               href="/downloads/setu-citizen.apk"

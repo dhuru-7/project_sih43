@@ -55,7 +55,10 @@ export const AppRoutes = () => {
       <Route path="/welcome" element={<OnboardingPage />} />
       <Route path="/intro" element={<OnboardingPage />} />
 
-      {/* 📱 Citizen Civic Reporting Portal (Stitch Design - Dual Desktop/Mobile) */}
+      {/* 📱 Reporting Portal (Stitch Design - Dual Desktop/Mobile) */}
+      <Route path="/report" element={<CitizenHomePage />} />
+      <Route path="/reporting" element={<CitizenHomePage />} />
+      <Route path="/reporting-portal" element={<CitizenHomePage />} />
       <Route path="/citizen" element={<CitizenHomePage />} />
       <Route path="/citizen/home" element={<CitizenHomePage />} />
       <Route path="/citizen/explore" element={<CitizenHomePage />} />
@@ -63,7 +66,6 @@ export const AppRoutes = () => {
       <Route path="/messages" element={<CitizenHomePage />} />
       <Route path="/citizen/profile" element={<CitizenHomePage />} />
       <Route path="/profile" element={<CitizenHomePage />} />
-      <Route path="/report" element={<CitizenHomePage />} />
       <Route path="/citizen/report" element={<CitizenHomePage />} />
 
       <Route element={<AuthLayout />}>
