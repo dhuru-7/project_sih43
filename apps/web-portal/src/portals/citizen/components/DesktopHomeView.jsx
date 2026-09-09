@@ -8,8 +8,9 @@ export const DesktopHomeView = ({
   onOpenIssueDetail,
   activeNav,
   setActiveNav,
-  userName = 'Rampal'
+  userName = 'Rahul'
 }) => {
+  const firstName = (userName || 'Rahul').trim().split(/\s+/)[0];
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '100vh', backgroundColor: '#f9f9f9', color: '#1a1c1c' }}>
       {/* 1. Left Persistent Expanded Sidemenu */}
@@ -210,7 +211,7 @@ export const DesktopHomeView = ({
               }}
             >
               <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1a1c1c', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {userName || 'Rampal'}
+                {userName || 'Rahul Verma'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 Ward 4
@@ -246,7 +247,7 @@ export const DesktopHomeView = ({
                 margin: 0
               }}
             >
-              {userName || 'Rampal'}.
+              {firstName}.
             </h1>
           </section>
 

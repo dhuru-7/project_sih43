@@ -10,9 +10,10 @@ export const MobileHomeView = ({
   onOpenIssueDetail,
   activeNav,
   setActiveNav,
-  userName = 'Rampal',
+  userName = 'Rahul',
   hideNav = false
 }) => {
+  const firstName = (userName || 'Rahul').trim().split(/\s+/)[0];
   return (
     <div
       style={{
@@ -107,7 +108,7 @@ export const MobileHomeView = ({
               margin: 0
             }}
           >
-            {userName || 'Rampal'}.
+            {firstName}.
           </h1>
         </section>
 

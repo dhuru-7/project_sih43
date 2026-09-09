@@ -4,15 +4,123 @@ import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
 const API_BASE = 'http://localhost:5000';
 
+// 7 Dummy Prototype Accounts (excludes 3 reserved dev accounts)
+const CITIZEN_ACCOUNTS = [
+  {
+    id: 'cit-001',
+    aadhaarParts: ['5678', '9012', '3456'],
+    aadhaar: '567890123456',
+    name: 'Rahul Verma',
+    mobile: '+91 98123 45670',
+    dob: '1998-05-14',
+    gender: 'Male',
+    address: 'Morabadi Ground Road, Ward 4',
+    district: 'Ranchi',
+    state: 'Jharkhand',
+    pincode: '834008',
+    lastOtp: '742918'
+  },
+  {
+    id: 'cit-002',
+    aadhaarParts: ['6789', '0123', '4567'],
+    aadhaar: '678901234567',
+    name: 'Anjali Soren',
+    mobile: '+91 98123 45671',
+    dob: '2001-09-18',
+    gender: 'Female',
+    address: 'Jail Road, Ward 12',
+    district: 'Dumka',
+    state: 'Jharkhand',
+    pincode: '814101',
+    lastOtp: '319482'
+  },
+  {
+    id: 'cit-003',
+    aadhaarParts: ['7890', '1234', '5678'],
+    aadhaar: '789012345678',
+    name: 'Amit Kumar Singh',
+    mobile: '+91 98123 45672',
+    dob: '1995-12-03',
+    gender: 'Male',
+    address: 'Korrah Road, Ward 8',
+    district: 'Hazaribagh',
+    state: 'Jharkhand',
+    pincode: '825301',
+    lastOtp: '852147'
+  },
+  {
+    id: 'cit-004',
+    aadhaarParts: ['8901', '2345', '6789'],
+    aadhaar: '890123456789',
+    name: 'Pooja Kumari',
+    mobile: '+91 98123 45673',
+    dob: '2000-03-27',
+    gender: 'Female',
+    address: 'Sector 4, Bokaro Steel City',
+    district: 'Bokaro',
+    state: 'Jharkhand',
+    pincode: '827004',
+    lastOtp: '963258'
+  },
+  {
+    id: 'cit-005',
+    aadhaarParts: ['9012', '3456', '7890'],
+    aadhaar: '901234567890',
+    name: 'Birsa Munda Jr.',
+    mobile: '+91 98123 45674',
+    dob: '1999-07-11',
+    gender: 'Male',
+    address: 'Main Bazar, Ulihatu Link Road',
+    district: 'Khunti',
+    state: 'Jharkhand',
+    pincode: '835210',
+    lastOtp: '147258'
+  },
+  {
+    id: 'cit-006',
+    aadhaarParts: ['1234', '5678', '9012'],
+    aadhaar: '123456789012',
+    name: 'Sunita Devi',
+    mobile: '+91 98123 45675',
+    dob: '1992-10-05',
+    gender: 'Female',
+    address: 'Castairs Town, Near Tower Chowk',
+    district: 'Deoghar',
+    state: 'Jharkhand',
+    pincode: '814112',
+    lastOtp: '369258'
+  },
+  {
+    id: 'cit-007',
+    aadhaarParts: ['9876', '5432', '1098'],
+    aadhaar: '987654321098',
+    name: 'Vikash Oraon',
+    mobile: '+91 98123 45676',
+    dob: '1997-01-30',
+    gender: 'Male',
+    address: 'Sisai Road, Ward 3',
+    district: 'Gumla',
+    state: 'Jharkhand',
+    pincode: '835207',
+    lastOtp: '258147'
+  }
+];
+
 export const AadhaarOnboardingStep = ({
   isMobile = false,
   onPrev,
   onSuccess
 }) => {
+  // Random initial account picked from the 7 prototype citizen accounts
+  const [initialAccount] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * CITIZEN_ACCOUNTS.length);
+    return CITIZEN_ACCOUNTS[randomIndex];
+  });
+
   // 3 Boxes, 4 Numbers Each
-  const [box1, setBox1] = useState('5678');
-  const [box2, setBox2] = useState('9012');
-  const [box3, setBox3] = useState('3456');
+  const [box1, setBox1] = useState(initialAccount.aadhaarParts[0]);
+  const [box2, setBox2] = useState(initialAccount.aadhaarParts[1]);
+  const [box3, setBox3] = useState(initialAccount.aadhaarParts[2]);
 
   const input1Ref = useRef(null);
   const input2Ref = useRef(null);
@@ -139,7 +247,8 @@ export const AadhaarOnboardingStep = ({
       }, 150);
     } catch (err) {
       // Offline fallback simulation
-      const fallbackCode = '742918';
+      const foundCitizen = CITIZEN_ACCOUNTS.find(a => a.aadhaar === fullAadhaar);
+      const fallbackCode = foundCitizen?.lastOtp || '742918';
       setSimulatedOtp(fallbackCode);
       setStep('otp');
       setShowNotification(true);
@@ -229,19 +338,25 @@ export const AadhaarOnboardingStep = ({
       onSuccess(data.user);
     } catch (err) {
       // Local fallback simulation
+      const foundCitizen = CITIZEN_ACCOUNTS.find(a => a.aadhaar === fullAadhaar) || CITIZEN_ACCOUNTS[0];
       const mockUser = {
-        id: 'cit-001',
-        name: 'Rahul Verma',
+        id: foundCitizen.id || 'cit-001',
+        name: foundCitizen.name || 'Rahul Verma',
         aadhaar: fullAadhaar,
         maskedAadhaar: `XXXX XXXX ${fullAadhaar.slice(-4)}`,
-        mobile: '+91 98123 45670',
-        district: 'Ranchi',
-        state: 'Jharkhand',
+        mobile: foundCitizen.mobile || '+91 98123 45670',
+        dob: foundCitizen.dob || '1998-05-14',
+        gender: foundCitizen.gender || 'Male',
+        address: foundCitizen.address || 'Morabadi Ground Road, Ward 4',
+        district: foundCitizen.district || 'Ranchi',
+        state: foundCitizen.state || 'Jharkhand',
+        pincode: foundCitizen.pincode || '834008',
         role: 'CITIZEN',
         sessionId: `sess-${Date.now()}`
       };
       localStorage.setItem('setu_user', JSON.stringify(mockUser));
       localStorage.setItem('setu_session_id', mockUser.sessionId);
+      localStorage.setItem('setu_token', mockUser.sessionId);
       localStorage.setItem('setu_onboarded', 'true');
       localStorage.setItem('setu_user_role', 'citizen');
       localStorage.setItem('sih_user_data', JSON.stringify(mockUser));
@@ -736,7 +851,7 @@ export const AadhaarOnboardingStep = ({
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#000000', marginTop: '0.5rem', flexShrink: 0 }} />
                 <p style={{ fontSize: '0.875rem', color: '#2c2c2e', margin: 0, lineHeight: 1.45 }}>
-                  <strong style={{ color: '#000000' }}>Demo Pre-fill:</strong> Aadhaar number <code style={{ backgroundColor: '#f2f2f7', padding: '0.15rem 0.35rem', borderRadius: '4px', fontSize: '0.8125rem' }}>5678 9012 3456</code> is pre-filled for 1-click evaluation. Production architecture connects directly to the state e-KYC gateway.
+                  <strong style={{ color: '#000000' }}>Demo Pre-fill:</strong> 1 of 7 dummy citizen accounts is randomly pre-filled on each visit for seamless 1-click evaluation. Production architecture connects directly to the state e-KYC gateway.
                 </p>
               </div>
 

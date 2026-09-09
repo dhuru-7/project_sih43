@@ -4,7 +4,7 @@ import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 export const DesktopProfileView = ({
   activeNav,
   setActiveNav,
-  userName = 'Rampal',
+  userName = 'Rahul Verma',
   onOpenTara,
   onOpenReportDetail
 }) => {
@@ -259,7 +259,7 @@ export const DesktopProfileView = ({
               }}
             >
               <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1a1c1c', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {userName || 'Rampal'}
+                {userName || 'Rahul Verma'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 Ward 4
