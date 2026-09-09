@@ -87,6 +87,79 @@ class GeminiService:
             raise
 
     @classmethod
+    def describe_visual_evidence(cls, images: list) -> str:
+        """
+        Extracts factual visual scene summary from attached photos / video frame thumbnails
+        using Gemini vision, so downstream models like Sarvam 105B have full visual context.
+        Fails gracefully to empty string if Gemini is unavailable or rate limited.
+        """
+        if not images or not isinstance(images, list):
+            return ""
+
+        try:
+            api_key, model = cls._get_api_key_and_model()
+            url = f"{GEMINI_BASE_URL}/models/{model}:generateContent?key={api_key}"
+            headers = {"Content-Type": "application/json"}
+
+            user_parts = [
+                {"text": "Briefly describe the civic issue, physical damage, environmental hazard, or infrastructure defect visible in these photos or video frames in 1-2 factual sentences."}
+            ]
+
+            for img in images[:3]:
+                if isinstance(img, dict) and "data" in img:
+                    user_parts.append({
+                        "inlineData": {
+                            "mimeType": img.get("mimeType", "image/jpeg"),
+                            "data": img["data"]
+                        }
+                    })
+                elif isinstance(img, str) and img.startswith("data:"):
+                    try:
+                        header, b64_data = img.split(",", 1)
+                        mime = header.split(";")[0].replace("data:", "")
+                        user_parts.append({
+                            "inlineData": {
+                                "mimeType": mime or "image/jpeg",
+                                "data": b64_data
+                            }
+                        })
+                    except Exception:
+                        pass
+                elif isinstance(img, str) and len(img) > 100:
+                    user_parts.append({
+                        "inlineData": {
+                            "mimeType": "image/jpeg",
+                            "data": img
+                        }
+                    })
+
+            if len(user_parts) <= 1:
+                return ""
+
+            payload = {
+                "contents": [{"parts": user_parts}],
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 150
+                }
+            }
+
+            response = requests.post(url, headers=headers, json=payload, timeout=12)
+            if response.status_code == 200:
+                res_json = response.json()
+                candidates = res_json.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        text = parts[0].get("text", "").strip()
+                        logger.info(f"Visual evidence summary: {text}")
+                        return text
+            logger.warning(f"describe_visual_evidence non-200: {response.status_code}")
+        except Exception as e:
+            logger.warning(f"Could not extract visual evidence via Gemini: {e}")
+        return ""
+
+    @classmethod
     def generate_issue_description(cls, transcript: str, images: list = None, location_info: dict = None, reporter_type: str = None, group_name: str = None) -> dict:
         """
         Synthesizes citizen notes, voice transcripts, attached image evidence, and location details

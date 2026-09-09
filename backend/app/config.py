@@ -1,7 +1,13 @@
 import os
 from dotenv import load_dotenv
 
+# Explicitly load .env from backend and root directory
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, "..", ".env"))
+load_dotenv(os.path.join(basedir, "..", "..", ".env"))
 load_dotenv()
+
+
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "sih_default_secret_key_2026")

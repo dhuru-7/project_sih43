@@ -124,3 +124,79 @@ export function extractVideoThumbnail(videoSrcOrBlob) {
     }
   });
 }
+
+/**
+ * Helper to encode an AudioBuffer to a standard 16-bit PCM WAV Blob
+ */
+function bufferToWave(abuffer, totalSamples) {
+  const numOfChan = abuffer.numberOfChannels;
+  const length = totalSamples * numOfChan * 2 + 44;
+  const out = new DataView(new ArrayBuffer(length));
+  const channels = [];
+  let sample = 0;
+  let offset = 0;
+  let pos = 0;
+
+  function writeString(str) {
+    for (let i = 0; i < str.length; i++) {
+      out.setUint8(pos++, str.charCodeAt(i));
+    }
+  }
+
+  writeString('RIFF');
+  out.setUint32(pos, length - 8, true); pos += 4;
+  writeString('WAVE');
+  writeString('fmt ');
+  out.setUint32(pos, 16, true); pos += 4;
+  out.setUint16(pos, 1, true); pos += 2;
+  out.setUint16(pos, numOfChan, true); pos += 2;
+  out.setUint32(pos, abuffer.sampleRate, true); pos += 4;
+  out.setUint32(pos, abuffer.sampleRate * 2 * numOfChan, true); pos += 4;
+  out.setUint16(pos, numOfChan * 2, true); pos += 2;
+  out.setUint16(pos, 16, true); pos += 2;
+  writeString('data');
+  out.setUint32(pos, length - pos - 4, true); pos += 4;
+
+  for (let i = 0; i < abuffer.numberOfChannels; i++) {
+    channels.push(abuffer.getChannelData(i));
+  }
+
+  while (offset < totalSamples) {
+    for (let i = 0; i < numOfChan; i++) {
+      sample = Math.max(-1, Math.min(1, channels[i][offset]));
+      sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+      out.setInt16(pos, sample, true);
+      pos += 2;
+    }
+    offset++;
+  }
+
+  return new Blob([out.buffer], { type: 'audio/wav' });
+}
+
+/**
+ * Extracts audio track from a video/audio file or blob into a lightweight WAV blob.
+ */
+export async function extractAudioFromMedia(fileOrBlob) {
+  if (!fileOrBlob) return null;
+  try {
+    if (fileOrBlob.type && fileOrBlob.type.startsWith('audio/')) {
+      return fileOrBlob;
+    }
+
+    const arrayBuffer = await fileOrBlob.arrayBuffer();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    const audioCtx = new AudioContextClass();
+    const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+    try { await audioCtx.close(); } catch (e) {}
+
+    const maxSamples = Math.min(decoded.length, decoded.sampleRate * 60);
+    return bufferToWave(decoded, maxSamples);
+  } catch (err) {
+    console.warn('Audio track extraction skipped:', err);
+    return null;
+  }
+}
+

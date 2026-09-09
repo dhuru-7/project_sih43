@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
-import { reverseGeocode, extractVideoThumbnail } from '../../../services/geoService';
+import { reverseGeocode, extractVideoThumbnail, extractAudioFromMedia } from '../../../services/geoService';
 import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
@@ -226,14 +226,14 @@ export const MobileReportingModal = ({
         };
 
         recorder.onstop = () => {
-          const blob = new Blob(recordedChunksRef.current, { type: 'video/mp4' });
+          const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
           const url = URL.createObjectURL(blob);
           const newItem = {
             id: `media-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
             type: 'video',
             url: url,
             blob: blob,
-            name: `Clip_${mediaItems.length + 1}.mp4`
+            name: `Clip_${mediaItems.length + 1}.webm`
           };
           setMediaItems((prev) => {
             const updated = [...prev, newItem];
@@ -325,14 +325,14 @@ export const MobileReportingModal = ({
             const formData = new FormData();
             formData.append('audio', audioBlob, 'grievance_voice.webm');
 
-            const resp = await fetch(`${API_BASE_URL}/voice/describe-issue`, {
+            const resp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
               method: 'POST',
               body: formData
             });
 
             const json = await resp.json();
             if (resp.ok && json.status === 'success' && json.data) {
-              const transcribed = json.data.transcript || json.data.description;
+              const transcribed = json.data.transcript;
               if (transcribed) {
                 setNotepadText((prev) => (prev ? prev.trim() + '\n\n' + transcribed : transcribed));
               }
@@ -367,35 +367,67 @@ export const MobileReportingModal = ({
     setStep('processing');
 
     try {
-      // 1. Extract thumbnail: first image or first frame of last video
-      let finalThumbnail = null;
-      const firstImage = mediaItems.find((m) => m.type === 'image');
-      const videos = mediaItems.filter((m) => m.type === 'video');
-
-      if (firstImage) {
-        finalThumbnail = firstImage.url;
-      } else if (videos.length > 0) {
-        const lastVideo = videos[videos.length - 1];
-        finalThumbnail = await extractVideoThumbnail(lastVideo.blob || lastVideo.url);
-      }
-
-      // 2. Prepare images payload for multimodal Gemini
+      // 1. Process all media items (Images + Videos)
       const imagePayloads = [];
-      for (const item of mediaItems.filter((m) => m.type === 'image').slice(0, 3)) {
-        if (item.file) {
-          const reader = new FileReader();
-          const b64 = await new Promise((res) => {
-            reader.onloadend = () => res(reader.result);
-            reader.readAsDataURL(item.file);
-          });
-          imagePayloads.push(b64);
+      const videoTranscripts = [];
+
+      for (const item of mediaItems) {
+        if (item.type === 'image') {
+          if (item.file) {
+            const reader = new FileReader();
+            const b64 = await new Promise((res) => {
+              reader.onloadend = () => res(reader.result);
+              reader.readAsDataURL(item.file);
+            });
+            if (b64) imagePayloads.push(b64);
+          } else if (item.url && item.url.startsWith('data:')) {
+            imagePayloads.push(item.url);
+          }
+        } else if (item.type === 'video') {
+          // Extract a frame thumbnail from video as image payload for AI vision
+          try {
+            const frameThumb = await extractVideoThumbnail(item.file || item.blob || item.url);
+            if (frameThumb) imagePayloads.push(frameThumb);
+          } catch (e) {
+            console.warn('Could not extract video frame thumbnail:', e);
+          }
+
+          // Extract audio track from video and transcribe via Sarvam Saaras v3 STT
+          try {
+            const audioBlob = await extractAudioFromMedia(item.file || item.blob);
+            if (audioBlob && audioBlob.size > 2000) {
+              const formData = new FormData();
+              formData.append('audio', audioBlob, 'video_audio.wav');
+              const tResp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
+                method: 'POST',
+                body: formData
+              });
+              const tJson = await tResp.json();
+              if (tResp.ok && tJson.data && tJson.data.transcript) {
+                videoTranscripts.push(tJson.data.transcript);
+              }
+            }
+          } catch (e) {
+            console.warn('Could not transcribe video audio:', e);
+          }
         }
       }
 
-      // 3. Process with AI Engine
+      // 2. Select card hero thumbnail: first image or first frame of video
+      let finalThumbnail = null;
+      const firstImage = mediaItems.find((m) => m.type === 'image');
+      const firstVideo = mediaItems.find((m) => m.type === 'video');
+      if (firstImage) {
+        finalThumbnail = firstImage.url;
+      } else if (firstVideo) {
+        finalThumbnail = await extractVideoThumbnail(firstVideo.blob || firstVideo.file || firstVideo.url);
+      }
+
+      // 3. Process with AI Engine (Sarvam 105B Primary)
       const aiPayload = {
         text: notepadText.trim(),
-        images: imagePayloads,
+        videoTranscript: videoTranscripts.join('; '),
+        images: imagePayloads.slice(0, 4),
         locationInfo: locationDetails,
         reporterType: 'Individual Citizen',
         groupName: ''
