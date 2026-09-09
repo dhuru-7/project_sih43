@@ -484,8 +484,6 @@
 
 .setu-primary-pill:hover {
   background-color: #1a1a1a;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
 }
 
 .setu-primary-pill:active {
@@ -555,8 +553,6 @@
 
 .apple-btn-primary:hover {
   background-color: #1a1a1a;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 .apple-btn-primary:active {
@@ -594,17 +590,17 @@
   transition: transform 0.08s ease-out;
 }
 
-/* Apple Selection Card */
+/* Apple Selection Card (No Hover Lift) */
 .apple-select-card {
   border-radius: 18px;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   position: relative;
 }
 
 .apple-select-card:hover {
-  transform: translateY(-1px);
+  border-color: rgba(0, 0, 0, 0.16);
 }
 
 .apple-select-card:active {
