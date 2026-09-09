@@ -308,7 +308,7 @@ export const AadhaarOnboardingStep = ({
   const handleVerifyOtp = async () => {
     const enteredOtp = otpDigits.join('');
     if (enteredOtp.length !== 6) {
-      setError('Please enter the 6-digit code');
+      setError('Please enter the 6-digit OTP');
       return;
     }
 
@@ -323,7 +323,7 @@ export const AadhaarOnboardingStep = ({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Invalid code');
+        throw new Error(data.error || 'Invalid OTP');
       }
 
       // Store in localStorage
@@ -431,7 +431,7 @@ export const AadhaarOnboardingStep = ({
                 <span style={{ fontSize: '0.6875rem', color: 'rgba(255, 255, 255, 0.4)' }}>now</span>
               </div>
               <div style={{ fontSize: '0.8125rem', color: '#ffffff', fontWeight: '500', marginTop: '0.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                Your code is <strong style={{ color: '#ffffff', letterSpacing: '0.06em' }}>{simulatedOtp}</strong>
+                Your OTP is <strong style={{ color: '#ffffff', letterSpacing: '0.06em' }}>{simulatedOtp}</strong>
               </div>
             </div>
           </div>
@@ -470,13 +470,13 @@ export const AadhaarOnboardingStep = ({
             lineHeight: 1.2
           }}
         >
-          {step === 'aadhaar' ? 'Enter Aadhaar' : 'Enter Code'}
+          {step === 'aadhaar' ? 'Enter Aadhaar' : 'Enter OTP'}
         </h1>
 
         <p style={{ fontSize: '0.875rem', color: '#636366', margin: 0, fontWeight: '500', maxWidth: '360px' }}>
           {step === 'aadhaar'
             ? 'Enter your 12-digit Aadhaar number to continue.'
-            : 'Enter the 6-digit code sent to your linked mobile.'}
+            : 'Enter the 6-digit OTP sent to your linked mobile.'}
         </p>
       </div>
 
