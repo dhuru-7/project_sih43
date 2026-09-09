@@ -54,7 +54,7 @@ export const MobileOnboardingView = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {currentStep > 0 && currentStep !== 3 && (
+          {currentStep > 3 && (
             <button
               onClick={onPrev}
               style={{
