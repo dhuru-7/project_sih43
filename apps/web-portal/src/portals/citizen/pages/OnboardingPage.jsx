@@ -115,34 +115,26 @@ const ROLES = [
   {
     id: 'citizen',
     title: 'Individual Citizen',
-    subtitle: 'Resident, commuter, student, farmer',
+    subtitle: 'Resident, commuter, student',
     icon: 'person',
     detail: 'Report local community problems with voice or photo, upvote nearby issues, and track verified lab fixes.',
     route: '/citizen'
   },
   {
     id: 'spoc',
-    title: 'Panchayat / Local Body SPOC',
-    subtitle: 'Panchayat Mukhiya, Ward SPOC, NGO Coordinator',
+    title: 'Organization / Local Body',
+    subtitle: 'Panchayat, NGO, SPOC, Councillor',
     icon: 'corporate_fare',
     detail: 'Verify village issue clusters, coordinate field tests with university researchers, and endorse solutions.',
     route: '/citizen?role=spoc'
   },
   {
     id: 'university',
-    title: 'University Research Lab',
-    subtitle: 'Faculty PI, student innovator, HEI SPOC',
+    title: 'University & Research Lab',
+    subtitle: 'Faculty, student innovator, lab lead',
     icon: 'school',
     detail: 'Adopt accredited societal challenges, submit prototyping proposals, unlock seed grants, and deploy solutions.',
     route: '/university/dashboard'
-  },
-  {
-    id: 'government',
-    title: 'DHTE Government Nodal Officer',
-    subtitle: 'Higher & Technical Education Directorate Admin',
-    icon: 'shield_person',
-    detail: 'Triage incoming problem statements, approve research seed funding, inspect deliverables, and monitor state metrics.',
-    route: '/government/dashboard'
   }
 ];
 
