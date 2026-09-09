@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
 export const DesktopProfileView = ({
@@ -8,6 +8,60 @@ export const DesktopProfileView = ({
   onOpenTara,
   onOpenReportDetail
 }) => {
+  const storedUser = useMemo(() => {
+    try {
+      const u = localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data');
+      return u ? JSON.parse(u) : {};
+    } catch (e) {
+      return {};
+    }
+  }, []);
+
+  const displayName = storedUser.name || userName || 'Rahul Verma';
+  const displayPhone = storedUser.mobile || '+91 98123 45670';
+  const displayAadhaar = storedUser.maskedAadhaar || (storedUser.aadhaar ? `XXXX XXXX ${storedUser.aadhaar.replace(/\s+/g, '').slice(-4)}` : '•••• •••• 3456');
+  const displayLocation = storedUser.district ? `${storedUser.district}, ${storedUser.state || 'Jharkhand'}` : 'Ranchi, Jharkhand';
+  const displayDob = storedUser.dob || '15/08/1996';
+
+  const [showAge, setShowAge] = useState(false);
+  const touchStartX = useRef(null);
+
+  const calculatedAge = useMemo(() => {
+    if (!storedUser?.dob) return '25 years old';
+    const dobStr = String(storedUser.dob).trim();
+    if (dobStr.includes('-')) {
+      const parts = dobStr.split('-');
+      const y = parseInt(parts[0], 10);
+      if (y > 1920 && y < 2026) {
+        return `${2026 - y} years old`;
+      }
+    }
+    if (dobStr.includes('/')) {
+      const parts = dobStr.split('/');
+      const y = parseInt(parts[parts.length - 1], 10);
+      if (y > 1920 && y < 2026) {
+        return `${2026 - y} years old`;
+      }
+    }
+    return '25 years old';
+  }, [storedUser?.dob]);
+
+  const handleDobTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleDobTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    if (Math.abs(touchEndX - touchStartX.current) > 20) {
+      setShowAge((prev) => !prev);
+    }
+    touchStartX.current = null;
+  };
+
+  const handleDobClick = () => {
+    setShowAge((prev) => !prev);
+  };
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '100vh', backgroundColor: '#f9f9f9', color: '#1a1c1c' }}>
       {/* 1. Left Persistent Expanded Sidemenu (Identical to DesktopHomeView/DesktopExploreView) */}
@@ -336,7 +390,7 @@ export const DesktopProfileView = ({
                         margin: 0
                       }}
                     >
-                      {userName || 'Alex Chen'}
+                      {displayName}
                     </h2>
                   </div>
                 </div>
@@ -412,7 +466,7 @@ export const DesktopProfileView = ({
                             textOverflow: 'ellipsis'
                           }}
                         >
-                          +91 98765 43210
+                          {displayPhone}
                         </span>
                       </div>
                     </div>
@@ -442,15 +496,7 @@ export const DesktopProfileView = ({
                           boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
                         }}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="20px"
-                          viewBox="0 -960 960 960"
-                          width="20px"
-                          fill="currentColor"
-                        >
-                          <path d="M560-440h200v-80H560v80Zm0-120h200v-80H560v80ZM200-320h320v-22q0-45-44-71.5T360-440q-72 0-116 26.5T200-342v22Zm216.5-183.5Q440-527 440-560t-23.5-56.5Q393-640 360-640t-56.5 23.5Q280-593 280-560t23.5 56.5Q327-480 360-480t56.5-23.5ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z" />
-                        </svg>
+                        <GoogleIcon name="badge" size={20} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                         <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e', fontWeight: '500' }}>
@@ -458,7 +504,7 @@ export const DesktopProfileView = ({
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', color: '#1a1c1c', fontWeight: '600' }}>
-                            •••• •••• 9842
+                            {displayAadhaar}
                           </span>
                         </div>
                       </div>
@@ -506,20 +552,25 @@ export const DesktopProfileView = ({
                             textOverflow: 'ellipsis'
                           }}
                         >
-                          Pattikalyana, Ward 4
+                          {displayLocation}
                         </span>
                       </div>
                     </div>
 
-                    {/* Date of Birth */}
+                    {/* Date of Birth / Age Swipe Toggle */}
                     <div
+                      onTouchStart={handleDobTouchStart}
+                      onTouchEnd={handleDobTouchEnd}
+                      onClick={handleDobClick}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         padding: '0.875rem',
                         borderRadius: '0.75rem',
                         backgroundColor: '#f3f3f3',
-                        gap: '0.75rem'
+                        gap: '0.75rem',
+                        cursor: 'pointer',
+                        userSelect: 'none'
                       }}
                     >
                       <div
@@ -536,13 +587,19 @@ export const DesktopProfileView = ({
                           boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
                         }}
                       >
-                        <GoogleIcon name="cake" size={20} />
+                        <GoogleIcon name="calendar_today" size={20} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e', fontWeight: '500' }}>
-                          Date of Birth
+                        <span
+                          key={showAge ? 'desktop-age-lbl' : 'desktop-dob-lbl'}
+                          className="apple-fade-enter"
+                          style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e', fontWeight: '500' }}
+                        >
+                          {showAge ? 'Age' : 'Date of Birth'}
                         </span>
                         <span
+                          key={showAge ? 'desktop-age-val' : 'desktop-dob-val'}
+                          className="apple-fade-enter"
                           style={{
                             fontSize: '0.875rem',
                             lineHeight: '1.25rem',
@@ -553,7 +610,7 @@ export const DesktopProfileView = ({
                             textOverflow: 'ellipsis'
                           }}
                         >
-                          14 Oct 1998
+                          {showAge ? calculatedAge : displayDob}
                         </span>
                       </div>
                     </div>

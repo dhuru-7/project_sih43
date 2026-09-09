@@ -103,27 +103,32 @@ export const CitizenHomePage = () => {
   const [issues, setIssues] = useState(INITIAL_ISSUES);
   const [upvotedSet, setUpvotedSet] = useState(new Set());
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isProfileInitial = location.pathname.includes('profile') || searchParams.get('tab') === 'profile';
+
   const [activeNav, setActiveNav] = useState(
-    location.pathname.includes('messages')
+    isProfileInitial
+      ? 'profile'
+      : location.pathname.includes('messages')
       ? 'messages'
       : location.pathname.includes('explore')
       ? 'explore'
-      : location.pathname.includes('profile')
-      ? 'profile'
       : 'home'
   );
 
   useEffect(() => {
-    if (location.pathname.includes('messages')) {
+    const params = new URLSearchParams(location.search);
+    if (location.pathname.includes('profile') || params.get('tab') === 'profile') {
+      setActiveNav('profile');
+      setIsReportingOpen(false);
+    } else if (location.pathname.includes('messages')) {
       setActiveNav('messages');
     } else if (location.pathname.includes('explore')) {
       setActiveNav('explore');
-    } else if (location.pathname.includes('profile')) {
-      setActiveNav('profile');
     } else if (location.pathname.includes('home') || location.pathname === '/citizen' || location.pathname === '/report') {
       setActiveNav('home');
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Modals
   const [isTaraOpen, setIsTaraOpen] = useState(false);
@@ -132,10 +137,12 @@ export const CitizenHomePage = () => {
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   useEffect(() => {
-    if (location.pathname === '/report' || location.pathname === '/citizen/report') {
+    const params = new URLSearchParams(location.search);
+    const wantsProfile = location.pathname.includes('profile') || params.get('tab') === 'profile';
+    if (!wantsProfile && (location.pathname === '/report' || location.pathname === '/citizen/report')) {
       setIsReportingOpen(true);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (activeNav !== 'messages') {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
 const API_BASE = 'http://localhost:5000';
@@ -266,55 +267,55 @@ export const AadhaarOnboardingStep = ({
         position: 'relative'
       }}
     >
-      {/* 1. TOP PUSH NOTIFICATION: Slides down smoothly from the top */}
-      {showNotification && simulatedOtp && (
+      {/* 1. TOP PUSH NOTIFICATION: Portalled to document.body so it is pinned to the absolute top of the screen */}
+      {showNotification && simulatedOtp && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div
           style={{
             position: 'fixed',
-            top: '20px',
+            top: '14px',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 10000,
-            width: isMobile ? 'calc(100% - 32px)' : '420px',
-            maxWidth: '440px',
+            zIndex: 999999,
+            width: 'calc(100% - 28px)',
+            maxWidth: '390px',
             backgroundColor: 'rgba(28, 28, 30, 0.94)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: '22px',
-            padding: '0.85rem 1rem 0.85rem 1.1rem',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.12)',
+            backdropFilter: 'blur(25px)',
+            WebkitBackdropFilter: 'blur(25px)',
+            borderRadius: '20px',
+            padding: '0.75rem 0.95rem',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '0.75rem',
-            animation: 'appleNotificationSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            animation: 'appleNotificationSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textAlign: 'left', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textAlign: 'left', minWidth: 0 }}>
             <div
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
+                width: '34px',
+                height: '34px',
+                borderRadius: '9px',
                 backgroundColor: '#000000',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0
               }}
             >
-              <GoogleIcon name="sms" size={20} color="#ffffff" />
+              <GoogleIcon name="sms" size={18} color="#ffffff" />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.6875rem', fontWeight: '700', color: 'rgba(255, 255, 255, 0.65)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Demo Message
                 </span>
                 <span style={{ fontSize: '0.6875rem', color: 'rgba(255, 255, 255, 0.4)' }}>•</span>
                 <span style={{ fontSize: '0.6875rem', color: 'rgba(255, 255, 255, 0.4)' }}>now</span>
               </div>
-              <div style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: '500', marginTop: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: '0.8125rem', color: '#ffffff', fontWeight: '500', marginTop: '0.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Your code is <strong style={{ color: '#ffffff', letterSpacing: '0.06em' }}>{simulatedOtp}</strong>
               </div>
             </div>
@@ -328,40 +329,22 @@ export const AadhaarOnboardingStep = ({
               color: '#000000',
               border: 'none',
               borderRadius: '9999px',
-              padding: '0.45rem 0.95rem',
-              fontSize: '0.8125rem',
+              padding: '0.4rem 0.85rem',
+              fontSize: '0.75rem',
               fontWeight: '700',
               cursor: 'pointer',
               flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)'
             }}
           >
             Auto-fill
           </button>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* 2. CLEAN APPLE HEADER */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', width: '100%' }}>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.25rem 0.65rem',
-            borderRadius: '9999px',
-            backgroundColor: '#f2f2f7',
-            fontSize: '0.6875rem',
-            fontWeight: '700',
-            color: '#1c1c1e',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase'
-          }}
-        >
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#000000' }} />
-          Demo Verification
-        </div>
-
+      {/* 2. CLEAN APPLE TITLE (NO Demo Verification Chip) */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', width: '100%', marginTop: '0.25rem' }}>
         <h1
           style={{
             fontSize: isMobile ? '1.625rem' : '1.875rem',
@@ -375,7 +358,7 @@ export const AadhaarOnboardingStep = ({
           {step === 'aadhaar' ? 'Enter Aadhaar' : 'Enter Code'}
         </h1>
 
-        <p style={{ fontSize: '0.875rem', color: '#636366', margin: 0, fontWeight: '500', maxWidth: '380px' }}>
+        <p style={{ fontSize: '0.875rem', color: '#636366', margin: 0, fontWeight: '500', maxWidth: '360px' }}>
           {step === 'aadhaar'
             ? 'Enter your 12-digit Aadhaar number to continue.'
             : 'Enter the 6-digit code sent to your linked mobile.'}
@@ -596,7 +579,7 @@ export const AadhaarOnboardingStep = ({
             </div>
           )}
 
-          {/* BOTTOM ACTIONS: Change & Confirm Button (strictly 'Confirm') */}
+          {/* BOTTOM ACTIONS: Change & Confirm Button */}
           <div
             style={{
               display: 'flex',
@@ -643,40 +626,41 @@ export const AadhaarOnboardingStep = ({
         </div>
       )}
 
-      {/* 4. SUBTLE DEVELOPER NOTE LINK AT THE BOTTOM */}
+      {/* 4. DEVELOPER NOTE PILL AT THE BOTTOM OF THE SCREEN */}
       <button
         onClick={() => setShowDevNote(true)}
         className="apple-tap"
         style={{
-          background: 'none',
-          border: 'none',
-          color: '#636366',
+          padding: '0.45rem 1.15rem',
+          borderRadius: '9999px',
+          backgroundColor: '#f2f2f7',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          color: '#1c1c1e',
           fontSize: '0.8125rem',
-          fontWeight: '500',
+          fontWeight: '600',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.35rem',
+          gap: '0.4rem',
           cursor: 'pointer',
-          padding: '0.25rem 0.5rem',
-          borderRadius: '8px',
-          marginTop: '0.5rem',
-          transition: 'color 0.2s ease'
+          marginTop: isMobile ? '1.25rem' : '1.5rem',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        <GoogleIcon name="info" size={16} color="#636366" />
+        <GoogleIcon name="code" size={15} color="#1c1c1e" />
         <span>Developer Note</span>
       </button>
 
-      {/* 5. CRISP, HIGH-CONTRAST DEVELOPER NOTE MODAL (TOP-LEVEL FIXED VIEWPORT) */}
-      {showDevNote && (
+      {/* 5. CRISP DEVELOPER NOTE MODAL: Portalled to document.body with pure uniform backdrop blur, NO black square shadow */}
+      {showDevNote && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 99999,
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 999999,
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -692,8 +676,8 @@ export const AadhaarOnboardingStep = ({
               borderRadius: '24px',
               padding: isMobile ? '1.75rem 1.5rem' : '2.25rem 2.25rem',
               width: '100%',
-              maxWidth: '460px',
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.22)',
+              maxWidth: '440px',
+              boxShadow: '0 16px 40px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
@@ -705,22 +689,20 @@ export const AadhaarOnboardingStep = ({
           >
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span
-                  style={{
-                    fontSize: '0.6875rem',
-                    fontWeight: '700',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '6px',
-                    backgroundColor: '#f2f2f7',
-                    color: '#1c1c1e'
-                  }}
-                >
-                  Prototype Note
-                </span>
-              </div>
+              <span
+                style={{
+                  fontSize: '0.6875rem',
+                  fontWeight: '700',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '6px',
+                  backgroundColor: '#f2f2f7',
+                  color: '#1c1c1e'
+                }}
+              >
+                Prototype Note
+              </span>
 
               <button
                 onClick={() => setShowDevNote(false)}
@@ -749,7 +731,7 @@ export const AadhaarOnboardingStep = ({
               </p>
             </div>
 
-            {/* Concise 2-3 Bullet Points */}
+            {/* Concise 3 Bullet Points */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#000000', marginTop: '0.5rem', flexShrink: 0 }} />
@@ -761,7 +743,7 @@ export const AadhaarOnboardingStep = ({
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#000000', marginTop: '0.5rem', flexShrink: 0 }} />
                 <p style={{ fontSize: '0.875rem', color: '#2c2c2e', margin: 0, lineHeight: 1.45 }}>
-                  <strong style={{ color: '#000000' }}>Demo OTP & Concurrency:</strong> A test code pops up on screen with 1-tap auto-fill. Setu enforces strict single-session concurrency—logging in terminates previous active sessions.
+                  <strong style={{ color: '#000000' }}>Demo OTP & Concurrency:</strong> A test code pops up on top with 1-tap auto-fill. Setu enforces strict single-session concurrency—logging in terminates previous active sessions.
                 </p>
               </div>
 
@@ -789,7 +771,8 @@ export const AadhaarOnboardingStep = ({
               Got it
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

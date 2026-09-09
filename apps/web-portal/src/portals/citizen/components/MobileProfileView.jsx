@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
@@ -24,6 +24,48 @@ export const MobileProfileView = ({
   const displayDob = storedUser.dob || '15/08/1996';
   const isDev = !!storedUser.isDevAccount;
   const designation = storedUser.designation || (isDev ? 'Developer Team' : 'Verified Citizen');
+
+  // Swipe / Tap to toggle between Date of Birth and Age with smooth fade animation
+  const [showAge, setShowAge] = useState(false);
+  const touchStartX = useRef(null);
+
+  const calculatedAge = useMemo(() => {
+    if (!storedUser?.dob) return '25 years old';
+    const dobStr = String(storedUser.dob).trim();
+    if (dobStr.includes('-')) {
+      const parts = dobStr.split('-');
+      const y = parseInt(parts[0], 10);
+      if (y > 1920 && y < 2026) {
+        return `${2026 - y} years old`;
+      }
+    }
+    if (dobStr.includes('/')) {
+      const parts = dobStr.split('/');
+      const y = parseInt(parts[parts.length - 1], 10);
+      if (y > 1920 && y < 2026) {
+        return `${2026 - y} years old`;
+      }
+    }
+    return '25 years old';
+  }, [storedUser?.dob]);
+
+  const handleDobTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleDobTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = Math.abs(touchEndX - touchStartX.current);
+    if (diff > 20) {
+      setShowAge((prev) => !prev);
+    }
+    touchStartX.current = null;
+  };
+
+  const handleDobClick = () => {
+    setShowAge((prev) => !prev);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('setu_user');
@@ -284,13 +326,18 @@ export const MobileProfileView = ({
               </div>
             </div>
 
-            {/* Date of Birth */}
+            {/* Date of Birth / Age Swipe Toggle */}
             <div
+              onTouchStart={handleDobTouchStart}
+              onTouchEnd={handleDobTouchEnd}
+              onClick={handleDobClick}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.875rem',
-                padding: '0.875rem 1rem'
+                padding: '0.875rem 1rem',
+                cursor: 'pointer',
+                userSelect: 'none'
               }}
             >
               <div
@@ -308,11 +355,31 @@ export const MobileProfileView = ({
                 <GoogleIcon name="calendar_today" size={18} color="#1c1c1e" />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
-                  Date of Birth
+                <span
+                  key={showAge ? 'age-lbl' : 'dob-lbl'}
+                  className="apple-fade-enter"
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '500',
+                    color: '#8e8e93',
+                    letterSpacing: '0.01em',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}
+                >
+                  {showAge ? 'Age' : 'Date of Birth'}
                 </span>
-                <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
-                  {displayDob}
+                <span
+                  key={showAge ? 'age-val' : 'dob-val'}
+                  className="apple-fade-enter"
+                  style={{
+                    fontSize: '0.9375rem',
+                    fontWeight: '600',
+                    color: '#1c1c1e',
+                    letterSpacing: '-0.01em',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}
+                >
+                  {showAge ? calculatedAge : displayDob}
                 </span>
               </div>
             </div>

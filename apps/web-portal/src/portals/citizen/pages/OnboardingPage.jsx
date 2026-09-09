@@ -128,7 +128,7 @@ export const OnboardingPage = () => {
   const handleAadhaarSuccess = (user) => {
     localStorage.setItem('setu_onboarded', 'true');
     localStorage.setItem('setu_user_role', 'citizen');
-    navigate('/report');
+    navigate('/report?tab=profile');
   };
 
   const isMobile = windowWidth < 1024;
