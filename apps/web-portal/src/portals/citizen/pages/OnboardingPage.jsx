@@ -27,26 +27,26 @@ const ONBOARDING_SLIDES = [
 const INTENTS = [
   {
     id: 'report',
-    title: 'Report or track a problem',
-    subtitle: 'Reporting Portal for civic, water, and local community issues',
+    title: 'Report Issue',
+    subtitle: 'Fix civic, road & water problems',
     icon: 'campaign'
   },
   {
     id: 'university',
-    title: 'Research & Student Innovation',
-    subtitle: 'For universities, students & faculty prototyping solutions',
+    title: 'Student Projects',
+    subtitle: 'Universities solving real challenges',
     icon: 'school'
   },
   {
     id: 'government',
-    title: 'Review & Allocate Grants',
-    subtitle: 'For DHTE state officers & administrative nodal cells',
+    title: 'Govt Grants',
+    subtitle: 'DHTE review & funding approvals',
     icon: 'account_balance'
   },
   {
     id: 'industry',
-    title: 'Sponsor & Deploy via CSR',
-    subtitle: 'For corporate industry partners & CSR funding heads',
+    title: 'CSR Funding',
+    subtitle: 'Corporate sponsorship & adoption',
     icon: 'apartment'
   }
 ];
@@ -61,8 +61,8 @@ const REPORTING_ROLES = [
   },
   {
     id: 'spoc',
-    title: 'Organization / Local Body',
-    subtitle: 'Panchayat, NGO, SPOC, Councillor',
+    title: 'Organisation / NGO',
+    subtitle: 'Panchayat, NGO or Local SPOC',
     icon: 'corporate_fare',
     route: '/report?role=spoc'
   }

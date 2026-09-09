@@ -187,7 +187,7 @@ export const MobileOnboardingView = ({
             </div>
 
             {/* 4 Intent Cards with Apple Spacing & Uncrowded Squircles */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {intents.map((intent) => {
                 const isSelected = selectedIntent === intent.id;
                 return (
@@ -196,8 +196,8 @@ export const MobileOnboardingView = ({
                     onClick={() => setSelectedIntent(intent.id)}
                     className="apple-select-card"
                     style={{
-                      padding: '1.1rem 1.25rem',
-                      borderRadius: '18px',
+                      padding: '0.85rem 1.15rem',
+                      borderRadius: '16px',
                       border: isSelected ? '2px solid #000000' : '1px solid rgba(0, 0, 0, 0.08)',
                       backgroundColor: '#ffffff',
                       boxShadow: isSelected
@@ -206,16 +206,16 @@ export const MobileOnboardingView = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: '1rem'
+                      gap: '0.85rem'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1 }}>
                       <div
                         style={{
-                          width: '44px',
-                          height: '44px',
-                          minWidth: '44px',
-                          borderRadius: '12px',
+                          width: '40px',
+                          height: '40px',
+                          minWidth: '40px',
+                          borderRadius: '11px',
                           backgroundColor: isSelected ? '#000000' : '#f2f2f7',
                           color: isSelected ? '#ffffff' : '#1c1c1e',
                           border: 'none',
@@ -225,13 +225,13 @@ export const MobileOnboardingView = ({
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       >
-                        <GoogleIcon name={intent.icon} size={22} />
+                        <GoogleIcon name={intent.icon} size={20} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#111111', lineHeight: 1.3 }}>
+                        <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#111111', lineHeight: 1.25 }}>
                           {intent.title}
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: '#636366', fontWeight: '400', display: 'block', marginTop: '0.2rem', lineHeight: 1.35 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#636366', fontWeight: '400', display: 'block', marginTop: '0.15rem', lineHeight: 1.3 }}>
                           {intent.subtitle}
                         </span>
                       </div>
@@ -301,8 +301,8 @@ export const MobileOnboardingView = ({
                     onClick={() => setSelectedRole(role.id)}
                     className="apple-select-card"
                     style={{
-                      padding: '1.15rem 1.25rem',
-                      borderRadius: '18px',
+                      padding: '0.95rem 1.15rem',
+                      borderRadius: '16px',
                       border: isSelected ? '2px solid #000000' : '1px solid rgba(0, 0, 0, 0.08)',
                       backgroundColor: '#ffffff',
                       boxShadow: isSelected
@@ -311,16 +311,16 @@ export const MobileOnboardingView = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: '1rem'
+                      gap: '0.85rem'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1 }}>
                       <div
                         style={{
-                          width: '44px',
-                          height: '44px',
-                          minWidth: '44px',
-                          borderRadius: '12px',
+                          width: '40px',
+                          height: '40px',
+                          minWidth: '40px',
+                          borderRadius: '11px',
                           backgroundColor: isSelected ? '#000000' : '#f2f2f7',
                           border: 'none',
                           display: 'flex',
@@ -330,13 +330,13 @@ export const MobileOnboardingView = ({
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       >
-                        <GoogleIcon name={role.icon} size={22} />
+                        <GoogleIcon name={role.icon} size={20} />
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#111111' }}>
+                        <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#111111', lineHeight: 1.25 }}>
                           {role.title}
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: '#636366', fontWeight: '400', display: 'block', marginTop: '0.2rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#636366', fontWeight: '400', display: 'block', marginTop: '0.15rem', lineHeight: 1.3 }}>
                           {role.subtitle}
                         </span>
                       </div>

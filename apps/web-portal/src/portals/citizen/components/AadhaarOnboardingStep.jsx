@@ -227,37 +227,46 @@ export const AadhaarOnboardingStep = ({
     setLoading(true);
     setError('');
 
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/aadhaar/request-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ aadhaarNumber: fullAadhaar })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to request OTP');
-      }
+    const isLocalhost = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+    );
+    const shouldFetchBackend = isLocalhost || !!import.meta.env.VITE_API_BASE_URL;
 
-      const code = data.otp || '742918';
-      setSimulatedOtp(code);
-      setStep('otp');
-      setShowNotification(true);
-      setTimeout(() => {
-        otpRefs[0].current?.focus();
-      }, 150);
-    } catch (err) {
-      // Offline fallback simulation
-      const foundCitizen = CITIZEN_ACCOUNTS.find(a => a.aadhaar === fullAadhaar);
-      const fallbackCode = foundCitizen?.lastOtp || '742918';
-      setSimulatedOtp(fallbackCode);
-      setStep('otp');
-      setShowNotification(true);
-      setTimeout(() => {
-        otpRefs[0].current?.focus();
-      }, 150);
-    } finally {
-      setLoading(false);
+    if (shouldFetchBackend) {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/aadhaar/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aadhaarNumber: fullAadhaar })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const code = data.otp || '742918';
+          setSimulatedOtp(code);
+          setStep('otp');
+          setShowNotification(true);
+          setTimeout(() => {
+            otpRefs[0].current?.focus();
+          }, 150);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        // Fall through to local simulation
+      }
     }
+
+    // Direct prototype simulation (Avoids any fetch to localhost on mobile/Vercel)
+    const foundCitizen = CITIZEN_ACCOUNTS.find(a => a.aadhaar === fullAadhaar) || CITIZEN_ACCOUNTS[0];
+    const fallbackCode = foundCitizen?.lastOtp || '742918';
+    setSimulatedOtp(fallbackCode);
+    setStep('otp');
+    setShowNotification(true);
+    setTimeout(() => {
+      otpRefs[0].current?.focus();
+    }, 150);
+    setLoading(false);
   };
 
   // OTP Change
@@ -313,59 +322,66 @@ export const AadhaarOnboardingStep = ({
     }
 
     setLoading(true);
-    setError('');
+    const isLocalhost = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+    );
+    const shouldFetchBackend = isLocalhost || !!import.meta.env.VITE_API_BASE_URL;
 
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/aadhaar/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ aadhaarNumber: fullAadhaar, otp: enteredOtp })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Invalid OTP');
+    if (shouldFetchBackend) {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/aadhaar/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aadhaarNumber: fullAadhaar, otp: enteredOtp })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Store in localStorage
+          localStorage.setItem('setu_user', JSON.stringify(data.user));
+          localStorage.setItem('setu_session_id', data.sessionId);
+          localStorage.setItem('setu_token', data.token);
+          localStorage.setItem('setu_onboarded', 'true');
+          localStorage.setItem('setu_user_role', 'citizen');
+          localStorage.setItem('sih_user_data', JSON.stringify(data.user));
+          localStorage.setItem('sih_auth_token', data.token);
+
+          onSuccess(data.user);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        // Fall through to local simulation
       }
-
-      // Store in localStorage
-      localStorage.setItem('setu_user', JSON.stringify(data.user));
-      localStorage.setItem('setu_session_id', data.sessionId);
-      localStorage.setItem('setu_token', data.token);
-      localStorage.setItem('setu_onboarded', 'true');
-      localStorage.setItem('setu_user_role', 'citizen');
-      localStorage.setItem('sih_user_data', JSON.stringify(data.user));
-      localStorage.setItem('sih_auth_token', data.token);
-
-      onSuccess(data.user);
-    } catch (err) {
-      // Local fallback simulation
-      const foundCitizen = CITIZEN_ACCOUNTS.find(a => a.aadhaar === fullAadhaar) || CITIZEN_ACCOUNTS[0];
-      const mockUser = {
-        id: foundCitizen.id || 'cit-001',
-        name: foundCitizen.name || 'Rahul Verma',
-        aadhaar: fullAadhaar,
-        maskedAadhaar: `XXXX XXXX ${fullAadhaar.slice(-4)}`,
-        mobile: foundCitizen.mobile || '+91 98123 45670',
-        dob: foundCitizen.dob || '1998-05-14',
-        gender: foundCitizen.gender || 'Male',
-        address: foundCitizen.address || 'Morabadi Ground Road, Ward 4',
-        district: foundCitizen.district || 'Ranchi',
-        state: foundCitizen.state || 'Jharkhand',
-        pincode: foundCitizen.pincode || '834008',
-        role: 'CITIZEN',
-        sessionId: `sess-${Date.now()}`
-      };
-      localStorage.setItem('setu_user', JSON.stringify(mockUser));
-      localStorage.setItem('setu_session_id', mockUser.sessionId);
-      localStorage.setItem('setu_token', mockUser.sessionId);
-      localStorage.setItem('setu_onboarded', 'true');
-      localStorage.setItem('setu_user_role', 'citizen');
-      localStorage.setItem('sih_user_data', JSON.stringify(mockUser));
-      localStorage.setItem('sih_auth_token', mockUser.sessionId);
-
-      onSuccess(mockUser);
-    } finally {
-      setLoading(false);
     }
+
+    // Direct prototype simulation (Avoids any fetch to localhost on mobile/Vercel)
+    const foundCitizen = CITIZEN_ACCOUNTS.find(a => a.aadhaar === fullAadhaar) || CITIZEN_ACCOUNTS[0];
+    const mockUser = {
+      id: foundCitizen.id || 'cit-001',
+      name: foundCitizen.name || 'Rahul Verma',
+      aadhaar: fullAadhaar,
+      maskedAadhaar: `XXXX XXXX ${fullAadhaar.slice(-4)}`,
+      mobile: foundCitizen.mobile || '+91 98123 45670',
+      dob: foundCitizen.dob || '1998-05-14',
+      gender: foundCitizen.gender || 'Male',
+      address: foundCitizen.address || 'Morabadi Ground Road, Ward 4',
+      district: foundCitizen.district || 'Ranchi',
+      state: foundCitizen.state || 'Jharkhand',
+      pincode: foundCitizen.pincode || '834008',
+      role: 'CITIZEN',
+      sessionId: `sess-${Date.now()}`
+    };
+    localStorage.setItem('setu_user', JSON.stringify(mockUser));
+    localStorage.setItem('setu_session_id', mockUser.sessionId);
+    localStorage.setItem('setu_token', mockUser.sessionId);
+    localStorage.setItem('setu_onboarded', 'true');
+    localStorage.setItem('setu_user_role', 'citizen');
+    localStorage.setItem('sih_user_data', JSON.stringify(mockUser));
+    localStorage.setItem('sih_auth_token', mockUser.sessionId);
+
+    onSuccess(mockUser);
+    setLoading(false);
   };
 
   return (

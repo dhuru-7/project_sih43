@@ -228,6 +228,12 @@ export const CitizenHomePage = () => {
 
   // Single-session concurrency validation heartbeat
   useEffect(() => {
+    const isLocalhost = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+    );
+    if (!isLocalhost && !import.meta.env.VITE_API_BASE_URL) return;
+
     const checkSession = async () => {
       const sessionId = localStorage.getItem('setu_session_id');
       const userStr = localStorage.getItem('setu_user');
