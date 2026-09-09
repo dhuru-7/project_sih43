@@ -524,7 +524,19 @@ export const DesktopOnboardingView = ({
             /* ===================================================================
                STAGE 4: Desktop Aadhaar Verification & OTP Screen (Step 5)
                =================================================================== */
-            <div style={{ width: '100%', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+            <div
+              className="apple-fade-enter"
+              style={{
+                padding: '2.5rem 2.5rem 2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                maxWidth: '520px',
+                margin: '0 auto',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
               <AadhaarOnboardingStep
                 isMobile={false}
                 onPrev={onPrev}

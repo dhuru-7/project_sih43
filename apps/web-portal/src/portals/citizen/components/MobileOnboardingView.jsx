@@ -494,6 +494,27 @@ export const MobileOnboardingView = ({
           />
         </footer>
       )}
+
+      {/* iOS Home Indicator on Step 5 */}
+      {currentStep === 5 && (
+        <div
+          style={{
+            paddingBottom: '1.25rem',
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%'
+          }}
+        >
+          <div
+            style={{
+              width: '128px',
+              height: '4px',
+              backgroundColor: '#d1d5db',
+              borderRadius: '9999px'
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
