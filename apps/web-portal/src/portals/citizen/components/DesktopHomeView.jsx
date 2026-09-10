@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const DesktopHomeView = ({
   issues,
@@ -12,6 +13,7 @@ export const DesktopHomeView = ({
   userName = 'Rahul'
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const firstName = (userName || 'Rahul').trim().split(/\s+/)[0];
 
   const [pfpUrl, setPfpUrl] = React.useState(() => {
@@ -108,10 +110,10 @@ export const DesktopHomeView = ({
           {/* Navigation Items */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
             {[
-              { id: 'home', label: 'Home', icon: 'home', badge: null },
-              { id: 'explore', label: 'Explore', icon: 'explore', badge: null },
-              { id: 'report', label: 'Report Issue', icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: 'Messages', icon: 'chat', badge: '3' }
+              { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
+              { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
+              { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
             ].map((item) => {
               const isActive = activeNav === item.id;
               return (
@@ -267,7 +269,7 @@ export const DesktopHomeView = ({
                 {userName || 'Rahul Verma'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                Ward 4
+                {t('ward_4', 'Ward 4')}
               </span>
             </div>
           </div>
@@ -288,7 +290,7 @@ export const DesktopHomeView = ({
                 letterSpacing: '-0.01em'
               }}
             >
-              Namaste,
+              {t('greeting', 'Namaste')},
             </div>
             <h1
               style={{
@@ -326,10 +328,10 @@ export const DesktopHomeView = ({
               <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>
                   <h2 style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff', margin: 0, lineHeight: 1.2 }}>
-                    Report Issue
+                    {t('report_issue', 'Report Issue')}
                   </h2>
                   <p style={{ fontSize: '0.9375rem', color: '#8e8e93', marginTop: '0.35rem', margin: '0.35rem 0 0 0', fontWeight: '500' }}>
-                    Make your city better.
+                    {t('make_city_better', 'Make your city better.')}
                   </p>
                 </div>
 
@@ -377,7 +379,7 @@ export const DesktopHomeView = ({
                   }}
                 >
                   <GoogleIcon name="attach_file" size={20} color="#000000" />
-                  <span>Upload Media</span>
+                  <span>{t('upload_media', 'Upload Media')}</span>
                 </button>
               </div>
             </div>
@@ -387,7 +389,7 @@ export const DesktopHomeView = ({
           <section style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.125rem' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1a1c1c', letterSpacing: '-0.015em', margin: 0, lineHeight: 1.2 }}>
-                My Submissions
+                {t('my_submissions', 'My Submissions')}
               </h2>
 
               <a
@@ -406,7 +408,7 @@ export const DesktopHomeView = ({
                   cursor: 'pointer'
                 }}
               >
-                <span>View all</span>
+                <span>{t('view_all', 'View all')}</span>
                 <GoogleIcon name="chevron_right" size={18} />
               </a>
             </div>
@@ -456,7 +458,11 @@ export const DesktopHomeView = ({
                           overflow: 'hidden'
                         }}
                       >
-                        {issue.title}
+                        {issue.title === 'Unverified Media Evidence Submitted'
+                          ? t('unverified_media_title', 'Unverified Media Evidence Submitted')
+                          : issue.title === 'Visual civic problem reported by citizen.' || issue.title === 'Visual civic problem reported by citizen'
+                          ? t('visual_problem_reported_title', 'Visual civic problem reported by citizen.')
+                          : issue.title}
                       </h3>
 
                       {/* Location & Time */}
@@ -467,7 +473,7 @@ export const DesktopHomeView = ({
                         </span>
                         <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: '#cfc4c5', flexShrink: 0 }}></span>
                         <span style={{ color: '#7e7576' }}>
-                          {issue.time}
+                          {issue.time === 'Recently' ? t('recently', 'Recently') : issue.time}
                         </span>
                       </div>
                     </div>

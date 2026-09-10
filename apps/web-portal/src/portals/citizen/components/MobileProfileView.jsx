@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { compressImage } from '../../../utils/imageCompressor';
 import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -11,6 +12,7 @@ export const MobileProfileView = ({
   setActiveNav
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [submissions, setSubmissions] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
@@ -96,24 +98,24 @@ export const MobileProfileView = ({
   const touchStartX = useRef(null);
 
   const calculatedAge = useMemo(() => {
-    if (!storedUser?.dob) return '25 years old';
+    if (!storedUser?.dob) return `25 ${t('years_old', 'years old')}`;
     const dobStr = String(storedUser.dob).trim();
     if (dobStr.includes('-')) {
       const parts = dobStr.split('-');
       const y = parseInt(parts[0], 10);
       if (y > 1920 && y < 2026) {
-        return `${2026 - y} years old`;
+        return `${2026 - y} ${t('years_old', 'years old')}`;
       }
     }
     if (dobStr.includes('/')) {
       const parts = dobStr.split('/');
       const y = parseInt(parts[parts.length - 1], 10);
       if (y > 1920 && y < 2026) {
-        return `${2026 - y} years old`;
+        return `${2026 - y} ${t('years_old', 'years old')}`;
       }
     }
-    return '25 years old';
-  }, [storedUser?.dob]);
+    return `25 ${t('years_old', 'years old')}`;
+  }, [storedUser?.dob, t]);
 
   const handleDobTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
@@ -198,7 +200,7 @@ export const MobileProfileView = ({
             margin: 0
           }}
         >
-          Profile
+          {t('profile', 'Profile')}
         </h1>
       </header>
 
@@ -233,7 +235,7 @@ export const MobileProfileView = ({
           <div
             onClick={() => fileInputRef.current?.click()}
             className="apple-tap"
-            title="Tap to change profile picture"
+            title={t('tap_to_change_pfp', 'Tap to change profile picture')}
             style={{
               position: 'relative',
               cursor: 'pointer'
@@ -309,7 +311,7 @@ export const MobileProfileView = ({
               }}
             >
               <GoogleIcon name="terminal" size={14} color="#ffffff" />
-              <span>Developer Team</span>
+              <span>{t('developer_team', 'Developer Team')}</span>
             </div>
           )}
         </section>
@@ -333,7 +335,7 @@ export const MobileProfileView = ({
               paddingLeft: '0.25rem'
             }}
           >
-            Personal Details
+            {t('personal_details', 'Personal Details')}
           </h2>
 
           <div
@@ -371,7 +373,7 @@ export const MobileProfileView = ({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
-                  Phone
+                  {t('phone', 'Phone')}
                 </span>
                 <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
                   {displayPhone}
@@ -405,7 +407,7 @@ export const MobileProfileView = ({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
-                  Aadhaar Number
+                  {t('aadhaar_number', 'Aadhaar Number')}
                 </span>
                 <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
                   {displayAadhaar}
@@ -413,7 +415,7 @@ export const MobileProfileView = ({
               </div>
             </div>
 
-            {/* Location */}
+            {/* Location / Address */}
             <div
               style={{
                 display: 'flex',
@@ -439,7 +441,7 @@ export const MobileProfileView = ({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: '500', color: '#8e8e93', letterSpacing: '0.01em' }}>
-                  Location
+                  {t('address', 'Address')}
                 </span>
                 <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e', letterSpacing: '-0.01em' }}>
                   {displayLocation}
@@ -487,7 +489,7 @@ export const MobileProfileView = ({
                     transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                 >
-                  {showAge ? 'Age' : 'Date of Birth'}
+                  {showAge ? t('age', 'Age') : t('date_of_birth', 'Date of Birth')}
                 </span>
                 <span
                   key={showAge ? 'age-val' : 'dob-val'}
@@ -527,7 +529,7 @@ export const MobileProfileView = ({
               paddingLeft: '0.25rem'
             }}
           >
-            Account Settings
+            {t('account_settings', 'Account Settings')}
           </h2>
 
           <div
@@ -574,10 +576,10 @@ export const MobileProfileView = ({
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e' }}>
-                        General
+                        {t('general', 'General')}
                       </span>
                       <span style={{ fontSize: '0.75rem', color: '#8e8e93' }}>
-                        Language, App Preferences & Session
+                        {t('app_preferences_session', 'Language, App Preferences & Session')}
                       </span>
                     </div>
                   </div>
@@ -618,7 +620,7 @@ export const MobileProfileView = ({
                       <GoogleIcon name="assignment" size={18} color="#1c1c1e" />
                     </div>
                     <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
-                      My Submissions
+                      {t('my_submissions', 'My Submissions')}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -673,7 +675,7 @@ export const MobileProfileView = ({
                       <GoogleIcon name="person_outline" size={18} color="#1c1c1e" />
                     </div>
                     <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
-                      Personal Information
+                      {t('personal_info', 'Personal Information')}
                     </span>
                   </div>
                   <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
@@ -712,7 +714,7 @@ export const MobileProfileView = ({
                       <GoogleIcon name="notifications_none" size={18} color="#1c1c1e" />
                     </div>
                     <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
-                      Notification Preferences
+                      {t('notification_preferences', 'Notification Preferences')}
                     </span>
                   </div>
                   <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
@@ -751,7 +753,7 @@ export const MobileProfileView = ({
                       <GoogleIcon name="lock_outline" size={18} color="#1c1c1e" />
                     </div>
                     <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
-                      Privacy & Security
+                      {t('privacy_security', 'Privacy & Security')}
                     </span>
                   </div>
                   <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />

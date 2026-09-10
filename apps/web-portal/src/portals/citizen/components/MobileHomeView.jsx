@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const MobileHomeView = ({
   issues,
@@ -15,6 +16,7 @@ export const MobileHomeView = ({
   hideNav = false
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const firstName = (userName || 'Rahul').trim().split(/\s+/)[0];
 
   // Limit home screen submissions to latest 3
@@ -101,7 +103,7 @@ export const MobileHomeView = ({
               letterSpacing: '-0.01em'
             }}
           >
-            Namaste,
+            {t('greeting', 'Namaste')},
           </div>
           <h1
             style={{
@@ -136,10 +138,10 @@ export const MobileHomeView = ({
             <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff', margin: 0, lineHeight: 1.2 }}>
-                  Report Issue
+                  {t('report_issue', 'Report Issue')}
                 </h2>
                 <p style={{ fontSize: '0.9375rem', color: '#8e8e93', marginTop: '0.35rem', margin: '0.35rem 0 0 0', fontWeight: '500' }}>
-                  Make your city better.
+                  {t('make_city_better', 'Make your city better.')}
                 </p>
               </div>
 
@@ -188,7 +190,7 @@ export const MobileHomeView = ({
               }}
             >
               <GoogleIcon name="videocam" size={20} color="#000000" />
-              <span>Record Video</span>
+              <span>{t('record_video', 'Record Video')}</span>
             </button>
           </div>
         </section>
@@ -197,7 +199,7 @@ export const MobileHomeView = ({
         <section style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#000000', letterSpacing: '-0.01em' }}>
-              My Submissions
+              {t('my_submissions', 'My Submissions')}
             </h2>
             <button
               className="apple-tap"
@@ -222,64 +224,73 @@ export const MobileHomeView = ({
 
           {/* Issues List Items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {displayedIssues.map((issue) => (
-              <div
-                key={issue.id}
-                onClick={() => navigate(`/my-submissions?highlight=${encodeURIComponent(issue.id)}`)}
-                className="apple-tap"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.875rem',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid rgba(0, 0, 0, 0.08)',
-                  borderRadius: '0.875rem',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-                  cursor: 'pointer',
-                  gap: '0.875rem'
-                }}
-              >
-                {/* Thumbnail */}
+            {displayedIssues.map((issue) => {
+              const displayTitle =
+                issue.title === 'Unverified Media Evidence Submitted'
+                  ? t('unverified_media_title', 'Unverified Media Evidence Submitted')
+                  : issue.title === 'Visual civic problem reported by citizen.' || issue.title === 'Visual civic problem reported by citizen'
+                  ? t('visual_problem_reported_title', 'Visual civic problem reported by citizen.')
+                  : issue.title;
+
+              return (
                 <div
+                  key={issue.id}
+                  onClick={() => navigate(`/my-submissions?highlight=${encodeURIComponent(issue.id)}`)}
+                  className="apple-tap"
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '0.625rem',
-                    overflow: 'hidden',
-                    backgroundColor: '#eeeeee',
-                    flexShrink: 0
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0.875rem',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    borderRadius: '0.875rem',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                    cursor: 'pointer',
+                    gap: '0.875rem'
                   }}
                 >
-                  <img
-                    src={issue.image}
-                    alt={issue.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-
-                {/* Title & Time */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h4
+                  {/* Thumbnail */}
+                  <div
                     style={{
-                      fontSize: '0.875rem',
-                      fontWeight: '700',
-                      color: '#000000',
-                      whiteSpace: 'nowrap',
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '0.625rem',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      backgroundColor: '#eeeeee',
+                      flexShrink: 0
                     }}
                   >
-                    {issue.title}
-                  </h4>
-                  <p style={{ fontSize: '0.75rem', color: '#5e5e5e', marginTop: '0.15rem' }}>
-                    Reported {issue.time}
-                  </p>
-                </div>
+                    <img
+                      src={issue.image}
+                      alt={issue.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
 
-                {/* Minimal forward arrow */}
-                <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
-              </div>
-            ))}
+                  {/* Title & Time */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h4
+                      style={{
+                        fontSize: '0.875rem',
+                        fontWeight: '700',
+                        color: '#000000',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {displayTitle}
+                    </h4>
+                    <p style={{ fontSize: '0.75rem', color: '#5e5e5e', marginTop: '0.15rem' }}>
+                      {t('reported', 'Reported')} {issue.time === 'Recently' ? t('recently', 'Recently') : issue.time}
+                    </p>
+                  </div>
+
+                  {/* Minimal forward arrow */}
+                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                </div>
+              );
+            })}
           </div>
         </section>
       </main>

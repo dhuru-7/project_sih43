@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const BookmarkIcon = ({ isBookmarked, size = 22 }) => {
   if (isBookmarked) {
@@ -314,6 +315,7 @@ export const MobileExploreView = ({
   userName = 'Rampal',
   hideNav = false
 }) => {
+  const { t } = useLanguage();
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [bookmarkedPosts, setBookmarkedPosts] = useState(new Set());
 
@@ -374,7 +376,7 @@ export const MobileExploreView = ({
             margin: 0
           }}
         >
-          Explore
+          {t('nav_explore', 'Explore')}
         </h1>
       </header>
 

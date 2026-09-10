@@ -65,6 +65,7 @@ export const AppRoutes = () => {
         <Route path="/citizen" element={<CitizenHomePage />} />
         <Route path="/citizen/home" element={<CitizenHomePage />} />
         <Route path="/citizen/explore" element={<CitizenHomePage />} />
+        <Route path="/explore" element={<CitizenHomePage />} />
         <Route path="/citizen/messages" element={<CitizenHomePage />} />
         <Route path="/messages" element={<CitizenHomePage />} />
         <Route path="/citizen/profile" element={<CitizenHomePage />} />

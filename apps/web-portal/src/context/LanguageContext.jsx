@@ -24,6 +24,7 @@ export const LanguageProvider = ({ children }) => {
       localStorage.setItem('setu_language', chosen);
       // Also tag the html lang attribute for accessibility & typography
       document.documentElement.lang = chosen;
+      window.dispatchEvent(new Event('setu-language-changed'));
     }
   }, []);
 
@@ -31,6 +32,21 @@ export const LanguageProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       document.documentElement.lang = currentLanguage;
     }
+  }, [currentLanguage]);
+
+  useEffect(() => {
+    const handleSync = () => {
+      const stored = localStorage.getItem('setu_language');
+      if (stored && stored !== currentLanguage) {
+        setCurrentLanguageState(stored);
+      }
+    };
+    window.addEventListener('setu-language-changed', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('setu-language-changed', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
   }, [currentLanguage]);
 
   // Synchronous, zero-latency, zero-flicker translation lookup

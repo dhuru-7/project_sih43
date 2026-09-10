@@ -303,6 +303,7 @@ export const CitizenHomePage = () => {
             <MobileMessagesView
               key="mobile-messages"
               onOpenTara={() => setIsTaraOpen(true)}
+              onOpenReport={() => setIsReportingOpen(true)}
               activeNav={activeNav}
               setActiveNav={setActiveNav}
               userName={userName}
@@ -313,6 +314,7 @@ export const CitizenHomePage = () => {
             <MobileExploreView
               key="mobile-explore"
               onOpenTara={() => setIsTaraOpen(true)}
+              onOpenReport={() => setIsReportingOpen(true)}
               onOpenIssueDetail={(issue) => setDetailIssue(issue)}
               activeNav={activeNav}
               setActiveNav={setActiveNav}
@@ -325,6 +327,7 @@ export const CitizenHomePage = () => {
               userName={userName}
               setActiveNav={setActiveNav}
               onOpenTara={() => setIsTaraOpen(true)}
+              onOpenReport={() => setIsReportingOpen(true)}
               onOpenReportDetail={(report) => setDetailIssue(report)}
             />
           ) : (
@@ -357,6 +360,7 @@ export const CitizenHomePage = () => {
         <DesktopMessagesView
           key="desktop-messages"
           onOpenTara={() => setIsTaraOpen(true)}
+          onOpenReport={() => setIsReportingOpen(true)}
           activeNav={activeNav}
           setActiveNav={setActiveNav}
           userName={userName}
@@ -365,6 +369,7 @@ export const CitizenHomePage = () => {
         <DesktopExploreView
           key="desktop-explore"
           onOpenTara={() => setIsTaraOpen(true)}
+          onOpenReport={() => setIsReportingOpen(true)}
           onOpenIssueDetail={(issue) => setDetailIssue(issue)}
           activeNav={activeNav}
           setActiveNav={setActiveNav}
@@ -377,6 +382,7 @@ export const CitizenHomePage = () => {
           setActiveNav={setActiveNav}
           userName={userName}
           onOpenTara={() => setIsTaraOpen(true)}
+          onOpenReport={() => setIsReportingOpen(true)}
           onOpenReportDetail={(report) => setDetailIssue(report)}
         />
       ) : (

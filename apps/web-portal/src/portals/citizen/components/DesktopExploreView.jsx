@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const BookmarkIcon = ({ isBookmarked, size = 22 }) => {
   if (isBookmarked) {
@@ -490,11 +491,13 @@ const DesktopPostCard = ({ post, isLiked, isBookmarked, onToggleLike, onToggleBo
 
 export const DesktopExploreView = ({
   onOpenTara,
+  onOpenReport,
   onOpenIssueDetail,
   activeNav,
   setActiveNav,
   userName = 'Rampal'
 }) => {
+  const { t } = useLanguage();
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [bookmarkedPosts, setBookmarkedPosts] = useState(new Set());
 
@@ -581,10 +584,10 @@ export const DesktopExploreView = ({
           {/* Navigation Items */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
             {[
-              { id: 'home', label: 'Home', icon: 'home', badge: null },
-              { id: 'explore', label: 'Explore', icon: 'explore', badge: null },
-              { id: 'report', label: 'Report Issue', icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: 'Messages', icon: 'chat', badge: '3' }
+              { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
+              { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
+              { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
             ].map((item) => {
               const isActive = activeNav === item.id;
               return (
@@ -592,7 +595,10 @@ export const DesktopExploreView = ({
                   key={item.id}
                   onClick={() => {
                     setActiveNav(item.id);
-                    if (item.id === 'report') onOpenTara();
+                    if (item.id === 'report') {
+                      if (onOpenReport) onOpenReport();
+                      else onOpenTara();
+                    }
                   }}
                   className="apple-tap"
                   style={{
@@ -736,7 +742,7 @@ export const DesktopExploreView = ({
                 {userName || 'Rampal'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                Ward 4
+                {t('ward_4', 'Ward 4')}
               </span>
             </div>
           </div>
@@ -750,7 +756,7 @@ export const DesktopExploreView = ({
           {/* Header - Strictly "Explore" */}
           <section style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.025em', color: '#1a1c1c', margin: 0, lineHeight: 1.15 }}>
-              Explore
+              {t('nav_explore', 'Explore')}
             </h1>
           </section>
 
@@ -792,7 +798,7 @@ export const DesktopExploreView = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1a1c1c', margin: 0 }}>
-                    Notifications
+                    {t('notifications', 'Notifications')}
                   </h3>
                 </div>
 

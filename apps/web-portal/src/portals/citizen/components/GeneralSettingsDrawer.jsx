@@ -438,7 +438,7 @@ export const GeneralSettingsDrawer = ({
             <div
               style={{
                 width: '100%',
-                animation: 'applePop 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
+                animation: 'appleSlideUpDock 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
               <button
@@ -458,11 +458,9 @@ export const GeneralSettingsDrawer = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.625rem',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <GoogleIcon name={savedSuccess ? 'check_circle' : 'save'} size={20} color="#ffffff" />
                 <span>
                   {savedSuccess
                     ? t('changes_saved', 'Language Saved!')

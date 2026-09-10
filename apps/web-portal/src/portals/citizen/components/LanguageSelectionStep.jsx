@@ -179,7 +179,7 @@ export const LanguageSelectionStep = ({ onContinue, isDesktop = false }) => {
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-          <span>Continue</span>
+          <span>{t('continue', 'Continue')}</span>
         </button>
       </div>
     </div>

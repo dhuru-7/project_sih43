@@ -131,6 +131,7 @@ const MediaLightboxModal = ({ isOpen, mediaList = [], initialIndex = 0, title = 
  *  Apple‑Grade Submission Card
  * ───────────────────────────────────────────── */
 const SubmissionCard = React.forwardRef(({ sub, isHighlighted, onOpenMediaPreview }, ref) => {
+  const { t } = useLanguage();
   const [expandedDesc, setExpandedDesc] = useState(false);
 
   const mediaList = useMemo(() => {
@@ -156,13 +157,13 @@ const SubmissionCard = React.forwardRef(({ sub, isHighlighted, onOpenMediaPrevie
   const fallbackImage = CATEGORY_FALLBACK_IMAGES[sub.category] || DEFAULT_IMAGE;
 
   const formattedDate = useMemo(() => {
-    if (!sub.created_at) return 'Recently Filed';
+    if (!sub.created_at) return t('recently', 'Recently');
     try {
       const d = new Date(sub.created_at);
       if (isNaN(d.getTime())) return sub.created_at;
       return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch { return sub.created_at; }
-  }, [sub.created_at]);
+  }, [sub.created_at, t]);
 
   const severityColor = useMemo(() => {
     const sev = (sub.severity || 'MEDIUM').toUpperCase();
@@ -275,7 +276,11 @@ const SubmissionCard = React.forwardRef(({ sub, isHighlighted, onOpenMediaPrevie
           lineHeight: 1.35, letterSpacing: '-0.02em',
           fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif'
         }}>
-          {sub.title}
+          {sub.title === 'Unverified Media Evidence Submitted'
+            ? t('unverified_media_title', 'Unverified Media Evidence Submitted')
+            : sub.title === 'Visual civic problem reported by citizen.' || sub.title === 'Visual civic problem reported by citizen'
+            ? t('visual_problem_reported_title', 'Visual civic problem reported by citizen.')
+            : (sub.title || t('unverified_media_title', 'Unverified Media Evidence Submitted'))}
         </h2>
 
         {/* Meta row: Category · Severity · Date */}
@@ -310,7 +315,7 @@ const SubmissionCard = React.forwardRef(({ sub, isHighlighted, onOpenMediaPrevie
                 onClick={() => setExpandedDesc((p) => !p)}
                 style={{ marginTop: '4px', padding: 0, background: 'none', border: 'none', color: '#0071e3', fontSize: '0.8125rem', fontWeight: '600', cursor: 'pointer' }}
               >
-                {expandedDesc ? 'Show less' : 'Read more'}
+                {expandedDesc ? t('show_less', 'Show less') : t('read_more', 'Read more')}
               </button>
             )}
           </div>
@@ -519,7 +524,7 @@ export const MySubmissionsPage = () => {
       }}>
         {loading ? (
           <div style={{ padding: '80px 20px', textAlign: 'center', color: '#8e8e93', fontSize: '0.9375rem' }}>
-            Loading your submissions...
+            {t('loading_submissions', 'Loading your submissions...')}
           </div>
         ) : submissions.length === 0 ? (
           <div style={{
@@ -531,9 +536,9 @@ export const MySubmissionsPage = () => {
             <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <GoogleIcon name="assignment" size={28} color="#8e8e93" />
             </div>
-            <h3 style={{ fontSize: '1.0625rem', fontWeight: '700', margin: 0, color: '#1c1c1e' }}>No Submissions Yet</h3>
+            <h3 style={{ fontSize: '1.0625rem', fontWeight: '700', margin: 0, color: '#1c1c1e' }}>{t('no_submissions_yet', 'No Submissions Yet')}</h3>
             <p style={{ fontSize: '0.875rem', color: '#6e6e73', margin: 0, maxWidth: '300px', lineHeight: 1.5 }}>
-              When you report an issue in your locality, it will appear here with live tracking and updates.
+              {t('no_submissions_desc', 'When you report an issue in your locality, it will appear here with live tracking and updates.')}
             </p>
           </div>
         ) : (

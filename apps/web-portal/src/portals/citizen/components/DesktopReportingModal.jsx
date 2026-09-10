@@ -453,7 +453,7 @@ export const DesktopReportingModal = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px'
+        padding: '16px 12px'
       }}
     >
       <input
@@ -465,33 +465,36 @@ export const DesktopReportingModal = ({
         onChange={handleFileSelect}
       />
 
-      {step === 'processing' && <TaraAuraProcessingScreen />}
-
       <div
         className="apple-modal-content"
         style={{
           width: '100%',
           maxWidth: '820px',
-          height: '680px',
+          height: 'min(640px, calc(100dvh - 32px))',
+          maxHeight: 'calc(100dvh - 32px)',
+          minHeight: 0,
           backgroundColor: '#ffffff',
           borderRadius: '24px',
           boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-          display: step === 'processing' ? 'none' : 'flex',
+          display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
           position: 'relative',
           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
+        {/* If processing, display Apple Intelligence glowing aura strictly inside this report card */}
+        {step === 'processing' && <TaraAuraProcessingScreen inline={true} />}
         {/* ===================================================================== */}
         {/* STEP 1: MEDIA UPLOAD & PREVIEW */}
         {/* ===================================================================== */}
         {step === 'media' && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             {/* Header */}
             <header
               style={{
-                padding: '18px 24px',
+                flexShrink: 0,
+                padding: '16px 24px',
                 borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
                 display: 'flex',
                 alignItems: 'center',
@@ -528,7 +531,7 @@ export const DesktopReportingModal = ({
             </header>
 
             {/* Media Body */}
-            <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
+            <div style={{ flex: 1, minHeight: 0, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
               {mediaItems.length === 0 ? (
                 <div
                   onClick={() => fileInputRef.current && fileInputRef.current.click()}
@@ -703,7 +706,8 @@ export const DesktopReportingModal = ({
             {/* Footer */}
             <footer
               style={{
-                padding: '16px 24px',
+                flexShrink: 0,
+                padding: '14px 24px',
                 borderTop: '1px solid rgba(0, 0, 0, 0.08)',
                 display: 'flex',
                 alignItems: 'center',
@@ -741,12 +745,13 @@ export const DesktopReportingModal = ({
         {/* ===================================================================== */}
         {/* STEP 2: NOTEPAD CANVAS (EXACT EMPTY SCREEN WITH MIC & CONTINUE) */}
         {/* ===================================================================== */}
-        {step === 'notepad' && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#ffffff' }}>
+        {(step === 'notepad' || step === 'processing') && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, backgroundColor: '#ffffff' }}>
             {/* Minimal Header */}
             <header
               style={{
-                padding: '16px 24px',
+                flexShrink: 0,
+                padding: '14px 24px',
                 borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
@@ -800,7 +805,7 @@ export const DesktopReportingModal = ({
             </header>
 
             {/* Empty Notepad Writing Area */}
-            <main style={{ flex: 1, padding: '24px 32px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <main style={{ flex: 1, minHeight: 0, padding: '20px 28px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
               <textarea
                 autoFocus
                 value={notepadText}
@@ -851,7 +856,8 @@ export const DesktopReportingModal = ({
             {/* Bottom Bar: ONLY 2 BUTTONS (MIC & CONTINUE) */}
             <footer
               style={{
-                padding: '16px 32px',
+                flexShrink: 0,
+                padding: '14px 28px',
                 borderTop: '1px solid rgba(0, 0, 0, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
@@ -920,11 +926,12 @@ export const DesktopReportingModal = ({
         {/* STEP 3: REVIEW CARD BEFORE SUBMISSION */}
         {/* ===================================================================== */}
         {step === 'review' && reviewData && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#ffffff' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, backgroundColor: '#ffffff' }}>
             {/* Header */}
             <header
               style={{
-                padding: '16px 24px',
+                flexShrink: 0,
+                padding: '14px 24px',
                 borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
                 display: 'flex',
                 alignItems: 'center',
@@ -976,7 +983,7 @@ export const DesktopReportingModal = ({
             </header>
 
             {/* Body */}
-            <div style={{ flex: 1, padding: '24px 32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ flex: 1, minHeight: 0, padding: '20px 28px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div
                 style={{
                   backgroundColor: '#ffffff',

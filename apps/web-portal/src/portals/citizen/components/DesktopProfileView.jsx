@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { compressImage } from '../../../utils/imageCompressor';
 import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -11,9 +12,11 @@ export const DesktopProfileView = ({
   setActiveNav,
   userName = 'Rahul Verma',
   onOpenTara,
+  onOpenReport,
   onOpenReportDetail
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [submissions, setSubmissions] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
@@ -209,10 +212,10 @@ export const DesktopProfileView = ({
           {/* Navigation Items */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
             {[
-              { id: 'home', label: 'Home', icon: 'home', badge: null },
-              { id: 'explore', label: 'Explore', icon: 'explore', badge: null },
-              { id: 'report', label: 'Report Issue', icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: 'Messages', icon: 'chat', badge: '3' }
+              { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
+              { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
+              { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
             ].map((item) => {
               const isActive = activeNav === item.id;
               return (
@@ -220,7 +223,10 @@ export const DesktopProfileView = ({
                   key={item.id}
                   onClick={() => {
                     setActiveNav(item.id);
-                    if (item.id === 'report') onOpenTara();
+                    if (item.id === 'report') {
+                      if (onOpenReport) onOpenReport();
+                      else onOpenTara();
+                    }
                   }}
                   className="apple-tap"
                   style={{
@@ -365,7 +371,7 @@ export const DesktopProfileView = ({
                 {displayName}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {storedUser?.ward || 'Ward 4'}
+                {storedUser?.ward || t('ward_4', 'Ward 4')}
               </span>
             </div>
           </div>
@@ -398,30 +404,9 @@ export const DesktopProfileView = ({
                     margin: 0
                   }}
                 >
-                  Profile
+                  {t('profile', 'Profile')}
                 </h1>
               </div>
-
-              <button
-                onClick={() => setIsGeneralOpen(true)}
-                className="apple-tap"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.45rem 0.9rem',
-                  borderRadius: '9999px',
-                  backgroundColor: '#f2f2f7',
-                  border: '1px solid rgba(0, 0, 0, 0.08)',
-                  color: '#1c1c1e',
-                  fontSize: '0.8125rem',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                <GoogleIcon name="tune" size={16} color="#1c1c1e" />
-                <span>General</span>
-              </button>
             </div>
 
             {/* 12-Column Grid matching Stitch */}
@@ -559,13 +544,12 @@ export const DesktopProfileView = ({
                       <h3
                         style={{
                           fontSize: '1.25rem',
-                          lineHeight: '1.75rem',
-                          fontWeight: '600',
+                          fontWeight: '700',
                           color: '#1a1c1c',
                           margin: 0
                         }}
                       >
-                        Personal Details
+                        {t('personal_details', 'Personal Details')}
                       </h3>
                     </div>
                   </div>
@@ -600,7 +584,7 @@ export const DesktopProfileView = ({
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                         <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e', fontWeight: '500' }}>
-                          Mobile Number
+                          {t('phone', 'Mobile Number')}
                         </span>
                         <span
                           style={{
@@ -647,7 +631,7 @@ export const DesktopProfileView = ({
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                         <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e', fontWeight: '500' }}>
-                          Aadhaar Number
+                          {t('aadhaar_number', 'Aadhaar Number')}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', color: '#1a1c1c', fontWeight: '600' }}>
@@ -686,7 +670,7 @@ export const DesktopProfileView = ({
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                         <span style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e', fontWeight: '500' }}>
-                          Ward & Location
+                          {t('address', 'Ward & Location')}
                         </span>
                         <span
                           style={{
@@ -742,7 +726,7 @@ export const DesktopProfileView = ({
                           className="apple-fade-enter"
                           style={{ fontSize: '0.75rem', lineHeight: '1rem', color: '#5e5e5e', fontWeight: '500' }}
                         >
-                          {showAge ? 'Age' : 'Date of Birth'}
+                          {showAge ? t('age', 'Age') : t('date_of_birth', 'Date of Birth')}
                         </span>
                         <span
                           key={showAge ? 'desktop-age-val' : 'desktop-dob-val'}
@@ -783,10 +767,10 @@ export const DesktopProfileView = ({
                     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1rem'
+                    gap: '1.25rem'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <h3
                         style={{
@@ -797,7 +781,7 @@ export const DesktopProfileView = ({
                           margin: 0
                         }}
                       >
-                        Account Settings
+                        {t('account_settings', 'Account Settings')}
                       </h3>
                     </div>
                   </div>
@@ -831,21 +815,21 @@ export const DesktopProfileView = ({
                             width: '2.25rem',
                             height: '2.25rem',
                             borderRadius: '0.5rem',
-                            backgroundColor: '#e0f2fe',
+                            backgroundColor: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#0284c7'
+                            color: '#1a1c1c'
                           }}
                         >
-                          <GoogleIcon name="tune" size={20} color="#0284c7" />
+                          <GoogleIcon name="tune" size={20} color="#1a1c1c" />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: '600', color: '#1a1c1c' }}>
-                            General
+                            {t('general', 'General')}
                           </span>
                           <span style={{ fontSize: '0.75rem', color: '#6e6e73' }}>
-                            Language & Session
+                            {t('language_region', 'Language & Region')}
                           </span>
                         </div>
                       </div>
@@ -883,7 +867,7 @@ export const DesktopProfileView = ({
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: '600', color: '#1a1c1c' }}>
-                            Personal Information
+                            {t('personal_info', 'Personal Information')}
                           </span>
                         </div>
                       </div>
@@ -921,7 +905,7 @@ export const DesktopProfileView = ({
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: '600', color: '#1a1c1c' }}>
-                            Notification Preferences
+                            {t('notification_preferences', 'Notification Preferences')}
                           </span>
                         </div>
                       </div>
@@ -959,7 +943,7 @@ export const DesktopProfileView = ({
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: '600', color: '#1a1c1c' }}>
-                            Privacy & Security
+                            {t('privacy_security', 'Privacy & Security')}
                           </span>
                         </div>
                       </div>
@@ -991,7 +975,7 @@ export const DesktopProfileView = ({
                           margin: 0
                         }}
                       >
-                        My Submissions
+                        {t('my_submissions', 'My Submissions')}
                       </h3>
                       {submissions.length > 0 && (
                         <span
@@ -1026,7 +1010,7 @@ export const DesktopProfileView = ({
                         transition: 'background-color 0.15s ease'
                       }}
                     >
-                      <span>View All</span>
+                      <span>{t('view_all', 'View All')}</span>
                       <GoogleIcon name="arrow_forward" size={14} />
                     </div>
                   </div>
@@ -1049,10 +1033,10 @@ export const DesktopProfileView = ({
                     >
                       <GoogleIcon name="inbox" size={28} color="#8e8e93" />
                       <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1c1c1e' }}>
-                        No submissions recorded yet
+                        {t('no_submissions_yet', 'No submissions recorded yet')}
                       </span>
                       <span style={{ fontSize: '0.75rem', color: '#8e8e93' }}>
-                        Tap here to view your submissions hub
+                        {t('tap_to_view_submissions', 'Tap here to view your submissions hub')}
                       </span>
                     </div>
                   ) : (
@@ -1135,7 +1119,11 @@ export const DesktopProfileView = ({
                                     textOverflow: 'ellipsis'
                                   }}
                                 >
-                                  {sub.title}
+                                  {sub.title === 'Unverified Media Evidence Submitted'
+                                    ? t('unverified_media_title', 'Unverified Media Evidence Submitted')
+                                    : sub.title === 'Visual civic problem reported by citizen.' || sub.title === 'Visual civic problem reported by citizen'
+                                    ? t('visual_problem_reported_title', 'Visual civic problem reported by citizen.')
+                                    : (sub.title || t('unverified_media_title', 'Unverified Media Evidence Submitted'))}
                                 </h4>
                                 <p
                                   style={{

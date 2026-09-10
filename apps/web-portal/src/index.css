@@ -733,23 +733,34 @@ button {
   transition: transform 60ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* TARA Full-Screen Apple-Style Glowing Aura Animations */
+/* TARA Gentle Apple-Style Glowing Aura Animations (No Center Spinning) */
 @keyframes taraAuraShift {
   0% {
-    transform: rotate(0deg) scale(1);
-    filter: hue-rotate(0deg) blur(60px);
+    opacity: 0.65;
+    filter: hue-rotate(0deg) blur(24px);
+    transform: scale(1);
   }
-  33% {
-    transform: rotate(120deg) scale(1.15) translate(30px, -20px);
-    filter: hue-rotate(45deg) blur(70px);
-  }
-  66% {
-    transform: rotate(240deg) scale(0.95) translate(-20px, 30px);
-    filter: hue-rotate(90deg) blur(65px);
+  50% {
+    opacity: 0.95;
+    filter: hue-rotate(25deg) blur(30px);
+    transform: scale(1.02);
   }
   100% {
-    transform: rotate(360deg) scale(1);
-    filter: hue-rotate(0deg) blur(60px);
+    opacity: 0.65;
+    filter: hue-rotate(0deg) blur(24px);
+    transform: scale(1);
+  }
+}
+
+/* Apple Docked Save Changes Slide Up (Zero Wobble/Bounce) */
+@keyframes appleSlideUpDock {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }
 

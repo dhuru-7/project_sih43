@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const INITIAL_CHATS = [
   {
@@ -126,10 +127,12 @@ const INITIAL_CHATS = [
 
 export const DesktopMessagesView = ({
   onOpenTara,
+  onOpenReport,
   activeNav,
   setActiveNav,
   userName = 'Rampal'
 }) => {
+  const { t } = useLanguage();
   const [chats, setChats] = useState(INITIAL_CHATS);
   const [selectedChatId, setSelectedChatId] = useState('city-maintenance');
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,7 +173,8 @@ export const DesktopMessagesView = ({
   const handleNavigateAway = (targetNav) => {
     if (targetNav === activeNav && targetNav !== 'report') return;
     if (targetNav === 'report') {
-      onOpenTara();
+      if (onOpenReport) onOpenReport();
+      else onOpenTara();
       return;
     }
     // If the sidebar is already expanded (e.g. user hovered over it),
@@ -330,10 +334,10 @@ export const DesktopMessagesView = ({
           {/* Navigation Items */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
             {[
-              { id: 'home', label: 'Home', icon: 'home', badge: null },
-              { id: 'explore', label: 'Explore', icon: 'explore', badge: null },
-              { id: 'report', label: 'Report Issue', icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: 'Messages', icon: 'chat', badge: '3' }
+              { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
+              { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
+              { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
             ].map((item) => {
               const isActive = activeNav === item.id || item.id === 'messages';
               return (
@@ -503,7 +507,7 @@ export const DesktopMessagesView = ({
                 {userName || 'Rampal'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                Ward 4
+                {t('ward_4', 'Ward 4')}
               </span>
             </div>
           </div>
@@ -540,7 +544,7 @@ export const DesktopMessagesView = ({
           {/* Chats Header */}
           <div style={{ padding: '1.25rem 1.25rem 0.75rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1a1c1c', letterSpacing: '-0.01em' }}>Chats</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1a1c1c', letterSpacing: '-0.01em' }}>{t('chats', 'Chats')}</span>
               <div style={{ position: 'relative' }}>
                 <button
                   title="More options"
@@ -617,7 +621,7 @@ export const DesktopMessagesView = ({
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        Mark all as read
+                        {t('mark_all_read', 'Mark all as read')}
                       </button>
                     </div>
                   </>
@@ -639,7 +643,7 @@ export const DesktopMessagesView = ({
               <GoogleIcon name="search" size={18} color="#7e7576" />
               <input
                 type="text"
-                placeholder="Search departments, reports..."
+                placeholder={t('search_placeholder', 'Search grievances...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
@@ -935,7 +939,7 @@ export const DesktopMessagesView = ({
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      Case details
+                      {t('case_details', 'Case details')}
                     </button>
                     <div style={{ height: '1px', backgroundColor: 'rgba(0, 0, 0, 0.06)', margin: '2px 0' }} />
                     <button
@@ -1149,7 +1153,7 @@ export const DesktopMessagesView = ({
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Type your official inquiry or field update..."
+                  placeholder={t('type_message', 'Type your inquiry or update...')}
                   style={{
                     flex: 1,
                     border: 'none',

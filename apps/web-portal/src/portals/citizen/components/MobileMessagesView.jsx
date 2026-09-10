@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const INITIAL_CHATS = [
   {
@@ -128,6 +129,7 @@ export const MobileMessagesView = ({
   hideNav = false,
   onChatOpenChange
 }) => {
+  const { t } = useLanguage();
   const [chats, setChats] = useState(INITIAL_CHATS);
   const [activeChatId, setActiveChatId] = useState(null);
   const [inputMessage, setInputMessage] = useState('');
@@ -429,7 +431,7 @@ export const MobileMessagesView = ({
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    Case details
+                    {t('case_details', 'Case details')}
                   </button>
                   <div style={{ height: '1px', backgroundColor: 'rgba(0, 0, 0, 0.06)', margin: '2px 0' }} />
                   <button
@@ -654,7 +656,7 @@ export const MobileMessagesView = ({
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type a message..."
+                placeholder={t('type_message', 'Type a message...')}
                 style={{
                   flex: 1,
                   minWidth: 0,
@@ -737,7 +739,7 @@ export const MobileMessagesView = ({
             margin: 0
           }}
         >
-          Messages
+          {t('nav_messages', 'Messages')}
         </h1>
         {/* 3-dots button with Apple touch */}
         <div style={{ position: 'relative' }}>
@@ -816,7 +818,7 @@ export const MobileMessagesView = ({
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  Mark all as read
+                  {t('mark_all_read', 'Mark all as read')}
                 </button>
               </div>
             </>
