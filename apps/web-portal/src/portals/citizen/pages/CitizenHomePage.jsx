@@ -91,6 +91,13 @@ export const CitizenHomePage = () => {
     }
   }, [location.pathname, location.search]);
 
+  // Always reset scroll to top when changing views/tabs in the citizen portal
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, [activeNav]);
+
   const navigate = useNavigate();
 
   // Strict route safeguard: unverified visitors cannot access citizen portal

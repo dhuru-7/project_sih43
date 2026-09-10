@@ -13,16 +13,16 @@ export const LanguageSelectionStep = ({ onContinue, isDesktop = false }) => {
         height: '100%',
         maxHeight: '100%',
         position: 'relative',
-        paddingTop: isDesktop ? '1.5rem' : '10%',
+        paddingTop: isDesktop ? '1.5rem' : '1.25rem',
         boxSizing: 'border-box',
         overflow: 'hidden'
       }}
     >
       {/* Centered Title */}
-      <div style={{ textAlign: 'center', marginBottom: isDesktop ? '0.875rem' : '1.25rem', flexShrink: 0 }}>
+      <div style={{ textAlign: 'center', marginBottom: isDesktop ? '0.875rem' : '0.85rem', flexShrink: 0 }}>
         <h1
           style={{
-            fontSize: isDesktop ? '1.875rem' : '1.625rem',
+            fontSize: isDesktop ? '1.875rem' : '1.5rem',
             fontWeight: '800',
             letterSpacing: '-0.03em',
             color: '#111111',
@@ -34,19 +34,23 @@ export const LanguageSelectionStep = ({ onContinue, isDesktop = false }) => {
         </h1>
       </div>
 
-      {/* Grid of Circular Language Cards - 8 columns on desktop to fit all 22 in exactly 3 rows without scrolling */}
+      {/* Grid of Circular Language Cards - 8 columns on desktop, 3 columns on mobile */}
       <div
         className="custom-scrollbar"
         style={{
           flex: 1,
+          minHeight: 0,
           overflowY: isDesktop ? 'hidden' : 'auto',
-          padding: isDesktop ? '0.25rem 0.75rem 0.5rem' : '0.25rem 0.25rem 5.5rem',
+          WebkitOverflowScrolling: 'touch',
+          padding: isDesktop ? '0.25rem 0.75rem 0.5rem' : '0.25rem 0.35rem 6.5rem',
           display: 'grid',
           gridTemplateColumns: isDesktop ? 'repeat(8, 1fr)' : 'repeat(3, 1fr)',
           columnGap: isDesktop ? '0.75rem' : '0.75rem',
           rowGap: isDesktop ? '0.75rem' : '1.25rem',
           alignContent: isDesktop ? 'center' : 'start',
-          justifyItems: 'center'
+          justifyItems: 'center',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
         }}
       >
         {languages.map((lang, idx) => {
@@ -148,14 +152,25 @@ export const LanguageSelectionStep = ({ onContinue, isDesktop = false }) => {
         })}
       </div>
 
-      {/* Bottom Apple Action Pill (Continue) */}
+      {/* Bottom Apple Action Pill (Continue) with Fade Boundary */}
       <div
         style={{
+          position: isDesktop ? 'relative' : 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
           flexShrink: 0,
-          padding: isDesktop ? '0.75rem 0 1.25rem' : '1rem 0 0.5rem',
+          padding: isDesktop ? '0.75rem 0 1.25rem' : '3.5rem 1.25rem 1.25rem',
+          background: isDesktop
+            ? 'transparent'
+            : 'linear-gradient(to top, #FCFCFD 55%, rgba(252, 252, 253, 0.92) 75%, rgba(252, 252, 253, 0) 100%)',
           display: 'flex',
           justifyContent: 'center',
-          zIndex: 20
+          alignItems: 'center',
+          zIndex: 20,
+          pointerEvents: isDesktop ? 'auto' : 'none',
+          border: 'none',
+          borderTop: 'none'
         }}
       >
         <button
@@ -163,12 +178,14 @@ export const LanguageSelectionStep = ({ onContinue, isDesktop = false }) => {
           className="apple-primary-btn"
           style={{
             width: isDesktop ? 'auto' : '100%',
+            maxWidth: isDesktop ? 'none' : '380px',
             minWidth: isDesktop ? '320px' : 'auto',
             padding: '0.875rem 2rem',
             borderRadius: '9999px',
             backgroundColor: '#000000',
             color: '#FFFFFF',
             border: 'none',
+            outline: 'none',
             fontSize: '0.9375rem',
             fontWeight: '600',
             display: 'flex',
@@ -176,7 +193,8 @@ export const LanguageSelectionStep = ({ onContinue, isDesktop = false }) => {
             justifyContent: 'center',
             cursor: 'pointer',
             boxShadow: '0 6px 20px rgba(0, 0, 0, 0.16)',
-            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            pointerEvents: 'auto'
           }}
         >
           <span>{t('continue', 'Continue')}</span>

@@ -53,6 +53,12 @@ export const OnboardingPage = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const toastTimeoutRef = useRef(null);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, [currentStep]);
+
   const showToast = (message) => {
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
@@ -65,6 +71,15 @@ export const OnboardingPage = () => {
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
+  const isMobile = windowWidth < 1024;
+
+  // On mobile view, skip the "What brings you to Setu?" workspace selection screen and default to report portal
+  useEffect(() => {
+    if (isMobile && currentStep === 4) {
+      setSelectedIntent('report');
+      setCurrentStep(5);
+    }
+  }, [isMobile, currentStep]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -172,10 +187,15 @@ export const OnboardingPage = () => {
       // Advance through slides (1 -> 2 -> 3)
       setCurrentStep((prev) => prev + 1);
     } else if (currentStep === 3) {
-      // Finished slideshow, move to Intent Selection
-      setCurrentStep(4);
+      // Finished slideshow: on mobile skip "What brings you to Setu?" and default to report portal
+      if (isMobile) {
+        setSelectedIntent('report');
+        setCurrentStep(5);
+      } else {
+        setCurrentStep(4);
+      }
     } else if (currentStep === 4) {
-      // Intent chosen
+      // Intent chosen (Desktop)
       if (selectedIntent === 'report') {
         setCurrentStep(5);
       } else {
@@ -195,13 +215,23 @@ export const OnboardingPage = () => {
 
   const handlePrev = () => {
     if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
+      if (isMobile && currentStep === 5) {
+        // On mobile, going back from role selection returns directly to Slide 3
+        setCurrentStep(3);
+      } else {
+        setCurrentStep((prev) => prev - 1);
+      }
     }
   };
 
   const handleSkip = () => {
-    // Jump straight to Intent Selection
-    setCurrentStep(4);
+    // Jump straight past slideshow: on mobile skips intent screen directly to role selection
+    if (isMobile) {
+      setSelectedIntent('report');
+      setCurrentStep(5);
+    } else {
+      setCurrentStep(4);
+    }
   };
 
   const handleAadhaarSuccess = (user) => {
@@ -215,14 +245,15 @@ export const OnboardingPage = () => {
     navigate('/citizen/home');
   };
 
-  const isMobile = windowWidth < 1024;
-
   return (
     <OnboardingErrorBoundary>
       <div
         style={{
           width: '100%',
-          minHeight: '100vh',
+          height: isMobile && currentStep === 0 ? '100dvh' : 'auto',
+          minHeight: isMobile && currentStep === 0 ? '100dvh' : '100vh',
+          maxHeight: isMobile && currentStep === 0 ? '100dvh' : 'none',
+          overflow: isMobile && currentStep === 0 ? 'hidden' : 'visible',
           backgroundColor: '#f9f9f9',
           boxSizing: 'border-box'
         }}

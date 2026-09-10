@@ -36,13 +36,16 @@ export const MobileOnboardingView = ({
       style={{
         width: '100%',
         maxWidth: '430px',
-        minHeight: '100vh',
+        height: isLanguageStep ? '100dvh' : 'auto',
+        minHeight: isLanguageStep ? '100dvh' : '100vh',
+        maxHeight: isLanguageStep ? '100dvh' : 'none',
+        overflow: isLanguageStep ? 'hidden' : 'visible',
         margin: '0 auto',
         backgroundColor: '#FCFCFD',
         color: '#111111',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        justifyContent: isLanguageStep ? 'flex-start' : 'space-between',
         position: 'relative',
         boxSizing: 'border-box',
         boxShadow: '0 0 40px rgba(0, 0, 0, 0.06)',
@@ -106,6 +109,9 @@ export const MobileOnboardingView = ({
       <main
         style={{
           flex: 1,
+          height: isLanguageStep ? '100%' : 'auto',
+          maxHeight: isLanguageStep ? '100%' : 'none',
+          overflow: isLanguageStep ? 'hidden' : 'visible',
           padding: isLanguageStep
             ? '0 1.25rem 0'
             : currentStep === 6
@@ -113,7 +119,9 @@ export const MobileOnboardingView = ({
             : '10% 1.5rem 1.5rem',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: isLanguageStep || currentStep === 6 ? 'flex-start' : 'center'
+          justifyContent: isLanguageStep || currentStep === 6 ? 'flex-start' : 'center',
+          position: 'relative',
+          boxSizing: 'border-box'
         }}
       >
         {isLanguageStep ? (
