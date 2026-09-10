@@ -79,7 +79,7 @@ export const OnboardingPage = () => {
   );
   const isMobile = windowWidth < 1024;
 
-  // Transition orchestrator using Apple HIG timings & curves (190ms exit dissolve, 300ms entrance settle)
+  // Transition orchestrator using Apple HIG timings & curves (150ms exit, 220ms entrance)
   const transitionToStep = (targetStep, direction = 'forward') => {
     if (isTransitioningRef.current || targetStep === displayedStep) return;
     isTransitioningRef.current = true;
@@ -90,7 +90,7 @@ export const OnboardingPage = () => {
       clearTimeout(transitionTimeoutRef.current);
     }
 
-    // Phase 1: 190ms exit dissolve (fades out, soft blur & subtle scale)
+    // Phase 1: 150ms exit dissolve (clean opacity + 6px translate, no blur/scale)
     transitionTimeoutRef.current = setTimeout(() => {
       setDisplayedStep(targetStep);
       setCurrentStep(targetStep);
@@ -101,12 +101,12 @@ export const OnboardingPage = () => {
       // Phase 2: Enter animation starts
       setTransitionPhase('entering');
 
-      // Phase 3: 300ms entrance settling, then restore idle
+      // Phase 3: 220ms entrance settling, then restore idle
       transitionTimeoutRef.current = setTimeout(() => {
         setTransitionPhase('idle');
         isTransitioningRef.current = false;
-      }, 300);
-    }, 190);
+      }, 220);
+    }, 150);
   };
 
   useEffect(() => {
@@ -334,10 +334,7 @@ export const OnboardingPage = () => {
       <div
         style={{
           width: '100%',
-          height: isMobile && displayedStep === 0 ? '100dvh' : 'auto',
-          minHeight: isMobile && displayedStep === 0 ? '100dvh' : '100vh',
-          maxHeight: isMobile && displayedStep === 0 ? '100dvh' : 'none',
-          overflow: isMobile && displayedStep === 0 ? 'hidden' : 'visible',
+          minHeight: '100vh',
           backgroundColor: '#f9f9f9',
           boxSizing: 'border-box'
         }}
@@ -346,8 +343,7 @@ export const OnboardingPage = () => {
           className={`apple-magical-stage-wrapper ${getTransitionClass()}`}
           style={{
             width: '100%',
-            height: isMobile && displayedStep === 0 ? '100dvh' : (isMobile ? 'auto' : '100vh'),
-            minHeight: isMobile && displayedStep === 0 ? '100dvh' : '100vh',
+            minHeight: '100vh',
             display: 'flex',
             flexDirection: 'column'
           }}

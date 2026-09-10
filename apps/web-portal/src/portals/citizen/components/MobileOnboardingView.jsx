@@ -134,7 +134,6 @@ export const MobileOnboardingView = ({
              STAGE 1: Pure Stitch Editorial Slideshow (Steps 1, 2, 3)
              =================================================================== */
           <div
-            className="apple-fade-enter"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -192,7 +191,6 @@ export const MobileOnboardingView = ({
              STAGE 2: Mobile Intent Selection Screen (Step 4)
              =================================================================== */
           <div
-            className="apple-fade-enter"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -294,7 +292,6 @@ export const MobileOnboardingView = ({
              STAGE 3: Mobile Reporting Portal Sub-Role Selection (Step 5)
              =================================================================== */
           <div
-            className="apple-fade-enter"
             style={{
               display: 'flex',
               flexDirection: 'column',

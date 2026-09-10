@@ -6,7 +6,6 @@ export const LanguageSelectionStep = ({ onContinue, isDesktop = false }) => {
 
   return (
     <div
-      className="apple-fade-enter"
       style={{
         display: 'flex',
         flexDirection: 'column',

@@ -32,8 +32,14 @@ const BookmarkIcon = ({ isBookmarked, size = 22 }) => {
 
 const PostMediaCarousel = ({ images, isPostHovered }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const touchStartRef = useRef({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const containerRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const isSwipingRef = useRef(false);
+  const isHorizontalGestureRef = useRef(null);
+  const hasMovedRef = useRef(false);
 
   if (!images || images.length === 0) return null;
 
@@ -50,39 +56,88 @@ const PostMediaCarousel = ({ images, isPostHovered }) => {
     setCurrentIndex((prev) => Math.min(total - 1, prev + 1));
   };
 
-  // Touch and Drag Swipe Handlers
-  const handleTouchStart = (e) => {
+  // 1:1 Finger and Mouse Drag Handlers
+  const handleStart = (clientX, clientY) => {
+    if (total <= 1) return;
     touchStartRef.current = {
-      x: e.touches ? e.touches[0].clientX : e.clientX,
-      y: e.touches ? e.touches[0].clientY : e.clientY
+      x: clientX,
+      y: clientY,
+      time: Date.now()
     };
     isSwipingRef.current = true;
+    isHorizontalGestureRef.current = null;
+    hasMovedRef.current = false;
+    setIsDragging(true);
+    setDragOffset(0);
   };
 
-  const handleTouchEnd = (e) => {
-    if (!isSwipingRef.current) return;
-    isSwipingRef.current = false;
-    const endX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-    const endY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-    const diffX = touchStartRef.current.x - endX;
-    const diffY = touchStartRef.current.y - endY;
+  const handleMove = (clientX, clientY, e) => {
+    if (!isSwipingRef.current || total <= 1) return;
 
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
-      if (diffX > 0) {
-        setCurrentIndex((prev) => Math.min(total - 1, prev + 1));
-      } else {
-        setCurrentIndex((prev) => Math.max(0, prev - 1));
+    const deltaX = clientX - touchStartRef.current.x;
+    const deltaY = clientY - touchStartRef.current.y;
+
+    if (isHorizontalGestureRef.current === null) {
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        isHorizontalGestureRef.current = Math.abs(deltaX) > Math.abs(deltaY);
       }
     }
+
+    if (isHorizontalGestureRef.current) {
+      if (e && e.cancelable && e.preventDefault) {
+        e.preventDefault();
+      }
+      hasMovedRef.current = true;
+
+      // Apple rubber-banding resistance at boundaries
+      let effective = deltaX;
+      if (currentIndex === 0 && deltaX > 0) {
+        effective = deltaX * 0.32;
+      } else if (currentIndex === total - 1 && deltaX < 0) {
+        effective = deltaX * 0.32;
+      }
+      setDragOffset(effective);
+    }
+  };
+
+  const handleEnd = () => {
+    if (!isSwipingRef.current) return;
+    isSwipingRef.current = false;
+    setIsDragging(false);
+
+    const elapsed = Date.now() - touchStartRef.current.time;
+    const velocity = Math.abs(dragOffset) / (elapsed || 1);
+    const containerWidth = containerRef.current?.offsetWidth || 400;
+    const threshold = Math.max(45, containerWidth * 0.16);
+
+    if ((dragOffset < -threshold || (dragOffset < -20 && velocity > 0.32)) && currentIndex < total - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    } else if ((dragOffset > threshold || (dragOffset > 20 && velocity > 0.32)) && currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+
+    setDragOffset(0);
+    isHorizontalGestureRef.current = null;
   };
 
   return (
     <div
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleTouchStart}
-      onMouseUp={handleTouchEnd}
-      onMouseLeave={() => { isSwipingRef.current = false; }}
+      ref={containerRef}
+      onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY, e)}
+      onTouchEnd={handleEnd}
+      onTouchCancel={handleEnd}
+      onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
+      onMouseMove={(e) => handleMove(e.clientX, e.clientY, e)}
+      onMouseUp={handleEnd}
+      onMouseLeave={() => {
+        if (isSwipingRef.current) handleEnd();
+      }}
+      onClickCapture={(e) => {
+        if (hasMovedRef.current) {
+          e.stopPropagation();
+        }
+      }}
       style={{
         position: 'relative',
         width: '100%',
@@ -93,17 +148,17 @@ const PostMediaCarousel = ({ images, isPostHovered }) => {
         marginTop: '0.25rem',
         touchAction: 'pan-y',
         userSelect: 'none',
-        cursor: total > 1 ? 'grab' : 'default'
+        cursor: total > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
       }}
     >
-      {/* Sliding image strip */}
+      {/* Sliding image strip directly tracks finger / mouse */}
       <div
         style={{
           display: 'flex',
           width: `${total * 100}%`,
           height: '100%',
-          transform: `translateX(-${currentIndex * (100 / total)}%)`,
-          transition: 'transform 0.45s cubic-bezier(0.32, 0.72, 0, 1)',
+          transform: `translateX(calc(-${(currentIndex * 100) / total}% + ${dragOffset}px))`,
+          transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.23, 1, 0.32, 1)',
           willChange: 'transform'
         }}
       >

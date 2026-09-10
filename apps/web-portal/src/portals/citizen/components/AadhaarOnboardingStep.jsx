@@ -555,7 +555,6 @@ export const AadhaarOnboardingStep = ({
 
   return (
     <div
-      className="apple-fade-enter"
       style={{
         width: '100%',
         maxWidth: '430px',

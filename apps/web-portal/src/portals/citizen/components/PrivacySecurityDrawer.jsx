@@ -174,22 +174,8 @@ export const PrivacySecurityDrawer = ({
             {t('privacy_security', 'Privacy & Security')}
           </h2>
 
-          {/* Done Button */}
-          <button
-            onClick={handleBack}
-            className="apple-tap"
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.9375rem',
-              fontWeight: '600',
-              color: '#000000',
-              cursor: 'pointer',
-              padding: '0.35rem 0.6rem'
-            }}
-          >
-            {t('done', 'Done')}
-          </button>
+          {/* Right Spacer to balance the Back button and keep title centered */}
+          <div style={{ width: '36px' }} />
         </header>
 
         {/* Content Body */}
@@ -286,7 +272,6 @@ export const PrivacySecurityDrawer = ({
                     marginTop: '0.25rem'
                   }}
                 >
-                  <GoogleIcon name="logout" size={20} color="#dc2626" />
                   <span>{isLoggingOut ? t('signing_out', 'Signing out...') : t('sign_out', 'Sign Out')}</span>
                 </button>
               </div>

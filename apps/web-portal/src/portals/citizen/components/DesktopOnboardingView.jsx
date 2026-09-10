@@ -285,7 +285,6 @@ export const DesktopOnboardingView = ({
                STAGE 2: Intent Selection Screen (Step 4)
                =================================================================== */
             <div
-              className="apple-fade-enter"
               style={{
                 padding: '2.25rem 3rem 2rem',
                 display: 'flex',
@@ -422,7 +421,6 @@ export const DesktopOnboardingView = ({
                STAGE 3: Reporting Portal Sub-Role Selection (Step 5)
                =================================================================== */
             <div
-              className="apple-fade-enter"
               style={{
                 padding: '2.5rem 3rem 2rem',
                 display: 'flex',
