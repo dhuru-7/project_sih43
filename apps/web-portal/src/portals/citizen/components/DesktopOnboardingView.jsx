@@ -20,7 +20,6 @@ export const DesktopOnboardingView = ({
   onAadhaarSuccess
 }) => {
   const { t, languageMeta } = useLanguage();
-  const [isExitingLang, setIsExitingLang] = useState(false);
 
   // Step 0: Language Selection
   // Steps 1-3: Slideshow
@@ -31,14 +30,6 @@ export const DesktopOnboardingView = ({
   const isSlideshow = currentStep >= 1 && currentStep <= 3;
   const slideIndex = isSlideshow ? currentStep - 1 : 0;
   const slide = slides[slideIndex] || slides[0];
-
-  const handleLanguageContinue = () => {
-    setIsExitingLang(true);
-    setTimeout(() => {
-      setIsExitingLang(false);
-      onNext();
-    }, 240);
-  };
 
   return (
     <div
@@ -71,8 +62,7 @@ export const DesktopOnboardingView = ({
             justifyContent: 'space-between',
             position: 'relative',
             zIndex: 20,
-            flexShrink: 0,
-            animation: 'appleFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both'
+            flexShrink: 0
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -127,13 +117,10 @@ export const DesktopOnboardingView = ({
             display: 'flex',
             flexDirection: 'column',
             boxSizing: 'border-box',
-            overflow: 'hidden',
-            opacity: isExitingLang ? 0 : 1,
-            transform: isExitingLang ? 'translate3d(0, -14px, 0) scale(0.985)' : 'translate3d(0, 0, 0) scale(1)',
-            transition: 'opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
+            overflow: 'hidden'
           }}
         >
-          <LanguageSelectionStep onContinue={handleLanguageContinue} isDesktop={true} />
+          <LanguageSelectionStep onContinue={onNext} isDesktop={true} />
         </main>
       ) : (
         <main
@@ -147,10 +134,7 @@ export const DesktopOnboardingView = ({
             alignItems: 'center',
             justifyContent: 'center',
             boxSizing: 'border-box',
-            overflow: 'hidden',
-            animation: isSlideshow && currentStep === 1
-              ? 'appleDesktopSlideIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) both'
-              : 'none'
+            overflow: 'hidden'
           }}
         >
           <div

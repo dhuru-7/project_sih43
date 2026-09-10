@@ -519,11 +519,148 @@
 @keyframes appleSpringEnter {
   0% {
     opacity: 0;
-    transform: translateY(8px) scale(0.992);
+    transform: translate3d(0, 8px, 0) scale(0.992);
+    filter: blur(3px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+/* ==========================================================================
+   APPLE MAGICAL ONBOARDING FADE TRANSITIONS
+   GPU-accelerated, Apple fluid easing, subtle scale & soft depth blur
+   ========================================================================== */
+
+/* Forward transition: exiting element dissolves with subtle upward lift & blur */
+@keyframes appleMagicalExitForward {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.985);
+    filter: blur(3px);
+  }
+}
+
+/* Forward transition: entering element emerges from soft blur and settles */
+@keyframes appleMagicalEnterForward {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+/* Backward transition: exiting element dissolves with gentle downward shift & blur */
+@keyframes appleMagicalExitBackward {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.985);
+    filter: blur(3px);
+  }
+}
+
+/* Backward transition: entering element descends gently from above and settles */
+@keyframes appleMagicalEnterBackward {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.apple-magical-stage-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.apple-magical-exit-forward {
+  animation: appleMagicalExitForward 0.19s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+  pointer-events: none !important;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.apple-magical-enter-forward {
+  animation: appleMagicalEnterForward 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.apple-magical-exit-backward {
+  animation: appleMagicalExitBackward 0.19s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+  pointer-events: none !important;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.apple-magical-enter-backward {
+  animation: appleMagicalEnterBackward 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Silence child animations during stage transitions so motion is unified */
+.apple-magical-stage-wrapper.apple-magical-enter-forward .apple-fade-enter,
+.apple-magical-stage-wrapper.apple-magical-enter-backward .apple-fade-enter,
+.apple-magical-stage-wrapper.apple-magical-exit-forward .apple-fade-enter,
+.apple-magical-stage-wrapper.apple-magical-exit-backward .apple-fade-enter {
+  animation: none !important;
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes appleMagicalSimpleFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes appleMagicalSimpleFadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .apple-magical-exit-forward,
+  .apple-magical-exit-backward {
+    animation: appleMagicalSimpleFadeOut 0.14s linear forwards !important;
+    transform: none !important;
+    filter: none !important;
+    will-change: opacity;
+  }
+  .apple-magical-enter-forward,
+  .apple-magical-enter-backward {
+    animation: appleMagicalSimpleFadeIn 0.18s linear forwards !important;
+    transform: none !important;
+    filter: none !important;
+    will-change: opacity;
   }
 }
 

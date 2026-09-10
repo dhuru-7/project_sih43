@@ -48,6 +48,12 @@ export const OnboardingPage = () => {
   // Step 5: Role Selection
   // Step 6: Aadhaar Verification
   const [currentStep, setCurrentStep] = useState(0);
+  const [displayedStep, setDisplayedStep] = useState(0);
+  const [transitionPhase, setTransitionPhase] = useState('idle'); // 'idle' | 'exiting' | 'entering'
+  const [transitionDirection, setTransitionDirection] = useState('forward'); // 'forward' | 'backward'
+  const transitionTimeoutRef = useRef(null);
+  const isTransitioningRef = useRef(false);
+
   const [selectedIntent, setSelectedIntent] = useState('report');
   const [selectedRole, setSelectedRole] = useState('citizen');
   const [toastMessage, setToastMessage] = useState(null);
@@ -57,7 +63,7 @@ export const OnboardingPage = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     if (document.documentElement) document.documentElement.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
-  }, [currentStep]);
+  }, [displayedStep]);
 
   const showToast = (message) => {
     if (toastTimeoutRef.current) {
@@ -73,13 +79,76 @@ export const OnboardingPage = () => {
   );
   const isMobile = windowWidth < 1024;
 
+  // Transition orchestrator using Apple HIG timings & curves (190ms exit dissolve, 300ms entrance settle)
+  const transitionToStep = (targetStep, direction = 'forward') => {
+    if (isTransitioningRef.current || targetStep === displayedStep) return;
+    isTransitioningRef.current = true;
+    setTransitionDirection(direction);
+    setTransitionPhase('exiting');
+
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
+
+    // Phase 1: 190ms exit dissolve (fades out, soft blur & subtle scale)
+    transitionTimeoutRef.current = setTimeout(() => {
+      setDisplayedStep(targetStep);
+      setCurrentStep(targetStep);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+
+      // Phase 2: Enter animation starts
+      setTransitionPhase('entering');
+
+      // Phase 3: 300ms entrance settling, then restore idle
+      transitionTimeoutRef.current = setTimeout(() => {
+        setTransitionPhase('idle');
+        isTransitioningRef.current = false;
+      }, 300);
+    }, 190);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleSetStep = (stepNum) => {
+    if (stepNum === displayedStep) return;
+    if (stepNum === 0 || displayedStep === 0 || stepNum >= 4 || displayedStep >= 4) {
+      transitionToStep(stepNum, stepNum > displayedStep ? 'forward' : 'backward');
+    } else {
+      setDisplayedStep(stepNum);
+      setCurrentStep(stepNum);
+    }
+  };
+
+  const getTransitionClass = () => {
+    if (transitionPhase === 'exiting') {
+      return transitionDirection === 'forward'
+        ? 'apple-magical-exit-forward'
+        : 'apple-magical-exit-backward';
+    }
+    if (transitionPhase === 'entering') {
+      return transitionDirection === 'forward'
+        ? 'apple-magical-enter-forward'
+        : 'apple-magical-enter-backward';
+    }
+    return '';
+  };
+
   // On mobile view, skip the "What brings you to Setu?" workspace selection screen and default to report portal
   useEffect(() => {
-    if (isMobile && currentStep === 4) {
+    if (isMobile && displayedStep === 4) {
       setSelectedIntent('report');
+      setDisplayedStep(5);
       setCurrentStep(5);
     }
-  }, [isMobile, currentStep]);
+  }, [isMobile, displayedStep]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -180,33 +249,34 @@ export const OnboardingPage = () => {
   };
 
   const handleNext = () => {
-    if (currentStep === 0) {
-      // Move from Language Selection to Slide 1
-      setCurrentStep(1);
-    } else if (currentStep < 3) {
+    if (displayedStep === 0) {
+      // Language Selection -> Slide 1
+      transitionToStep(1, 'forward');
+    } else if (displayedStep < 3) {
       // Advance through slides (1 -> 2 -> 3)
+      setDisplayedStep((prev) => prev + 1);
       setCurrentStep((prev) => prev + 1);
-    } else if (currentStep === 3) {
+    } else if (displayedStep === 3) {
       // Finished slideshow: on mobile skip "What brings you to Setu?" and default to report portal
       if (isMobile) {
         setSelectedIntent('report');
-        setCurrentStep(5);
+        transitionToStep(5, 'forward');
       } else {
-        setCurrentStep(4);
+        transitionToStep(4, 'forward');
       }
-    } else if (currentStep === 4) {
-      // Intent chosen (Desktop)
+    } else if (displayedStep === 4) {
+      // Intent chosen (Desktop) -> Role Question
       if (selectedIntent === 'report') {
-        setCurrentStep(5);
+        transitionToStep(5, 'forward');
       } else {
         showToast(t('coming_soon_msg', 'This workflow is currently under development. Please select Report Issue.'));
       }
-    } else if (currentStep === 5) {
-      // Reporting role chosen
+    } else if (displayedStep === 5) {
+      // Reporting role chosen -> Aadhaar Verification
       if (selectedRole === 'citizen') {
         localStorage.setItem('setu_onboarded', 'true');
         localStorage.setItem('setu_user_role', selectedRole);
-        setCurrentStep(6);
+        transitionToStep(6, 'forward');
       } else {
         showToast(t('coming_soon_msg', 'Organization onboarding is currently under development. Please proceed as Citizen.'));
       }
@@ -214,12 +284,26 @@ export const OnboardingPage = () => {
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) {
-      if (isMobile && currentStep === 5) {
-        // On mobile, going back from role selection returns directly to Slide 3
-        setCurrentStep(3);
-      } else {
+    if (displayedStep > 0) {
+      if (displayedStep === 6) {
+        // Aadhaar Verification -> Role Selection
+        transitionToStep(5, 'backward');
+      } else if (displayedStep === 5) {
+        if (isMobile) {
+          // On mobile, going back from role selection returns directly to Slide 3
+          transitionToStep(3, 'backward');
+        } else {
+          transitionToStep(4, 'backward');
+        }
+      } else if (displayedStep === 4) {
+        // Desktop Intent -> Slide 3
+        transitionToStep(3, 'backward');
+      } else if (displayedStep === 3 || displayedStep === 2) {
+        setDisplayedStep((prev) => prev - 1);
         setCurrentStep((prev) => prev - 1);
+      } else if (displayedStep === 1) {
+        // Slide 1 -> Language Selection
+        transitionToStep(0, 'backward');
       }
     }
   };
@@ -228,9 +312,9 @@ export const OnboardingPage = () => {
     // Jump straight past slideshow: on mobile skips intent screen directly to role selection
     if (isMobile) {
       setSelectedIntent('report');
-      setCurrentStep(5);
+      transitionToStep(5, 'forward');
     } else {
-      setCurrentStep(4);
+      transitionToStep(4, 'forward');
     }
   };
 
@@ -250,47 +334,58 @@ export const OnboardingPage = () => {
       <div
         style={{
           width: '100%',
-          height: isMobile && currentStep === 0 ? '100dvh' : 'auto',
-          minHeight: isMobile && currentStep === 0 ? '100dvh' : '100vh',
-          maxHeight: isMobile && currentStep === 0 ? '100dvh' : 'none',
-          overflow: isMobile && currentStep === 0 ? 'hidden' : 'visible',
+          height: isMobile && displayedStep === 0 ? '100dvh' : 'auto',
+          minHeight: isMobile && displayedStep === 0 ? '100dvh' : '100vh',
+          maxHeight: isMobile && displayedStep === 0 ? '100dvh' : 'none',
+          overflow: isMobile && displayedStep === 0 ? 'hidden' : 'visible',
           backgroundColor: '#f9f9f9',
           boxSizing: 'border-box'
         }}
       >
-      {isMobile ? (
-        <MobileOnboardingView
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          slides={slides}
-          selectedIntent={selectedIntent}
-          setSelectedIntent={handleSelectIntent}
-          intents={intents}
-          selectedRole={selectedRole}
-          setSelectedRole={handleSelectRole}
-          roles={roles}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          onSkip={handleSkip}
-          onAadhaarSuccess={handleAadhaarSuccess}
-        />
-      ) : (
-        <DesktopOnboardingView
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          slides={slides}
-          selectedIntent={selectedIntent}
-          setSelectedIntent={handleSelectIntent}
-          intents={intents}
-          selectedRole={selectedRole}
-          setSelectedRole={handleSelectRole}
-          roles={roles}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          onSkip={handleSkip}
-          onAadhaarSuccess={handleAadhaarSuccess}
-        />
-      )}
+        <div
+          className={`apple-magical-stage-wrapper ${getTransitionClass()}`}
+          style={{
+            width: '100%',
+            height: isMobile && displayedStep === 0 ? '100dvh' : (isMobile ? 'auto' : '100vh'),
+            minHeight: isMobile && displayedStep === 0 ? '100dvh' : '100vh',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          {isMobile ? (
+            <MobileOnboardingView
+              currentStep={displayedStep}
+              setCurrentStep={handleSetStep}
+              slides={slides}
+              selectedIntent={selectedIntent}
+              setSelectedIntent={handleSelectIntent}
+              intents={intents}
+              selectedRole={selectedRole}
+              setSelectedRole={handleSelectRole}
+              roles={roles}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              onSkip={handleSkip}
+              onAadhaarSuccess={handleAadhaarSuccess}
+            />
+          ) : (
+            <DesktopOnboardingView
+              currentStep={displayedStep}
+              setCurrentStep={handleSetStep}
+              slides={slides}
+              selectedIntent={selectedIntent}
+              setSelectedIntent={handleSelectIntent}
+              intents={intents}
+              selectedRole={selectedRole}
+              setSelectedRole={handleSelectRole}
+              roles={roles}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              onSkip={handleSkip}
+              onAadhaarSuccess={handleAadhaarSuccess}
+            />
+          )}
+        </div>
 
       {/* Floating Bottom Toast Pill ("a simple sentence inside a shape (rectangle or pill)") */}
       {toastMessage && typeof document !== 'undefined' && ReactDOM.createPortal(
