@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { compressImage } from '../../../utils/imageCompressor';
 import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
+import { PrivacySecurityDrawer } from './PrivacySecurityDrawer';
 import { useLanguage } from '../../../context/LanguageContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
@@ -51,8 +52,9 @@ export const MobileProfileView = ({
   const displayDob = storedUser.dob || '15/08/1996';
   const isDev = !!storedUser.isDevAccount;
 
-  // General Settings Drawer State
+  // General & Privacy Settings Drawer State
   const [isGeneralOpen, setIsGeneralOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   // Profile Picture Upload & Compression
   const fileInputRef = useRef(null);
@@ -574,14 +576,9 @@ export const MobileProfileView = ({
                     >
                       <GoogleIcon name="tune" size={18} color="#1c1c1e" />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e' }}>
-                        {t('general', 'General')}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: '#8e8e93' }}>
-                        {t('app_preferences_session', 'Language, App Preferences & Session')}
-                      </span>
-                    </div>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e' }}>
+                      {t('general', 'General')}
+                    </span>
                   </div>
                   <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
                 </button>
@@ -725,6 +722,7 @@ export const MobileProfileView = ({
               <li>
                 <button
                   className="apple-tap"
+                  onClick={() => setIsPrivacyOpen(true)}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -769,6 +767,13 @@ export const MobileProfileView = ({
       <GeneralSettingsDrawer
         isOpen={isGeneralOpen}
         onClose={() => setIsGeneralOpen(false)}
+        userData={storedUser}
+      />
+
+      {/* Full-Screen Apple Privacy & Security Drawer */}
+      <PrivacySecurityDrawer
+        isOpen={isPrivacyOpen}
+        onClose={() => setIsPrivacyOpen(false)}
         userData={storedUser}
       />
     </div>

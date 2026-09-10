@@ -14,14 +14,11 @@ export const GeneralSettingsDrawer = ({
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [selectedLangId, setSelectedLangId] = useState(currentLanguage);
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
-  // Sync selected language when drawer opens or currentLanguage changes
   useEffect(() => {
     if (isOpen) {
       setSelectedLangId(currentLanguage);
-      setSavedSuccess(false);
       setIsClosing(false);
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -31,7 +28,6 @@ export const GeneralSettingsDrawer = ({
     }
   }, [isOpen, currentLanguage]);
 
-  // Smooth Apple back transition
   const handleBack = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -40,57 +36,16 @@ export const GeneralSettingsDrawer = ({
     }, 280);
   };
 
-  // Save changes handler - explicitly updates and persists language
-  const handleSaveLanguage = () => {
-    setLanguage(selectedLangId);
+  const handleSelectLanguage = (langId) => {
+    setSelectedLangId(langId);
+    setLanguage(langId);
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
-      setIsLangDropdownOpen(false);
-    }, 600);
-  };
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      const rawUser = localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data');
-      const sessionId = localStorage.getItem('setu_session_id');
-      if (rawUser) {
-        const u = JSON.parse(rawUser);
-        const rawAadhaar = u.aadhaar ? u.aadhaar.replace(/\D/g, '') : '';
-        await fetch('http://localhost:5000/api/v1/auth/aadhaar/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            aadhaarNumber: rawAadhaar,
-            sessionId: sessionId || ''
-          })
-        }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Logout network notice:', e);
-    }
-
-    // Thorough storage purge
-    localStorage.removeItem('setu_user');
-    localStorage.removeItem('setu_session_id');
-    localStorage.removeItem('setu_token');
-    localStorage.removeItem('setu_onboarded');
-    localStorage.removeItem('setu_user_role');
-    localStorage.removeItem('setu_show_pfp_prompt');
-    localStorage.removeItem('sih_user_data');
-    localStorage.removeItem('sih_auth_token');
-    sessionStorage.clear();
-
-    onClose();
-    // Redirect cleanly to onboarding
-    navigate('/onboarding');
+    }, 1200);
   };
 
   if (!isOpen && !isClosing) return null;
-
-  const hasUnsavedChanges = selectedLangId !== currentLanguage;
-  const activeSelectedMeta = languages.find((l) => l.id === selectedLangId) || languageMeta;
 
   const drawerContent = (
     <div
@@ -313,9 +268,7 @@ export const GeneralSettingsDrawer = ({
                         return (
                           <button
                             key={l.id}
-                            onClick={() => {
-                              setSelectedLangId(l.id);
-                            }}
+                            onClick={() => handleSelectLanguage(l.id)}
                             className="apple-tap"
                             style={{
                               display: 'flex',
@@ -431,73 +384,9 @@ export const GeneralSettingsDrawer = ({
           </div>
         </div>
 
-        {/* Bottom Section: Save Changes Pop-Up Button, Sign Out Button & Setu Version */}
+        {/* Bottom Section: Setu Version */}
         <div style={{ marginTop: 'auto', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.875rem', alignItems: 'center' }}>
-          {/* Pop-Up Save Changes Button when a new language is selected */}
-          {(hasUnsavedChanges || savedSuccess) && (
-            <div
-              style={{
-                width: '100%',
-                animation: 'appleSlideUpDock 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-            >
-              <button
-                onClick={handleSaveLanguage}
-                className="apple-tap"
-                style={{
-                  width: '100%',
-                  height: '52px',
-                  borderRadius: '14px',
-                  backgroundColor: savedSuccess ? '#0d8042' : '#000000',
-                  color: '#ffffff',
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  border: 'none',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <span>
-                  {savedSuccess
-                    ? t('changes_saved', 'Language Saved!')
-                    : `${t('save_changes', 'Save Changes')} (${activeSelectedMeta?.nativeName})`}
-                </span>
-              </button>
-            </div>
-          )}
-
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="apple-tap"
-            style={{
-              width: '100%',
-              height: '52px',
-              borderRadius: '14px',
-              backgroundColor: '#ffffff',
-              border: '1px solid rgba(220, 38, 38, 0.25)',
-              color: '#dc2626',
-              fontSize: '1rem',
-              fontWeight: '700',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 1px 3px rgba(220, 38, 38, 0.05)',
-              cursor: isLoggingOut ? 'not-allowed' : 'pointer',
-              opacity: isLoggingOut ? 0.7 : 1,
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <GoogleIcon name="logout" size={20} color="#dc2626" />
-            <span>{isLoggingOut ? t('signing_out', 'Signing out...') : t('sign_out', 'Sign Out')}</span>
-          </button>
-
-          {/* Simple Setu version at bottom - no note under signout */}
+          {/* Simple Setu version at bottom */}
           <span
             style={{
               fontSize: '0.75rem',

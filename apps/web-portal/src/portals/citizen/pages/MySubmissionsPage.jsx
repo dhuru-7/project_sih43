@@ -537,9 +537,6 @@ export const MySubmissionsPage = () => {
               <GoogleIcon name="assignment" size={28} color="#8e8e93" />
             </div>
             <h3 style={{ fontSize: '1.0625rem', fontWeight: '700', margin: 0, color: '#1c1c1e' }}>{t('no_submissions_yet', 'No Submissions Yet')}</h3>
-            <p style={{ fontSize: '0.875rem', color: '#6e6e73', margin: 0, maxWidth: '300px', lineHeight: 1.5 }}>
-              {t('no_submissions_desc', 'When you report an issue in your locality, it will appear here with live tracking and updates.')}
-            </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

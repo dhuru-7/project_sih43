@@ -116,7 +116,6 @@ body::-webkit-scrollbar {
   height: 0px !important;
 }
 
-/* Global Selection: Suppress native blue text selection highlights across all non-input elements */
 ::selection {
   background-color: transparent;
   color: inherit;
@@ -124,6 +123,24 @@ body::-webkit-scrollbar {
 ::-moz-selection {
   background-color: transparent;
   color: inherit;
+}
+
+/* Allow text selection and native highlighting on desktop views */
+@media (min-width: 768px) {
+  html, body {
+    -webkit-user-select: auto !important;
+    -moz-user-select: auto !important;
+    -ms-user-select: auto !important;
+    user-select: auto !important;
+  }
+  ::selection {
+    background-color: rgba(0, 0, 0, 0.15) !important;
+    color: inherit !important;
+  }
+  ::-moz-selection {
+    background-color: rgba(0, 0, 0, 0.15) !important;
+    color: inherit !important;
+  }
 }
 
 /* Text inputs, textareas, and contenteditable fields must allow standard typing, text selection, and editing */

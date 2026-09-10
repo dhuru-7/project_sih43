@@ -64,32 +64,51 @@ export const CitizenHomePage = () => {
     fetchLiveIssues();
   }, []);
   const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const isProfileInitial = location.pathname.includes('profile') || searchParams.get('tab') === 'profile';
+  const navigate = useNavigate();
 
-  const [activeNav, setActiveNav] = useState(
-    isProfileInitial
-      ? 'profile'
-      : location.pathname.includes('messages')
-      ? 'messages'
-      : location.pathname.includes('explore')
-      ? 'explore'
-      : 'home'
-  );
+  const getNavFromPath = (pathname, search) => {
+    const params = new URLSearchParams(search);
+    if (pathname.includes('profile') || params.get('tab') === 'profile') return 'profile';
+    if (pathname.includes('messages') || params.get('tab') === 'messages') return 'messages';
+    if (pathname.includes('explore') || params.get('tab') === 'explore') return 'explore';
+    if (pathname.includes('home')) return 'home';
+    const saved = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('setu_citizen_active_tab')) ||
+                  (typeof localStorage !== 'undefined' && localStorage.getItem('setu_citizen_active_tab'));
+    if (saved && ['home', 'explore', 'messages', 'profile'].includes(saved)) {
+      return saved;
+    }
+    return 'home';
+  };
+
+  const [activeNav, setActiveNavState] = useState(() => getNavFromPath(location.pathname, location.search));
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (location.pathname.includes('profile') || params.get('tab') === 'profile') {
-      setActiveNav('profile');
+    const resolved = getNavFromPath(location.pathname, location.search);
+    setActiveNavState(resolved);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('setu_citizen_active_tab', resolved);
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('setu_citizen_active_tab', resolved);
+    }
+    if (resolved === 'profile') {
       setIsReportingOpen(false);
-    } else if (location.pathname.includes('messages')) {
-      setActiveNav('messages');
-    } else if (location.pathname.includes('explore')) {
-      setActiveNav('explore');
-    } else if (location.pathname.includes('home') || location.pathname === '/citizen' || location.pathname === '/report') {
-      setActiveNav('home');
     }
   }, [location.pathname, location.search]);
+
+  const setActiveNav = (newNav) => {
+    setActiveNavState(newNav);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('setu_citizen_active_tab', newNav);
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('setu_citizen_active_tab', newNav);
+    }
+    const targetPath = newNav === 'home' ? '/citizen/home' : `/citizen/${newNav}`;
+    if (location.pathname !== targetPath) {
+      navigate(targetPath, { replace: true });
+    }
+  };
 
   // Always reset scroll to top when changing views/tabs in the citizen portal
   useEffect(() => {
@@ -97,8 +116,6 @@ export const CitizenHomePage = () => {
     if (document.documentElement) document.documentElement.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
   }, [activeNav]);
-
-  const navigate = useNavigate();
 
   // Strict route safeguard: unverified visitors cannot access citizen portal
   useEffect(() => {

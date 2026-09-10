@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { useLanguage } from '../../../context/LanguageContext';
+import { getExplorePosts } from '../data/explorePosts';
 
 const BookmarkIcon = ({ isBookmarked, size = 22 }) => {
   if (isBookmarked) {
@@ -29,79 +30,10 @@ const BookmarkIcon = ({ isBookmarked, size = 22 }) => {
   );
 };
 
-const STITCH_EXPLORE_POSTS = [
-  {
-    id: 'post-1',
-    authorName: 'Sarah Jenkins',
-    authorAvatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBctzw8sp_k8x45dON6iiZfMoBkhsSTrsItsDSl41PlSllQsb7D7Ua9ii12fvjgEDlgjpl0mJHZSnsMrBm8d1Wob4cqwVayGh20tOPHYguB4-SvqLou9IHmwgvdgKch-8k46KCNFmViaFgXbWoGT8nB0amtA2MPgxetmbRp_n3dWllHsAHicKMXw55ZYtMPwGeoxBnHUjZChhVWPIN5BDFaK387sjTCf0XStFXIlhkbpfYw-ZPv59qUHg',
-    authorInitials: 'SJ',
-    timeAgo: '2h ago',
-    content:
-      'The revitalization of Sector 4 Central Promenade is now officially complete! We have installed 18 solar-powered luminaire bollards, replanted drought-resistant native hedges, and repaired the western walking trails. Thank you to the 142 neighborhood volunteers who assisted during weekend planting.',
-    tags: ['#Sector4Garden', '#CleanCityInitiative', '#UrbanGreening'],
-    images: [
-      {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCHLgpa6w9Mc0xb0uRDCltnA57316hNCEx8m2gsDYU9dYGL8jHTe1Fx_VJe0ofiXkjfDINb8H6KhvIOUGi0CE2-F2bEf-JEP-k-mjv4lJBZ_CIkhP-SZZvBh1QIMMy9thuAXqS9HmskDhdKjrzsbeBEQ7rV5-C__8tiu2AAp0E_nbY8ixzoMvebKxizup9W0CieQrAGS8iIsY73h5sgK3k5lhJlWRischfnoQRJUVOAKbagxw8ui-0oXw',
-        caption: 'After · Promenade Walk'
-      },
-      {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwOdSVlaviBH80UBoIZxQyH09PA24NZxOtxaijvNTITzuIm0cnKHgJLKS7ZBN9CQ7GjrX9wNMj3Mxnelg9HY7Bg-jIlfORB-2N1cU4d7qC5N-VnAoz6KqeFnfA2aAOF56xWkBxkSM4KuNJxxCWi2qF9ryuZHg0jo2Gy2R8rM15m3mlKNBLRvXHXxgTkJSMdn9CQc-hYPWeKa5XvrnMhiQu0z1ZpkYEwndMeQ5w4xh5lW6rZ_3JHwVNqA',
-        caption: 'Volunteer Drive'
-      }
-    ],
-    likes: 248,
-    shares: 19
-  },
-  {
-    id: 'post-2',
-    authorName: 'Mike Kumar',
-    authorAvatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDc2UiFo6S9Napd9Pq1woWNpJ74ngdi76i5YdD6jNBTshxR_R3VmAzVywaJXsTXIN0QAfybNnDUZyGvkpKn2mRRei8QOj-Z4F5X_wvfBADG54xXO1dm1HttLGV48R18D3QD_XQaASjfadAfRP56yis0lS2n0ypXQCP6zYDrDc8YDmkm1qYAG6XD7MstLP5PlQSLFEXaAztc7eieG0wLADNm2LI80eB07B9dGhN1vbQNyWtLGFBjNJYQng',
-    authorInitials: 'MK',
-    timeAgo: '4h ago',
-    content:
-      'Quick verification check on the deep asphalt depression near 7th Ave crosswalk. Road maintenance team came out at 9:00 AM and resurfaced the entire 12-meter stretch. Traffic is flowing smoothly again with safe pedestrian crossing lines repainted.',
-    tags: ['#PotholeRepair', '#7thAvenue', '#RapidResponse'],
-    images: [
-      {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuChYMCFD76IfKpkc1oLApEVIAY0KrG3rOtAcom65byNUoZXXxE0A3nVB4xqv7oM3pgWz1H01WhWQmnPvAW9DYEXAxCxMOePMQwGkpwsQhMPiQxnM6O2gpPPbRFvV6D5pUSl769KU-WLOEmjcyDpUKCgklmbYugi8GNNo3mTVg-ee7MO9aBI4C3tCie_XxQ_t8Qrzg12xCdj0--yhugUwx0j7AjyuEE816vfwOfkJUESiLLTWqeROVr32Q',
-        caption: 'Repaired Surface'
-      },
-      {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAnFhknnzKZ77MzM__18zi9CIQg_GZqe9Z6PzL3A1cLRHav_s_Oi96NIArTm4qPF3AWCuJ-fLos5M8DEYPGxQQbf96XnJn4JofBVB4EmRZ8wQijJiglIuOBSQ9jg1efg1HLBa2JxjB4aI0MyC_c0RCBA_xeliKoiMo_-jcJP3Rvmd7MUrOREH31T_bNReLQZWijcsZuKCL_hyH_QmDuCoe7JSHk0BZb4yYq7-e1pNLaS5S79urviGtK4A',
-        caption: 'Crews at Work'
-      },
-      {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAuamkwueplMzdyfVyVcevqYRlu16KSZ1ZAO40ibKqaiozk83dTUwBjtfTAqVCJa2rFwrCdeqVo7RyRHegHV5q7CX2VSa7oTH8AvYNVpGafkyNtQDtKEbxvfkdUKH2iJgtsl4nDJU8sGqxvhnFDZdXMwb8N6_bJAaPIUv5FniBk939zWdvsPuS1gHRWhdrxGKLn75kuCaA-iD-PNCaWicXCgbBiKiWpXPdbHYNOGS-kgwPO_TIjT_JNQQ',
-        caption: 'Pedestrian Line'
-      }
-    ],
-    likes: 112,
-    shares: 8
-  },
-  {
-    id: 'post-3',
-    authorName: 'City Parks Dept',
-    authorAvatar: null,
-    authorInitials: 'CP',
-    timeAgo: '1d ago',
-    content:
-      'Update on the Riverside community renovation project. Phase 1 is officially complete! Check out the newly restored walkways, indigenous flora buffer zones, and ambient solar benches.',
-    tags: ['#RiversideRevitalize', '#PublicSpaces', '#CivicPride'],
-    images: [
-      {
-        url: 'https://lh3.googleusercontent.com/aida/AEtjO1XamjKI0u4wiLQqbdwIjka3AUunHLyO5VUGIt-_sfI6vEgqbtRUT49D8SONBV1ygAhoLHjL9GRocWXSlc32S88GvnNoVMoR4SKJ47C_k_Xr_mC-yUbq-2nJNfPFlS-UUMXp7gxVln36z80KYaQ7KFwvLEhJh-wD_DbEGL8qKyViXPOA45OyqWIttGNuY8Fw97uZ3m6LLPDGVv4A2bAsa5OwexUT4DBznN6OrpfjcPCDR0xRwjORXc13dqLz',
-        caption: 'Riverside Walkway'
-      }
-    ],
-    likes: 312,
-    shares: 24
-  }
-];
-
 const PostMediaCarousel = ({ images, isPostHovered }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const isSwipingRef = useRef(false);
 
   if (!images || images.length === 0) return null;
 
@@ -109,17 +41,48 @@ const PostMediaCarousel = ({ images, isPostHovered }) => {
   const currentImg = images[currentIndex];
 
   const handlePrev = (e) => {
-    e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation();
     setCurrentIndex((prev) => Math.max(0, prev - 1));
   };
 
   const handleNext = (e) => {
-    e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation();
     setCurrentIndex((prev) => Math.min(total - 1, prev + 1));
+  };
+
+  // Touch and Drag Swipe Handlers
+  const handleTouchStart = (e) => {
+    touchStartRef.current = {
+      x: e.touches ? e.touches[0].clientX : e.clientX,
+      y: e.touches ? e.touches[0].clientY : e.clientY
+    };
+    isSwipingRef.current = true;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!isSwipingRef.current) return;
+    isSwipingRef.current = false;
+    const endX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const endY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const diffX = touchStartRef.current.x - endX;
+    const diffY = touchStartRef.current.y - endY;
+
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
+      if (diffX > 0) {
+        setCurrentIndex((prev) => Math.min(total - 1, prev + 1));
+      } else {
+        setCurrentIndex((prev) => Math.max(0, prev - 1));
+      }
+    }
   };
 
   return (
     <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleTouchStart}
+      onMouseUp={handleTouchEnd}
+      onMouseLeave={() => { isSwipingRef.current = false; }}
       style={{
         position: 'relative',
         width: '100%',
@@ -127,7 +90,10 @@ const PostMediaCarousel = ({ images, isPostHovered }) => {
         borderRadius: '0.75rem',
         overflow: 'hidden',
         backgroundColor: '#eeeeee',
-        marginTop: '0.25rem'
+        marginTop: '0.25rem',
+        touchAction: 'pan-y',
+        userSelect: 'none',
+        cursor: total > 1 ? 'grab' : 'default'
       }}
     >
       {/* Sliding image strip */}
@@ -146,12 +112,15 @@ const PostMediaCarousel = ({ images, isPostHovered }) => {
             key={idx}
             src={img.url}
             alt={img.caption || ''}
+            draggable={false}
             style={{
               width: `${100 / total}%`,
               height: '100%',
               objectFit: 'cover',
               display: 'block',
-              flexShrink: 0
+              flexShrink: 0,
+              pointerEvents: 'none',
+              userSelect: 'none'
             }}
           />
         ))}
@@ -497,7 +466,8 @@ export const DesktopExploreView = ({
   setActiveNav,
   userName = 'Rampal'
 }) => {
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
+  const posts = useMemo(() => getExplorePosts(currentLanguage, false), [currentLanguage]);
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [bookmarkedPosts, setBookmarkedPosts] = useState(new Set());
 
@@ -765,7 +735,7 @@ export const DesktopExploreView = ({
             
             {/* Feed Column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {STITCH_EXPLORE_POSTS.map((post) => {
+              {posts.map((post) => {
                 const isLiked = likedPosts.has(post.id);
                 const isBookmarked = bookmarkedPosts.has(post.id);
 
