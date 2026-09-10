@@ -9,6 +9,7 @@ import { DashboardLayout } from '../layouts/DashboardLayout';
 // Route Guards
 import { ProtectedRoute } from './ProtectedRoute';
 import { RoleGuard } from './RoleGuard';
+import { CitizenRouteGuard } from './CitizenRouteGuard';
 
 // Public Pages
 import { LandingPage } from '../public-pages/LandingPage';
@@ -56,20 +57,22 @@ export const AppRoutes = () => {
       <Route path="/welcome" element={<OnboardingPage />} />
       <Route path="/intro" element={<OnboardingPage />} />
 
-      {/* 📱 Reporting Portal (Stitch Design - Dual Desktop/Mobile) */}
-      <Route path="/report" element={<CitizenHomePage />} />
-      <Route path="/reporting" element={<CitizenHomePage />} />
-      <Route path="/reporting-portal" element={<CitizenHomePage />} />
-      <Route path="/citizen" element={<CitizenHomePage />} />
-      <Route path="/citizen/home" element={<CitizenHomePage />} />
-      <Route path="/citizen/explore" element={<CitizenHomePage />} />
-      <Route path="/citizen/messages" element={<CitizenHomePage />} />
-      <Route path="/messages" element={<CitizenHomePage />} />
-      <Route path="/citizen/profile" element={<CitizenHomePage />} />
-      <Route path="/profile" element={<CitizenHomePage />} />
-      <Route path="/citizen/report" element={<CitizenHomePage />} />
-      <Route path="/my-submissions" element={<MySubmissionsPage />} />
-      <Route path="/citizen/my-submissions" element={<MySubmissionsPage />} />
+      {/* 📱 Reporting Portal (Stitch Design - Dual Desktop/Mobile with Aadhaar Route Guard) */}
+      <Route element={<CitizenRouteGuard />}>
+        <Route path="/report" element={<CitizenHomePage />} />
+        <Route path="/reporting" element={<CitizenHomePage />} />
+        <Route path="/reporting-portal" element={<CitizenHomePage />} />
+        <Route path="/citizen" element={<CitizenHomePage />} />
+        <Route path="/citizen/home" element={<CitizenHomePage />} />
+        <Route path="/citizen/explore" element={<CitizenHomePage />} />
+        <Route path="/citizen/messages" element={<CitizenHomePage />} />
+        <Route path="/messages" element={<CitizenHomePage />} />
+        <Route path="/citizen/profile" element={<CitizenHomePage />} />
+        <Route path="/profile" element={<CitizenHomePage />} />
+        <Route path="/citizen/report" element={<CitizenHomePage />} />
+        <Route path="/my-submissions" element={<MySubmissionsPage />} />
+        <Route path="/citizen/my-submissions" element={<MySubmissionsPage />} />
+      </Route>
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />

@@ -815,6 +815,38 @@ button {
   pointer-events: none;
 }
 
+/* Apple Native Navigation Screen Slide Transitions */
+@keyframes appleSlideInRight {
+  0% {
+    transform: translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes appleSlideOutRight {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+/* Desktop Presentation Card Enter Transition */
+@keyframes appleDesktopSlideIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+
 /* Accessibility: Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .apple-tap, .apple-pill-tap, .apple-stitch-card, .apple-modal-content, .tara-wave-bar, .apple-pop-animate, .apple-metric-btn:active .apple-icon-push, .apple-send-btn:active, .apple-pin-btn:active {
@@ -831,4 +863,5 @@ button {
     to { opacity: 1; }
   }
 }
+
 

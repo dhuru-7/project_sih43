@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { AadhaarOnboardingStep } from './AadhaarOnboardingStep';
+import { LanguageSelectionStep } from './LanguageSelectionStep';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const DesktopOnboardingView = ({
   currentStep,
@@ -17,9 +19,26 @@ export const DesktopOnboardingView = ({
   onSkip,
   onAadhaarSuccess
 }) => {
-  const isSlideshow = currentStep < 3;
-  const slide = slides[currentStep] || slides[0];
-  const currentRoleObj = roles.find((r) => r.id === selectedRole) || roles[0];
+  const { t, languageMeta } = useLanguage();
+  const [isExitingLang, setIsExitingLang] = useState(false);
+
+  // Step 0: Language Selection
+  // Steps 1-3: Slideshow
+  // Step 4: Intent Selection
+  // Step 5: Role Selection
+  // Step 6: Aadhaar Verification
+  const isLanguageStep = currentStep === 0;
+  const isSlideshow = currentStep >= 1 && currentStep <= 3;
+  const slideIndex = isSlideshow ? currentStep - 1 : 0;
+  const slide = slides[slideIndex] || slides[0];
+
+  const handleLanguageContinue = () => {
+    setIsExitingLang(true);
+    setTimeout(() => {
+      setIsExitingLang(false);
+      onNext();
+    }, 240);
+  };
 
   return (
     <div
@@ -28,6 +47,7 @@ export const DesktopOnboardingView = ({
         height: '100vh',
         maxHeight: '100vh',
         backgroundColor: '#f9f9f9',
+        transition: 'background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
         color: '#1a1c1c',
         display: 'flex',
         flexDirection: 'column',
@@ -38,89 +58,119 @@ export const DesktopOnboardingView = ({
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif"
       }}
     >
-      {/* Top Header: Clean Setu. Logo on left, Minimal Skip on right */}
-      <header
-        style={{
-          width: '100%',
-          maxWidth: '1120px',
-          margin: '0 auto',
-          padding: '1.25rem 2.5rem 0.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'relative',
-          zIndex: 20,
-          flexShrink: 0
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span
-            style={{
-              fontSize: '1.625rem',
-              fontWeight: '800',
-              letterSpacing: '-0.035em',
-              color: '#000000',
-              lineHeight: 1
-            }}
-          >
-            Setu<span style={{ color: '#000000', fontWeight: '900' }}>.</span>
-          </span>
-        </div>
-
-        {isSlideshow && (
-          <button
-            onClick={onSkip}
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: '600',
-              color: '#8e8e93',
-              background: 'none',
-              border: 'none',
-              padding: '0.4rem 0.9rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#111111')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#8e8e93')}
-          >
-            Skip
-          </button>
-        )}
-      </header>
-
-      {/* Main Apple Bento Presentation Canvas - Fitted strictly within 100vh */}
-      <main
-        style={{
-          flex: 1,
-          width: '100%',
-          maxWidth: '1120px',
-          margin: '0 auto',
-          padding: '0.5rem 2rem 1.25rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxSizing: 'border-box',
-          overflow: 'hidden'
-        }}
-      >
-        <div
+      {/* Top Header: Clean Setu. Logo on left, Minimal Skip on right (Hidden on Language Step 0 & Aadhaar Step 6) */}
+      {!isLanguageStep && currentStep !== 6 && (
+        <header
           style={{
             width: '100%',
-            backgroundColor: '#ffffff',
-            borderRadius: '1.75rem',
-            border: '1px solid rgba(0, 0, 0, 0.07)',
-            boxShadow: '0 16px 48px -12px rgba(0, 0, 0, 0.05)',
-            overflow: 'hidden',
-            display: 'grid',
-            gridTemplateColumns: isSlideshow ? '1.05fr 1fr' : '1fr',
-            maxHeight: 'calc(100vh - 90px)',
-            alignItems: 'center'
+            maxWidth: '1120px',
+            margin: '0 auto',
+            padding: '1.25rem 2.5rem 0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'relative',
+            zIndex: 20,
+            flexShrink: 0,
+            animation: 'appleFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both'
           }}
         >
-          {isSlideshow ? (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span
+              style={{
+                fontSize: '1.625rem',
+                fontWeight: '800',
+                letterSpacing: '-0.035em',
+                color: '#000000',
+                lineHeight: 1
+              }}
+            >
+              Setu<span style={{ color: '#000000', fontWeight: '900' }}>.</span>
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            {isSlideshow && (
+              <button
+                onClick={onSkip}
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#8e8e93',
+                  background: 'none',
+                  border: 'none',
+                  padding: '0.4rem 0.9rem',
+                  borderRadius: '9999px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#111111')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#8e8e93')}
+              >
+                {t('skip', 'Skip')}
+              </button>
+            )}
+          </div>
+        </header>
+      )}
+
+      {/* Main Apple Presentation Canvas - No card wrapper on language screen */}
+      {isLanguageStep ? (
+        <main
+          style={{
+            flex: 1,
+            width: '100%',
+            maxWidth: '1080px',
+            margin: '0 auto',
+            height: '100vh',
+            maxHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            opacity: isExitingLang ? 0 : 1,
+            transform: isExitingLang ? 'translate3d(0, -14px, 0) scale(0.985)' : 'translate3d(0, 0, 0) scale(1)',
+            transition: 'opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+          <LanguageSelectionStep onContinue={handleLanguageContinue} isDesktop={true} />
+        </main>
+      ) : (
+        <main
+          style={{
+            flex: 1,
+            width: '100%',
+            maxWidth: currentStep === 6 ? '480px' : '1120px',
+            margin: '0 auto',
+            padding: currentStep === 6 ? '1.5rem 1.5rem' : '0.5rem 2rem 1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            animation: isSlideshow && currentStep === 1
+              ? 'appleDesktopSlideIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) both'
+              : 'none'
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              backgroundColor: '#ffffff',
+              borderRadius: '1.75rem',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)',
+              overflow: currentStep === 6 ? 'visible' : 'hidden',
+              display: currentStep === 6 ? 'block' : 'grid',
+              gridTemplateColumns: isSlideshow ? '1.05fr 1fr' : '1fr',
+              maxHeight: currentStep === 6 ? 'none' : 'calc(100vh - 90px)',
+              alignItems: 'center',
+              padding: currentStep === 6 ? '1.5rem 1.75rem 1.75rem' : '0'
+            }}
+          >
+            {isSlideshow ? (
             /* ===================================================================
-               SLIDESHOW STAGE: Dual-pane balanced layout with Artwork & Headline
+               STAGE 1: Slideshow Stage: Dual-pane layout
                =================================================================== */
             <>
               {/* Left Pane: Artwork in generous soft frame */}
@@ -155,8 +205,10 @@ export const DesktopOnboardingView = ({
                   }}
                 >
                   <img
+                    key={`slide-img-${slideIndex}`}
                     src={slide.image}
                     alt={slide.title}
+                    className="apple-fade-enter"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -178,7 +230,7 @@ export const DesktopOnboardingView = ({
                 }}
               >
                 {/* Headline Section */}
-                <div style={{ margin: 'auto 0' }}>
+                <div key={`slide-text-${slideIndex}`} className="apple-fade-enter" style={{ margin: 'auto 0' }}>
                   <h1
                     style={{
                       fontSize: '2.25rem',
@@ -206,49 +258,47 @@ export const DesktopOnboardingView = ({
                 >
                   {/* 3 Dots: Active is 32px pill, inactives are 8px dots */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {[0, 1, 2].map((idx) => (
+                    {[1, 2, 3].map((stepNum) => (
                       <button
-                        key={idx}
-                        onClick={() => setCurrentStep(idx)}
+                        key={stepNum}
+                        onClick={() => setCurrentStep(stepNum)}
                         style={{
                           height: '8px',
-                          width: idx === currentStep ? '32px' : '8px',
-                          backgroundColor: idx === currentStep ? '#000000' : '#d1d5db',
+                          width: stepNum === currentStep ? '32px' : '8px',
+                          backgroundColor: stepNum === currentStep ? '#000000' : '#d1d5db',
                           borderRadius: '9999px',
                           border: 'none',
                           cursor: 'pointer',
                           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                           padding: 0
                         }}
-                        aria-label={`Slide ${idx + 1}`}
+                        aria-label={`Slide ${stepNum}`}
                       />
                     ))}
                   </div>
 
-                  {/* Actions: Back & Continue/Get Started (NO ARROWS) */}
+                  {/* Actions: Back & Continue/Get Started */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {currentStep > 0 && (
-                      <button
-                        onClick={onPrev}
-                        className="apple-btn-secondary"
-                      >
-                        Back
-                      </button>
-                    )}
+                    <button
+                      onClick={onPrev}
+                      className="apple-btn-secondary"
+                    >
+                      {t('back', 'Back')}
+                    </button>
 
                     <button
                       onClick={onNext}
                       className="apple-btn-primary"
                     >
-                      {currentStep === 2 ? 'Get Started' : 'Continue'}
+                      {currentStep === 3 ? t('next', 'Get Started') : t('next', 'Continue')}
                     </button>
                   </div>
                 </div>
               </div>
             </>
-          ) : currentStep === 3 ? (
+          ) : currentStep === 4 ? (
             /* ===================================================================
-               STAGE 2: Intent Selection Screen (Fits Viewport, NO Scrolling)
+               STAGE 2: Intent Selection Screen (Step 4)
                =================================================================== */
             <div
               className="apple-fade-enter"
@@ -271,14 +321,11 @@ export const DesktopOnboardingView = ({
                     letterSpacing: '-0.03em',
                     color: '#111111',
                     lineHeight: 1.2,
-                    margin: '0 0 0.35rem'
+                    margin: '0 0 0.5rem'
                   }}
                 >
-                  What brings you to Setu?
+                  {t('intent_heading', 'What brings you to Setu?')}
                 </h1>
-                <p style={{ fontSize: '0.875rem', color: '#636366', margin: 0, fontWeight: '500' }}>
-                  Select your primary focus area to access the right portal workflow.
-                </p>
               </div>
 
               {/* 4 Intent Bento Cards in compact 2x2 grid */}
@@ -361,7 +408,7 @@ export const DesktopOnboardingView = ({
                 })}
               </div>
 
-              {/* Action Bar (NO 3 DOTS, NO ARROW) */}
+              {/* Action Bar */}
               <div
                 style={{
                   display: 'flex',
@@ -375,20 +422,20 @@ export const DesktopOnboardingView = ({
                   onClick={onPrev}
                   className="apple-btn-secondary"
                 >
-                  Back
+                  {t('back', 'Back')}
                 </button>
 
                 <button
                   onClick={onNext}
                   className="apple-btn-primary"
                 >
-                  Continue
+                  {t('next', 'Continue')}
                 </button>
               </div>
             </div>
-          ) : currentStep === 4 ? (
+          ) : currentStep === 5 ? (
             /* ===================================================================
-               STAGE 3: Reporting Portal Sub-Role Selection (Static Title, NO Scroll)
+               STAGE 3: Reporting Portal Sub-Role Selection (Step 5)
                =================================================================== */
             <div
               className="apple-fade-enter"
@@ -411,14 +458,11 @@ export const DesktopOnboardingView = ({
                     letterSpacing: '-0.03em',
                     color: '#111111',
                     lineHeight: 1.2,
-                    margin: '0 0 0.35rem'
+                    margin: '0 0 0.5rem'
                   }}
                 >
-                  Choose your role
+                  {t('role_sub', 'How will you be registering on Setu?')}
                 </h1>
-                <p style={{ fontSize: '0.875rem', color: '#636366', margin: 0, fontWeight: '500' }}>
-                  Select how you will participate in the Reporting Portal.
-                </p>
               </div>
 
               {/* 2 Apple Sub-Roles */}
@@ -495,7 +539,7 @@ export const DesktopOnboardingView = ({
                 })}
               </div>
 
-              {/* Action Bar (NO 3 DOTS, NO ARROWS) */}
+              {/* Action Bar */}
               <div
                 style={{
                   display: 'flex',
@@ -509,43 +553,30 @@ export const DesktopOnboardingView = ({
                   onClick={onPrev}
                   className="apple-btn-secondary"
                 >
-                  Back
+                  {t('back', 'Back')}
                 </button>
 
                 <button
                   onClick={onNext}
                   className="apple-btn-primary"
                 >
-                  Continue
+                  {t('next', 'Continue')}
                 </button>
               </div>
             </div>
           ) : (
             /* ===================================================================
-               STAGE 4: Desktop Aadhaar Verification & OTP Screen (Step 5)
+               STAGE 4: Desktop Aadhaar Verification & OTP Screen (Step 6)
                =================================================================== */
-            <div
-              className="apple-fade-enter"
-              style={{
-                padding: '2.5rem 2.5rem 2rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                maxWidth: '520px',
-                margin: '0 auto',
-                width: '100%',
-                boxSizing: 'border-box'
-              }}
-            >
-              <AadhaarOnboardingStep
-                isMobile={false}
-                onPrev={onPrev}
-                onSuccess={onAadhaarSuccess}
-              />
-            </div>
+            <AadhaarOnboardingStep
+              isMobile={false}
+              onPrev={onPrev}
+              onSuccess={onAadhaarSuccess}
+            />
           )}
         </div>
       </main>
+      )}
     </div>
   );
 };

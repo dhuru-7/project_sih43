@@ -30,6 +30,7 @@ def create_app(config_name="development"):
     from app.routes.analytics import analytics_bp
     from app.routes.voice_agent import voice_agent_bp
     from app.routes.version import version_bp
+    from app.routes.bhashini import bhashini_bp
     
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(problems_bp, url_prefix="/api/v1/problems")
@@ -43,6 +44,8 @@ def create_app(config_name="development"):
     app.register_blueprint(analytics_bp, url_prefix="/api/v1/analytics")
     app.register_blueprint(voice_agent_bp, url_prefix="/api/v1/voice")
     app.register_blueprint(version_bp, url_prefix="/api/v1/app")
+    app.register_blueprint(bhashini_bp, url_prefix="/api/bhashini")
+    app.register_blueprint(bhashini_bp, url_prefix="/api/v1/bhashini", name="bhashini_v1")
     
     @app.route("/api/health", methods=["GET"])
     def health_check():

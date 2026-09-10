@@ -250,6 +250,21 @@ export const DesktopMessagesView = ({
   const sidebarWidth = isSidemenuExpanded ? 256 : 72;
   const layoutMarginLeft = (!isSqueezed || isExiting) ? 256 : 72;
 
+  const [pfpUrl, setPfpUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('setu_user_pfp') || null;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    const handlePfpUpdate = () => {
+      setPfpUrl(localStorage.getItem('setu_user_pfp') || null);
+    };
+    window.addEventListener('setu-pfp-updated', handlePfpUpdate);
+    return () => window.removeEventListener('setu-pfp-updated', handlePfpUpdate);
+  }, []);
+
   return (
     <div style={{ display: 'flex', width: '100%', height: '100vh', backgroundColor: '#ffffff', color: '#1a1c1c', overflow: 'hidden' }}>
       {/* 1. Left Persistent Sidemenu: Squeezes on arrival, expands over chats on hover */}
@@ -460,10 +475,15 @@ export const DesktopMessagesView = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                overflow: 'hidden'
               }}
             >
-              <GoogleIcon name="person" size={18} color="#ffffff" />
+              {pfpUrl ? (
+                <img src={pfpUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <GoogleIcon name="person" size={18} color="#ffffff" />
+              )}
             </div>
             <div
               style={{

@@ -314,21 +314,71 @@ def get_current_user():
 
 @auth_bp.route("/aadhaar/accounts", methods=["GET"])
 def get_aadhaar_accounts():
-    """Returns the list of 10 dummy Aadhaar accounts for prototype reference."""
+    """Returns the list of 10 dummy Aadhaar accounts for prototype reference with active login status."""
     accounts = []
     for uid, acc in AADHAAR_ACCOUNTS_DB.items():
         accounts.append({
             "id": acc["id"],
             "name": acc["name"],
+            "aadhaar": acc["aadhaar"],
             "formattedAadhaar": acc["formattedAadhaar"],
             "maskedAadhaar": acc["maskedAadhaar"],
             "maskedMobile": acc["maskedMobile"],
             "district": acc["district"],
             "isDevAccount": acc.get("isDevAccount", False),
             "isDefault": acc.get("isDefault", False),
-            "designation": acc.get("designation", "")
+            "designation": acc.get("designation", ""),
+            "lastOtp": acc.get("lastOtp", "123456"),
+            "isLoggedIn": bool(acc.get("activeSessionId"))
         })
     return jsonify({"accounts": accounts}), 200
+
+@auth_bp.route("/aadhaar/available-account", methods=["GET"])
+def get_available_aadhaar_account():
+    """
+    Returns an available citizen Aadhaar account that is NOT currently logged in
+    by anyone, preventing collision logouts when multiple testers/evaluators test Setu.
+    """
+    citizen_accounts = [
+        acc for acc in AADHAAR_ACCOUNTS_DB.values()
+        if not acc.get("isDevAccount", False)
+    ]
+    
+    # Filter for accounts that have no active session
+    available = [acc for acc in citizen_accounts if not acc.get("activeSessionId")]
+    
+    chosen = available[0] if available else citizen_accounts[0]
+    
+    return jsonify({
+        "success": True,
+        "account": {
+            "id": chosen["id"],
+            "name": chosen["name"],
+            "aadhaar": chosen["aadhaar"],
+            "aadhaarParts": [chosen["aadhaar"][:4], chosen["aadhaar"][4:8], chosen["aadhaar"][8:]],
+            "formattedAadhaar": chosen["formattedAadhaar"],
+            "maskedAadhaar": chosen["maskedAadhaar"],
+            "maskedMobile": chosen["maskedMobile"],
+            "district": chosen["district"],
+            "lastOtp": chosen.get("lastOtp", "123456"),
+            "isLoggedIn": bool(chosen.get("activeSessionId"))
+        },
+        "availableCount": len(available),
+        "totalCitizenAccounts": len(citizen_accounts)
+    }), 200
+
+@auth_bp.route("/aadhaar/logout", methods=["POST"])
+def aadhaar_logout():
+    """Clears active session for an Aadhaar account on logout."""
+    data = request.get_json() or {}
+    raw_aadhaar = str(data.get("aadhaarNumber", "")).replace(" ", "").replace("-", "").strip()
+    session_id = data.get("sessionId", "")
+    
+    account = AADHAAR_ACCOUNTS_DB.get(raw_aadhaar)
+    if account:
+        if not session_id or account.get("activeSessionId") == session_id:
+            account["activeSessionId"] = None
+    return jsonify({"success": True, "message": "Logged out successfully"}), 200
 
 @auth_bp.route("/aadhaar/request-otp", methods=["POST"])
 def request_aadhaar_otp():

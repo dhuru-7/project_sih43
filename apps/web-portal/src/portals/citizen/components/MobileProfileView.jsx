@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { compressImage } from '../../../utils/imageCompressor';
+import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -47,6 +49,48 @@ export const MobileProfileView = ({
   const displayDob = storedUser.dob || '15/08/1996';
   const isDev = !!storedUser.isDevAccount;
 
+  // General Settings Drawer State
+  const [isGeneralOpen, setIsGeneralOpen] = useState(false);
+
+  // Profile Picture Upload & Compression
+  const fileInputRef = useRef(null);
+  const [pfpUrl, setPfpUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('setu_user_pfp') || null;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    const handlePfpUpdate = () => {
+      setPfpUrl(localStorage.getItem('setu_user_pfp') || null);
+    };
+    window.addEventListener('setu-pfp-updated', handlePfpUpdate);
+
+    // Auto-open picker if guided from Welcome modal
+    if (sessionStorage.getItem('setu_auto_open_pfp_picker') === 'true') {
+      sessionStorage.removeItem('setu_auto_open_pfp_picker');
+      setTimeout(() => {
+        fileInputRef.current?.click();
+      }, 350);
+    }
+
+    return () => window.removeEventListener('setu-pfp-updated', handlePfpUpdate);
+  }, []);
+
+  const handlePfpFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressedDataUrl = await compressImage(file, { maxWidth: 256, maxHeight: 256, quality: 0.8 });
+      localStorage.setItem('setu_user_pfp', compressedDataUrl);
+      setPfpUrl(compressedDataUrl);
+      window.dispatchEvent(new Event('setu-pfp-updated'));
+    } catch (err) {
+      console.error('Failed to compress profile picture:', err);
+    }
+  };
+
   // Swipe / Tap to toggle between Date of Birth and Age with smooth fade animation
   const [showAge, setShowAge] = useState(false);
   const touchStartX = useRef(null);
@@ -90,6 +134,18 @@ export const MobileProfileView = ({
   };
 
   const handleLogout = () => {
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('setu_user') || '{}');
+      const sessionId = localStorage.getItem('setu_session_id') || '';
+      if (savedUser?.aadhaar) {
+        fetch('http://localhost:5000/api/v1/auth/aadhaar/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aadhaarNumber: savedUser.aadhaar, sessionId })
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
     localStorage.removeItem('setu_user');
     localStorage.removeItem('setu_session_id');
     localStorage.removeItem('setu_token');
@@ -167,21 +223,62 @@ export const MobileProfileView = ({
             gap: '0.75rem'
           }}
         >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handlePfpFileChange}
+          />
           <div
+            onClick={() => fileInputRef.current?.click()}
+            className="apple-tap"
+            title="Tap to change profile picture"
             style={{
-              width: '5.5rem',
-              height: '5.5rem',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 0 0 3px #ffffff, 0 0 0 4px rgba(0, 0, 0, 0.06)',
-              flexShrink: 0
+              position: 'relative',
+              cursor: 'pointer'
             }}
           >
-            <img
-              alt="User Avatar"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd7Q5nXugqNrYH6tTlJ1gPhmYZQXQu98rd1Gm0GQOQwZIIlWY3ahiBUR3xLqWmW1JX_WhXWMnVWsSz1JWolSZiNoJMwZmxt4lVKcxxS2eHBcIDyaojSejOSrMf_hpe606-2aDFO52eADSwwES5Br1PuGAi9WlzrGHNGnyTdJmFarDE4Tee6eC354TkyYqo6mmnoYg-JRWfVhxKz4e1mt0Sq1LOhgZ-1E1AE-Z-T6v-Vs3xQivPctWkCQ"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+            <div
+              style={{
+                width: '5.5rem',
+                height: '5.5rem',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 0 0 3px #ffffff, 0 0 0 4px rgba(0, 0, 0, 0.06)',
+                flexShrink: 0,
+                backgroundColor: '#e5e7eb'
+              }}
+            >
+              <img
+                alt="User Avatar"
+                src={
+                  pfpUrl ||
+                  "https://lh3.googleusercontent.com/aida-public/AB6AXuAd7Q5nXugqNrYH6tTlJ1gPhmYZQXQu98rd1Gm0GQOQwZIIlWY3ahiBUR3xLqWmW1JX_WhXWMnVWsSz1JWolSZiNoJMwZmxt4lVKcxxS2eHBcIDyaojSejOSrMf_hpe606-2aDFO52eADSwwES5Br1PuGAi9WlzrGHNGnyTdJmFarDE4Tee6eC354TkyYqo6mmnoYg-JRWfVhxKz4e1mt0Sq1LOhgZ-1E1AE-Z-T6v-Vs3xQivPctWkCQ"
+                }
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+            {/* Edit / Pen Icon Pill */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.25)',
+                border: '2px solid #ffffff'
+              }}
+            >
+              <GoogleIcon name="edit" size={14} color="#ffffff" />
+            </div>
           </div>
           <h2
             style={{
@@ -443,6 +540,51 @@ export const MobileProfileView = ({
             }}
           >
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
+              {/* General (Language, Preferences, Full-Screen Sidebar) */}
+              <li style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                <button
+                  onClick={() => setIsGeneralOpen(true)}
+                  className="apple-tap"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.875rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f2f2f7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <GoogleIcon name="tune" size={18} color="#1c1c1e" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e' }}>
+                        General
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#8e8e93' }}>
+                        Language, App Preferences & Session
+                      </span>
+                    </div>
+                  </div>
+                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
+                </button>
+              </li>
+
               {/* My Submissions */}
               <li style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
                 <button
@@ -619,33 +761,14 @@ export const MobileProfileView = ({
           </div>
         </section>
 
-        {/* Sign Out Section */}
-        <section style={{ marginTop: '0.5rem' }}>
-          <button
-            onClick={handleLogout}
-            className="apple-tap"
-            style={{
-              width: '100%',
-              height: '50px',
-              borderRadius: '14px',
-              backgroundColor: '#ffffff',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              color: '#dc2626',
-              fontSize: '0.9375rem',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
-              cursor: 'pointer'
-            }}
-          >
-            <GoogleIcon name="logout" size={18} color="#dc2626" />
-            <span>Sign Out</span>
-          </button>
-        </section>
       </main>
+
+      {/* Full-Screen Apple General Settings Drawer */}
+      <GeneralSettingsDrawer
+        isOpen={isGeneralOpen}
+        onClose={() => setIsGeneralOpen(false)}
+        userData={storedUser}
+      />
     </div>
   );
 };

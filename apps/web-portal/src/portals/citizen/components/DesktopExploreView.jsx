@@ -498,6 +498,21 @@ export const DesktopExploreView = ({
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [bookmarkedPosts, setBookmarkedPosts] = useState(new Set());
 
+  const [pfpUrl, setPfpUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('setu_user_pfp') || null;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    const handlePfpUpdate = () => {
+      setPfpUrl(localStorage.getItem('setu_user_pfp') || null);
+    };
+    window.addEventListener('setu-pfp-updated', handlePfpUpdate);
+    return () => window.removeEventListener('setu-pfp-updated', handlePfpUpdate);
+  }, []);
+
   const handleToggleLike = (postId) => {
     setLikedPosts((prev) => {
       const next = new Set(prev);
@@ -699,10 +714,15 @@ export const DesktopExploreView = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                overflow: 'hidden'
               }}
             >
-              <GoogleIcon name="person" size={18} color="#ffffff" />
+              {pfpUrl ? (
+                <img src={pfpUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <GoogleIcon name="person" size={18} color="#ffffff" />
+              )}
             </div>
             <div
               style={{

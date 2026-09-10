@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DesktopHomeView } from '../components/DesktopHomeView';
 import { MobileHomeView } from '../components/MobileHomeView';
 import { DesktopExploreView } from '../components/DesktopExploreView';
@@ -13,6 +13,7 @@ import { TaraCopilotModal } from '../components/TaraCopilotModal';
 import { IssueDetailModal } from '../components/IssueDetailModal';
 import { MobileReportingModal } from '../components/MobileReportingModal';
 import { DesktopReportingModal } from '../components/DesktopReportingModal';
+import { AadhaarWelcomeModal } from '../components/AadhaarWelcomeModal';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -90,11 +91,44 @@ export const CitizenHomePage = () => {
     }
   }, [location.pathname, location.search]);
 
+  const navigate = useNavigate();
+
+  // Strict route safeguard: unverified visitors cannot access citizen portal
+  useEffect(() => {
+    const isOnboarded = localStorage.getItem('setu_onboarded') === 'true';
+    const hasUserData = Boolean(
+      localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data')
+    );
+    if (!isOnboarded || !hasUserData) {
+      navigate('/onboarding', { replace: true });
+    }
+  }, [navigate]);
+
   // Modals
   const [isTaraOpen, setIsTaraOpen] = useState(false);
   const [isReportingOpen, setIsReportingOpen] = useState(false);
   const [detailIssue, setDetailIssue] = useState(null);
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+
+  useEffect(() => {
+    const shouldShow = localStorage.getItem('setu_show_pfp_prompt') === 'true';
+    if (shouldShow) {
+      setIsWelcomeModalOpen(true);
+    }
+  }, []);
+
+  const handleSetPfpAction = () => {
+    localStorage.removeItem('setu_show_pfp_prompt');
+    setIsWelcomeModalOpen(false);
+    sessionStorage.setItem('setu_auto_open_pfp_picker', 'true');
+    setActiveNav('profile');
+  };
+
+  const handleCloseWelcomeModal = () => {
+    localStorage.removeItem('setu_show_pfp_prompt');
+    setIsWelcomeModalOpen(false);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -388,6 +422,14 @@ export const CitizenHomePage = () => {
         onClose={() => setDetailIssue(null)}
         onUpvote={handleUpvote}
         isUpvoted={detailIssue ? upvotedSet.has(detailIssue.id) : false}
+      />
+
+      {/* Aadhaar Welcome Note & Profile Picture Prompt Modal */}
+      <AadhaarWelcomeModal
+        isOpen={isWelcomeModalOpen}
+        onClose={handleCloseWelcomeModal}
+        onSetPfp={handleSetPfpAction}
+        userData={storedSetuUser}
       />
     </div>
   );

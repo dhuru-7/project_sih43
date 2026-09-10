@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { compressImage } from '../../../utils/imageCompressor';
+import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -49,6 +51,48 @@ export const DesktopProfileView = ({
   const displayLocation = storedUser.district ? `${storedUser.district}, ${storedUser.state || 'Jharkhand'}` : 'Ranchi, Jharkhand';
   const displayDob = storedUser.dob || '15/08/1996';
 
+  // General Settings Drawer State
+  const [isGeneralOpen, setIsGeneralOpen] = useState(false);
+
+  // Profile Picture Upload & Compression
+  const fileInputRef = useRef(null);
+  const [pfpUrl, setPfpUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('setu_user_pfp') || null;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    const handlePfpUpdate = () => {
+      setPfpUrl(localStorage.getItem('setu_user_pfp') || null);
+    };
+    window.addEventListener('setu-pfp-updated', handlePfpUpdate);
+
+    // Auto-open picker if guided from Welcome modal
+    if (sessionStorage.getItem('setu_auto_open_pfp_picker') === 'true') {
+      sessionStorage.removeItem('setu_auto_open_pfp_picker');
+      setTimeout(() => {
+        fileInputRef.current?.click();
+      }, 350);
+    }
+
+    return () => window.removeEventListener('setu-pfp-updated', handlePfpUpdate);
+  }, []);
+
+  const handlePfpFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressedDataUrl = await compressImage(file, { maxWidth: 256, maxHeight: 256, quality: 0.8 });
+      localStorage.setItem('setu_user_pfp', compressedDataUrl);
+      setPfpUrl(compressedDataUrl);
+      window.dispatchEvent(new Event('setu-pfp-updated'));
+    } catch (err) {
+      console.error('Failed to compress profile picture:', err);
+    }
+  };
+
   const [showAge, setShowAge] = useState(false);
   const touchStartX = useRef(null);
 
@@ -87,6 +131,33 @@ export const DesktopProfileView = ({
 
   const handleDobClick = () => {
     setShowAge((prev) => !prev);
+  };
+
+  const handleLogout = () => {
+    try {
+      const rawUser = localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data');
+      const sessionId = localStorage.getItem('setu_session_id');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        const rawAadhaar = u.aadhaar ? u.aadhaar.replace(/\D/g, '') : '';
+        fetch('http://localhost:5000/api/v1/auth/aadhaar/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            aadhaarNumber: rawAadhaar,
+            sessionId: sessionId || ''
+          })
+        }).catch(() => {});
+      }
+    } catch (e) {}
+    localStorage.removeItem('setu_user');
+    localStorage.removeItem('setu_session_id');
+    localStorage.removeItem('setu_token');
+    localStorage.removeItem('setu_onboarded');
+    localStorage.removeItem('setu_user_role');
+    localStorage.removeItem('sih_user_data');
+    localStorage.removeItem('sih_auth_token');
+    navigate('/onboarding');
   };
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '100vh', backgroundColor: '#f9f9f9', color: '#1a1c1c' }}>
@@ -241,19 +312,20 @@ export const DesktopProfileView = ({
         </div>
 
         {/* Bottom Profile Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
           <div
             onClick={() => setActiveNav('profile')}
             className="apple-tap"
             style={{
               display: 'flex',
               alignItems: 'center',
-              width: '100%',
+              flex: 1,
+              minWidth: 0,
               height: '44px',
               minHeight: '44px',
               maxHeight: '44px',
               boxSizing: 'border-box',
-              padding: '0 5px',
+              padding: '0 8px',
               borderRadius: '0.75rem',
               backgroundColor: activeNav === 'profile' ? '#eeeeee' : 'transparent',
               cursor: 'pointer',
@@ -271,10 +343,15 @@ export const DesktopProfileView = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                overflow: 'hidden'
               }}
             >
-              <GoogleIcon name="person" size={18} color="#ffffff" />
+              {pfpUrl ? (
+                <img src={pfpUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <GoogleIcon name="person" size={18} color="#ffffff" />
+              )}
             </div>
             <div
               style={{
@@ -285,10 +362,10 @@ export const DesktopProfileView = ({
               }}
             >
               <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1a1c1c', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {userName || 'Rahul Verma'}
+                {displayName}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                Ward 4
+                {storedUser?.ward || 'Ward 4'}
               </span>
             </div>
           </div>
@@ -301,21 +378,21 @@ export const DesktopProfileView = ({
           className="apple-page-enter"
           style={{
             width: '100%',
-            backgroundColor: '#f9f9f9',
-            minHeight: '100vh',
-            padding: '0 2rem 4rem 2rem',
+            maxWidth: '1280px',
+            margin: '0 auto',
+            padding: '2rem',
             boxSizing: 'border-box'
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', paddingBottom: '4rem' }}>
-            {/* Header: Title */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
                 <h1
                   style={{
-                    fontSize: '1.5rem',
-                    lineHeight: '2rem',
-                    fontWeight: '600',
+                    fontSize: '1.875rem',
+                    lineHeight: '2.25rem',
+                    fontWeight: '800',
                     letterSpacing: '-0.01em',
                     color: '#1a1c1c',
                     margin: 0
@@ -324,6 +401,27 @@ export const DesktopProfileView = ({
                   Profile
                 </h1>
               </div>
+
+              <button
+                onClick={() => setIsGeneralOpen(true)}
+                className="apple-tap"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '9999px',
+                  backgroundColor: '#f2f2f7',
+                  border: '1px solid rgba(0, 0, 0, 0.08)',
+                  color: '#1c1c1e',
+                  fontSize: '0.8125rem',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                <GoogleIcon name="tune" size={16} color="#1c1c1e" />
+                <span>General</span>
+              </button>
             </div>
 
             {/* 12-Column Grid matching Stitch */}
@@ -369,7 +467,25 @@ export const DesktopProfileView = ({
                       backgroundColor: '#f3f3f3'
                     }}
                   />
-                  <div style={{ position: 'relative', zIndex: 10, marginTop: '1.5rem', marginBottom: '1rem' }}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handlePfpFileChange}
+                  />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="apple-tap"
+                    title="Click to upload profile picture"
+                    style={{
+                      position: 'relative',
+                      zIndex: 10,
+                      marginTop: '1.5rem',
+                      marginBottom: '1rem',
+                      cursor: 'pointer'
+                    }}
+                  >
                     <div
                       style={{
                         width: '7rem',
@@ -377,33 +493,38 @@ export const DesktopProfileView = ({
                         borderRadius: '50%',
                         backgroundColor: '#eeeeee',
                         padding: '0.25rem',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        overflow: 'hidden'
                       }}
                     >
                       <img
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyCHP9GwCX-AKcq_nVkK-tjZy2rPHvI12nyIEeea4b_8n7AHcKf1IKjGJECP12zPi5wgh26yjFRZ5OWx339njztMER-PUBTdtJCYjHZPSNebaqZLk6UdNTW3oOiU95NfsDk4Eag0wt05sHBO7QuUw8vjElUnZ8gGMpGkY4D89jkeN00DrGZdn--wUlAq8yYhasElZSzeMqobYl2nk06uvjHB7pduWJdHEE_1n7x9_3QMziOaby5bHjfw"
+                        src={
+                          pfpUrl ||
+                          "https://lh3.googleusercontent.com/aida-public/AB6AXuDyCHP9GwCX-AKcq_nVkK-tjZy2rPHvI12nyIEeea4b_8n7AHcKf1IKjGJECP12zPi5wgh26yjFRZ5OWx339njztMER-PUBTdtJCYjHZPSNebaqZLk6UdNTW3oOiU95NfsDk4Eag0wt05sHBO7QuUw8vjElUnZ8gGMpGkY4D89jkeN00DrGZdn--wUlAq8yYhasElZSzeMqobYl2nk06uvjHB7pduWJdHEE_1n7x9_3QMziOaby5bHjfw"
+                        }
                         alt={userName || 'Alex Chen'}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                       />
                     </div>
                     <span
-                      title="Edit Photo"
+                      title="Upload Photo"
                       style={{
                         position: 'absolute',
                         bottom: '0.25rem',
                         right: '0.25rem',
-                        width: '1.5rem',
-                        height: '1.5rem',
+                        width: '1.75rem',
+                        height: '1.75rem',
                         borderRadius: '50%',
                         backgroundColor: '#000000',
                         color: '#ffffff',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.25)',
+                        border: '2px solid #ffffff'
                       }}
                     >
-                      <GoogleIcon name="edit" size={14} color="#ffffff" />
+                      <GoogleIcon name="edit" size={15} color="#ffffff" />
                     </span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem', zIndex: 10, width: '100%' }}>
@@ -689,6 +810,48 @@ export const DesktopProfileView = ({
                       paddingTop: '0.5rem'
                     }}
                   >
+                    {/* General Settings */}
+                    <div
+                      onClick={() => setIsGeneralOpen(true)}
+                      className="apple-tap"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.875rem',
+                        borderRadius: '0.75rem',
+                        backgroundColor: '#f3f3f3',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div
+                          style={{
+                            width: '2.25rem',
+                            height: '2.25rem',
+                            borderRadius: '0.5rem',
+                            backgroundColor: '#e0f2fe',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0284c7'
+                          }}
+                        >
+                          <GoogleIcon name="tune" size={20} color="#0284c7" />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: '600', color: '#1a1c1c' }}>
+                            General
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: '#6e6e73' }}>
+                            Language & Session
+                          </span>
+                        </div>
+                      </div>
+                      <GoogleIcon name="chevron_right" size={20} color="#5e5e5e" />
+                    </div>
+
                     {/* Personal Information */}
                     <div
                       className="apple-tap"
@@ -1016,6 +1179,13 @@ export const DesktopProfileView = ({
           </div>
         </main>
       </div>
+
+      {/* Full-Screen Apple General Settings Drawer */}
+      <GeneralSettingsDrawer
+        isOpen={isGeneralOpen}
+        onClose={() => setIsGeneralOpen(false)}
+        userData={storedUser}
+      />
     </div>
   );
 };

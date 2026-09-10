@@ -1,79 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import '../styles/onboarding.css';
 import { MobileOnboardingView } from '../components/MobileOnboardingView';
 import { DesktopOnboardingView } from '../components/DesktopOnboardingView';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
-const ONBOARDING_SLIDES = [
-  {
-    title: 'See a problem?',
-    highlight: 'Just record or speak.',
-    image: '/illustrations/onboarding-step-1.png'
-  },
-  {
-    title: 'Jharkhand’s brightest youth',
-    highlight: 'will solve it.',
-    image: '/illustrations/onboarding-step-2.png'
-  },
-  {
-    title: 'Funded by Industry.',
-    highlight: 'Delivered to you.',
-    image: '/illustrations/onboarding-step-3.png'
+class OnboardingErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
-];
-
-const INTENTS = [
-  {
-    id: 'report',
-    title: 'Report Issue',
-    subtitle: 'Fix civic, road & water problems',
-    icon: 'campaign'
-  },
-  {
-    id: 'university',
-    title: 'Student Projects',
-    subtitle: 'Universities solving real challenges',
-    icon: 'school'
-  },
-  {
-    id: 'government',
-    title: 'Govt Grants',
-    subtitle: 'DHTE review & funding approvals',
-    icon: 'account_balance'
-  },
-  {
-    id: 'industry',
-    title: 'CSR Funding',
-    subtitle: 'Corporate sponsorship & adoption',
-    icon: 'apartment'
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
   }
-];
-
-const REPORTING_ROLES = [
-  {
-    id: 'citizen',
-    title: 'Individual Citizen',
-    subtitle: 'Resident, commuter, student',
-    icon: 'person',
-    route: '/report'
-  },
-  {
-    id: 'spoc',
-    title: 'Organisation / NGO',
-    subtitle: 'Panchayat, NGO or Local SPOC',
-    icon: 'corporate_fare',
-    route: '/report?role=spoc'
+  componentDidCatch(error, errorInfo) {
+    console.error('Onboarding ErrorBoundary caught:', error, errorInfo);
   }
-];
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9f9f9', color: '#111', padding: '2rem', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem' }}>Loading Onboarding...</h2>
+          <button
+            onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+            style={{ padding: '0.6rem 1.4rem', borderRadius: '9999px', backgroundColor: '#000', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Refresh Screen
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export const OnboardingPage = () => {
   const navigate = useNavigate();
+  const { t, currentLanguage } = useLanguage();
+
+  // Step 0: Language Selection
+  // Step 1: Slide 1
+  // Step 2: Slide 2
+  // Step 3: Slide 3
+  // Step 4: Intent Selection
+  // Step 5: Role Selection
+  // Step 6: Aadhaar Verification
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedIntent, setSelectedIntent] = useState('report');
   const [selectedRole, setSelectedRole] = useState('citizen');
-  const [underDevModal, setUnderDevModal] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = (message) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToastMessage(message);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1200
   );
@@ -84,13 +72,85 @@ export const OnboardingPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Ensure body background is light during onboarding to eliminate black screen
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const prevBg = document.body.style.backgroundColor;
+      document.body.style.backgroundColor = '#f9f9f9';
+      return () => {
+        document.body.style.backgroundColor = prevBg;
+      };
+    }
+  }, []);
+
+  // Dynamically translated slides using instantaneous synchronous i18n
+  const slides = useMemo(() => [
+    {
+      title: t('slide_1_title', 'See a problem?'),
+      highlight: t('slide_1_highlight', 'Just record or speak.'),
+      image: '/illustrations/onboarding-step-1.png'
+    },
+    {
+      title: t('slide_2_title', 'Jharkhand’s brightest youth'),
+      highlight: t('slide_2_highlight', 'will solve it.'),
+      image: '/illustrations/onboarding-step-2.png'
+    },
+    {
+      title: t('slide_3_title', 'Funded by Industry.'),
+      highlight: t('slide_3_highlight', 'Delivered to you.'),
+      image: '/illustrations/onboarding-step-3.png'
+    }
+  ], [t, currentLanguage]);
+
+  // Dynamically translated intents
+  const intents = useMemo(() => [
+    {
+      id: 'report',
+      title: t('intent_report_title', 'Report Issue'),
+      subtitle: t('intent_report_sub', 'Fix civic, road & water problems'),
+      icon: 'campaign'
+    },
+    {
+      id: 'university',
+      title: t('intent_uni_title', 'Student Projects'),
+      subtitle: t('intent_uni_sub', 'Universities solving real challenges'),
+      icon: 'school'
+    },
+    {
+      id: 'government',
+      title: t('intent_gov_title', 'Govt Grants'),
+      subtitle: t('intent_gov_sub', 'DHTE review & funding approvals'),
+      icon: 'account_balance'
+    },
+    {
+      id: 'industry',
+      title: t('intent_ind_title', 'CSR Funding'),
+      subtitle: t('intent_ind_sub', 'Corporate sponsorship & adoption'),
+      icon: 'apartment'
+    }
+  ], [t, currentLanguage]);
+
+  // Dynamically translated roles
+  const roles = useMemo(() => [
+    {
+      id: 'citizen',
+      title: t('role_citizen_title', 'Individual Citizen'),
+      subtitle: t('role_citizen_sub', 'Resident, commuter, student'),
+      icon: 'person',
+      route: '/report'
+    },
+    {
+      id: 'spoc',
+      title: t('role_spoc_title', 'Organisation / NGO'),
+      subtitle: t('role_spoc_sub', 'Panchayat, NGO or Local SPOC'),
+      icon: 'corporate_fare',
+      route: '/report?role=spoc'
+    }
+  ], [t, currentLanguage]);
+
   const handleSelectIntent = (intentId) => {
     if (intentId !== 'report') {
-      setUnderDevModal({
-        title: 'Under Development',
-        badge: 'Coming Soon',
-        message: 'This portal workflow is currently under active development. Please select "Report or track a problem" to test the citizen portal.'
-      });
+      showToast(t('coming_soon_msg', 'This workflow is currently under development. Please select Report Issue.'));
       return;
     }
     setSelectedIntent('report');
@@ -98,45 +158,37 @@ export const OnboardingPage = () => {
 
   const handleSelectRole = (roleId) => {
     if (roleId !== 'citizen') {
-      setUnderDevModal({
-        title: 'Under Development',
-        badge: 'Coming Soon',
-        message: 'Organization and Local Body onboarding is currently under active development. Please proceed as an Individual Citizen to evaluate the prototype.'
-      });
+      showToast(t('coming_soon_msg', 'Organization onboarding is currently under development. Please proceed as Citizen.'));
       return;
     }
     setSelectedRole('citizen');
   };
 
   const handleNext = () => {
-    if (currentStep < 2) {
+    if (currentStep === 0) {
+      // Move from Language Selection to Slide 1
+      setCurrentStep(1);
+    } else if (currentStep < 3) {
+      // Advance through slides (1 -> 2 -> 3)
       setCurrentStep((prev) => prev + 1);
-    } else if (currentStep === 2) {
-      // Finished slideshow, move to Intent Selection
-      setCurrentStep(3);
     } else if (currentStep === 3) {
+      // Finished slideshow, move to Intent Selection
+      setCurrentStep(4);
+    } else if (currentStep === 4) {
       // Intent chosen
       if (selectedIntent === 'report') {
-        setCurrentStep(4);
+        setCurrentStep(5);
       } else {
-        setUnderDevModal({
-          title: 'Under Development',
-          badge: 'Coming Soon',
-          message: 'This portal workflow is currently under active development. Please select "Report or track a problem" to test the citizen portal.'
-        });
+        showToast(t('coming_soon_msg', 'This workflow is currently under development. Please select Report Issue.'));
       }
-    } else if (currentStep === 4) {
+    } else if (currentStep === 5) {
       // Reporting role chosen
       if (selectedRole === 'citizen') {
         localStorage.setItem('setu_onboarded', 'true');
         localStorage.setItem('setu_user_role', selectedRole);
-        setCurrentStep(5);
+        setCurrentStep(6);
       } else {
-        setUnderDevModal({
-          title: 'Under Development',
-          badge: 'Coming Soon',
-          message: 'Organization and Local Body onboarding is currently under active development. Please proceed as an Individual Citizen to evaluate the prototype.'
-        });
+        showToast(t('coming_soon_msg', 'Organization onboarding is currently under development. Please proceed as Citizen.'));
       }
     }
   };
@@ -149,37 +201,43 @@ export const OnboardingPage = () => {
 
   const handleSkip = () => {
     // Jump straight to Intent Selection
-    setCurrentStep(3);
+    setCurrentStep(4);
   };
 
   const handleAadhaarSuccess = (user) => {
     localStorage.setItem('setu_onboarded', 'true');
     localStorage.setItem('setu_user_role', 'citizen');
-    navigate('/report?tab=profile');
+    localStorage.setItem('setu_show_pfp_prompt', 'true');
+    if (user) {
+      localStorage.setItem('setu_user', JSON.stringify(user));
+      localStorage.setItem('sih_user_data', JSON.stringify(user));
+    }
+    navigate('/citizen/home');
   };
 
   const isMobile = windowWidth < 1024;
 
   return (
-    <div
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        backgroundColor: '#f9f9f9',
-        boxSizing: 'border-box'
-      }}
-    >
+    <OnboardingErrorBoundary>
+      <div
+        style={{
+          width: '100%',
+          minHeight: '100vh',
+          backgroundColor: '#f9f9f9',
+          boxSizing: 'border-box'
+        }}
+      >
       {isMobile ? (
         <MobileOnboardingView
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-          slides={ONBOARDING_SLIDES}
+          slides={slides}
           selectedIntent={selectedIntent}
           setSelectedIntent={handleSelectIntent}
-          intents={INTENTS}
+          intents={intents}
           selectedRole={selectedRole}
           setSelectedRole={handleSelectRole}
-          roles={REPORTING_ROLES}
+          roles={roles}
           onNext={handleNext}
           onPrev={handlePrev}
           onSkip={handleSkip}
@@ -189,13 +247,13 @@ export const OnboardingPage = () => {
         <DesktopOnboardingView
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-          slides={ONBOARDING_SLIDES}
+          slides={slides}
           selectedIntent={selectedIntent}
           setSelectedIntent={handleSelectIntent}
-          intents={INTENTS}
+          intents={intents}
           selectedRole={selectedRole}
           setSelectedRole={handleSelectRole}
-          roles={REPORTING_ROLES}
+          roles={roles}
           onNext={handleNext}
           onPrev={handlePrev}
           onSkip={handleSkip}
@@ -203,142 +261,43 @@ export const OnboardingPage = () => {
         />
       )}
 
-      {/* Under Development Modal: Portalled to document.body with Frosted Glass Backdrop */}
-      {underDevModal && typeof document !== 'undefined' && ReactDOM.createPortal(
+      {/* Floating Bottom Toast Pill ("a simple sentence inside a shape (rectangle or pill)") */}
+      {toastMessage && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div
-          onClick={() => setUnderDevModal(null)}
+          onClick={() => setToastMessage(null)}
           style={{
             position: 'fixed',
-            inset: 0,
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
             zIndex: 999999,
-            backgroundColor: 'rgba(0, 0, 0, 0.25)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            maxWidth: 'calc(100% - 36px)',
+            width: 'max-content',
+            backgroundColor: 'rgba(28, 28, 30, 0.94)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            color: '#FFFFFF',
+            padding: '0.65rem 1.25rem',
+            borderRadius: '9999px',
+            boxShadow: '0 10px 28px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.12)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1.25rem',
-            animation: 'appleFadeEnter 0.2s ease-out'
+            gap: '0.55rem',
+            fontSize: '0.84rem',
+            fontWeight: '500',
+            textAlign: 'center',
+            letterSpacing: '-0.01em',
+            cursor: 'pointer',
+            animation: 'appleToastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            userSelect: 'none'
           }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '24px',
-              padding: '1.75rem',
-              maxWidth: '380px',
-              width: '100%',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.16), 0 0 1px rgba(0, 0, 0, 0.12)',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '1rem',
-              position: 'relative',
-              boxSizing: 'border-box',
-              animation: 'appleSpringEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
-          >
-            {/* Top Close Button */}
-            <button
-              onClick={() => setUnderDevModal(null)}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'none',
-                border: 'none',
-                padding: '6px',
-                cursor: 'pointer',
-                borderRadius: '50%',
-                color: '#8e8e93',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <GoogleIcon name="close" size={20} color="#8e8e93" />
-            </button>
-
-            {/* Icon */}
-            <div
-              style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                backgroundColor: '#f2f2f7',
-                color: '#000000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: '0.25rem'
-              }}
-            >
-              <GoogleIcon name="engineering" size={28} color="#111111" />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
-              <span
-                style={{
-                  fontSize: '0.6875rem',
-                  fontWeight: '700',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  padding: '0.2rem 0.6rem',
-                  borderRadius: '9999px',
-                  backgroundColor: '#f2f2f7',
-                  color: '#636366'
-                }}
-              >
-                {underDevModal.badge || 'Prototype Notice'}
-              </span>
-
-              <h2
-                style={{
-                  fontSize: '1.35rem',
-                  fontWeight: '800',
-                  color: '#111111',
-                  margin: '0.25rem 0 0',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.2
-                }}
-              >
-                {underDevModal.title || 'Under Development'}
-              </h2>
-
-              <p
-                style={{
-                  fontSize: '0.875rem',
-                  color: '#636366',
-                  margin: '0.35rem 0 0',
-                  lineHeight: 1.45,
-                  fontWeight: '400'
-                }}
-              >
-                {underDevModal.message}
-              </p>
-            </div>
-
-            {/* Got It Button */}
-            <button
-              onClick={() => setUnderDevModal(null)}
-              className="apple-btn-primary"
-              style={{
-                width: '100%',
-                height: '48px',
-                borderRadius: '14px',
-                fontSize: '0.9375rem',
-                fontWeight: '600',
-                marginTop: '0.25rem'
-              }}
-            >
-              Got It
-            </button>
-          </div>
+          <span>{toastMessage}</span>
         </div>,
         document.body
       )}
-    </div>
+      </div>
+    </OnboardingErrorBoundary>
   );
 };

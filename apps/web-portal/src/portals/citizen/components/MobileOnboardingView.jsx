@@ -1,6 +1,8 @@
 import React from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { AadhaarOnboardingStep } from './AadhaarOnboardingStep';
+import { LanguageSelectionStep } from './LanguageSelectionStep';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const MobileOnboardingView = ({
   currentStep,
@@ -17,9 +19,17 @@ export const MobileOnboardingView = ({
   onSkip,
   onAadhaarSuccess
 }) => {
-  const isSlideshow = currentStep < 3;
-  const slide = slides[currentStep] || slides[0];
-  const currentRoleObj = roles.find((r) => r.id === selectedRole) || roles[0];
+  const { t, languageMeta } = useLanguage();
+
+  // Step 0: Language Selection
+  // Steps 1-3: Slideshow
+  // Step 4: Intent Selection
+  // Step 5: Role Selection
+  // Step 6: Aadhaar Verification
+  const isLanguageStep = currentStep === 0;
+  const isSlideshow = currentStep >= 1 && currentStep <= 3;
+  const slideIndex = isSlideshow ? currentStep - 1 : 0;
+  const slide = slides[slideIndex] || slides[0];
 
   return (
     <div
@@ -40,69 +50,83 @@ export const MobileOnboardingView = ({
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Valley Sans', sans-serif"
       }}
     >
-      {/* Top Navigation Bar: Clean Setu. Logo on left (NO back button), Skip on right */}
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 30,
-          padding: '1.25rem 1.5rem 0.75rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: '800',
-              letterSpacing: '-0.03em',
-              color: '#000000',
-              lineHeight: 1
-            }}
-          >
-            Setu<span style={{ color: '#000000', fontWeight: '900' }}>.</span>
-          </span>
-        </div>
+      {/* Top Navigation Bar: Clean Setu. Logo on left, Skip on right (Hidden on Language Step 0 & Aadhaar Step 6) */}
+      {!isLanguageStep && currentStep !== 6 && (
+        <header
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 30,
+            padding: '1.25rem 1.5rem 0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: '800',
+                letterSpacing: '-0.03em',
+                color: '#000000',
+                lineHeight: 1
+              }}
+            >
+              Setu<span style={{ color: '#000000', fontWeight: '900' }}>.</span>
+            </span>
+          </div>
 
-        {isSlideshow && (
-          <button
-            onClick={onSkip}
-            style={{
-              fontSize: '0.875rem',
-              fontWeight: '600',
-              color: '#8e8e93',
-              background: 'none',
-              border: 'none',
-              padding: '0.35rem 0.75rem',
-              borderRadius: '9999px',
-              cursor: 'pointer'
-            }}
-          >
-            Skip
-          </button>
-        )}
-      </header>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            {isSlideshow && (
+              <button
+                onClick={onSkip}
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#8e8e93',
+                  background: 'none',
+                  border: 'none',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '9999px',
+                  cursor: 'pointer'
+                }}
+              >
+                {t('skip', 'Skip')}
+              </button>
+            )}
+          </div>
+        </header>
+      )}
 
       {/* Main Viewport Content */}
       <main
         style={{
           flex: 1,
-          padding: '0.5rem 1.5rem 1.5rem',
+          padding: isLanguageStep
+            ? '0 1.25rem 0'
+            : currentStep === 6
+            ? '0.75rem 1.25rem 1.25rem'
+            : '10% 1.5rem 1.5rem',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center'
+          justifyContent: isLanguageStep || currentStep === 6 ? 'flex-start' : 'center'
         }}
       >
-        {isSlideshow ? (
+        {isLanguageStep ? (
           /* ===================================================================
-             SLIDESHOW STAGE: Pure Stitch Editorial Slides
+             STAGE 0: Language Selection Screen (Matching User's Screenshot)
+             =================================================================== */
+          <LanguageSelectionStep onContinue={onNext} isDesktop={false} />
+        ) : isSlideshow ? (
+          /* ===================================================================
+             STAGE 1: Pure Stitch Editorial Slideshow (Steps 1, 2, 3)
              =================================================================== */
           <div
+            className="apple-fade-enter"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -155,9 +179,9 @@ export const MobileOnboardingView = ({
               <span style={{ color: '#000000' }}>{slide.highlight}</span>
             </h1>
           </div>
-        ) : currentStep === 3 ? (
+        ) : currentStep === 4 ? (
           /* ===================================================================
-             STAGE 2: Mobile Intent Selection Screen (NO 3 DOTS, NO Back Before Setu)
+             STAGE 2: Mobile Intent Selection Screen (Step 4)
              =================================================================== */
           <div
             className="apple-fade-enter"
@@ -176,17 +200,14 @@ export const MobileOnboardingView = ({
                   letterSpacing: '-0.025em',
                   color: '#111111',
                   lineHeight: 1.25,
-                  margin: '0 0 0.35rem'
+                  margin: '0 0 0.5rem'
                 }}
               >
-                What brings you to Setu?
+                {t('intent_heading', 'What brings you to Setu?')}
               </h1>
-              <p style={{ fontSize: '0.8125rem', color: '#636366', margin: 0, fontWeight: '500' }}>
-                Select your focus area to access the right portal workflow.
-              </p>
             </div>
 
-            {/* 4 Intent Cards with Apple Spacing & Uncrowded Squircles */}
+            {/* 4 Intent Cards with Apple Spacing */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {intents.map((intent) => {
                 const isSelected = selectedIntent === intent.id;
@@ -260,9 +281,9 @@ export const MobileOnboardingView = ({
               })}
             </div>
           </div>
-        ) : currentStep === 4 ? (
+        ) : currentStep === 5 ? (
           /* ===================================================================
-             STAGE 3: Mobile Reporting Portal Sub-Role Selection (Static Heading, Concise)
+             STAGE 3: Mobile Reporting Portal Sub-Role Selection (Step 5)
              =================================================================== */
           <div
             className="apple-fade-enter"
@@ -276,19 +297,16 @@ export const MobileOnboardingView = ({
             <div>
               <h1
                 style={{
-                  fontSize: '1.625rem',
+                  fontSize: '1.5rem',
                   fontWeight: '800',
                   letterSpacing: '-0.025em',
                   color: '#111111',
                   lineHeight: 1.25,
-                  margin: 0
+                  margin: '0 0 0.5rem'
                 }}
               >
-                Choose your role
+                {t('role_sub', 'How will you be registering on Setu?')}
               </h1>
-              <p style={{ fontSize: '0.8125rem', color: '#636366', margin: '0.35rem 0 0', fontWeight: '500' }}>
-                Select how you will participate in the Reporting Portal.
-              </p>
             </div>
 
             {/* Apple Role Cards */}
@@ -375,7 +393,7 @@ export const MobileOnboardingView = ({
           </div>
         ) : (
           /* ===================================================================
-             STAGE 4: Mobile Aadhaar Verification & OTP Screen (Step 5)
+             STAGE 4: Mobile Aadhaar Verification & OTP Screen (Step 6)
              =================================================================== */
           <AadhaarOnboardingStep
             isMobile={true}
@@ -385,8 +403,8 @@ export const MobileOnboardingView = ({
         )}
       </main>
 
-      {/* Bottom Interactive Safe Area & Navigation Controls (Only for Steps 0-4) */}
-      {currentStep < 5 && (
+      {/* Bottom Interactive Safe Area & Navigation Controls (Only for Steps 1-5) */}
+      {!isLanguageStep && currentStep < 6 && (
         <footer
           style={{
             padding: '1rem 1.5rem 1.75rem',
@@ -396,24 +414,24 @@ export const MobileOnboardingView = ({
             gap: '0.85rem'
           }}
         >
-          {/* 3 Animated Apple Pill Indicators - ONLY during Slideshow */}
+          {/* 3 Animated Apple Pill Indicators - ONLY during Slideshow (Steps 1, 2, 3) */}
           {isSlideshow && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-              {[0, 1, 2].map((idx) => (
+              {[1, 2, 3].map((stepNum) => (
                 <button
-                  key={idx}
-                  onClick={() => setCurrentStep(idx)}
+                  key={stepNum}
+                  onClick={() => setCurrentStep(stepNum)}
                   style={{
                     height: '8px',
-                    width: idx === currentStep ? '32px' : '8px',
-                    backgroundColor: idx === currentStep ? '#000000' : '#d1d5db',
+                    width: stepNum === currentStep ? '32px' : '8px',
+                    backgroundColor: stepNum === currentStep ? '#000000' : '#d1d5db',
                     borderRadius: '9999px',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     padding: 0
                   }}
-                  aria-label={`Slide ${idx + 1}`}
+                  aria-label={`Slide ${stepNum}`}
                 />
               ))}
             </div>
@@ -425,16 +443,16 @@ export const MobileOnboardingView = ({
               display: 'flex',
               alignItems: 'center',
               width: '100%',
-              gap: currentStep >= 3 ? '0.75rem' : '0px',
+              gap: currentStep >= 4 ? '0.75rem' : '0px',
               transition: 'gap 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
           >
-            {/* Back Button on Left: Smoothly Expands and Slides in, Squeezing Continue Button */}
+            {/* Back Button on Left: Smoothly Expands and Slides in */}
             <button
               onClick={onPrev}
               className="apple-btn-secondary"
-              aria-hidden={currentStep < 3}
-              tabIndex={currentStep < 3 ? -1 : 0}
+              aria-hidden={currentStep < 2}
+              tabIndex={currentStep < 2 ? -1 : 0}
               style={{
                 height: '52px',
                 borderRadius: '16px',
@@ -445,22 +463,22 @@ export const MobileOnboardingView = ({
                 justifyContent: 'center',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
-                width: currentStep >= 3 ? '100px' : '0px',
-                minWidth: currentStep >= 3 ? '100px' : '0px',
-                maxWidth: currentStep >= 3 ? '100px' : '0px',
-                opacity: currentStep >= 3 ? 1 : 0,
-                padding: currentStep >= 3 ? '0 1rem' : '0px',
-                border: currentStep >= 3 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
-                pointerEvents: currentStep >= 3 ? 'auto' : 'none',
-                transform: currentStep >= 3 ? 'translateX(0) scale(1)' : 'translateX(-16px) scale(0.9)',
+                width: currentStep >= 2 ? '100px' : '0px',
+                minWidth: currentStep >= 2 ? '100px' : '0px',
+                maxWidth: currentStep >= 2 ? '100px' : '0px',
+                opacity: currentStep >= 2 ? 1 : 0,
+                padding: currentStep >= 2 ? '0 1rem' : '0px',
+                border: currentStep >= 2 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+                pointerEvents: currentStep >= 2 ? 'auto' : 'none',
+                transform: currentStep >= 2 ? 'translateX(0) scale(1)' : 'translateX(-16px) scale(0.9)',
                 transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                 boxSizing: 'border-box'
               }}
             >
-              Back
+              {t('back', 'Back')}
             </button>
 
-            {/* Primary Action Button (Smoothly Squeezes to Accommodate Back Button) */}
+            {/* Primary Action Button */}
             <button
               onClick={onNext}
               className="apple-btn-primary"
@@ -475,9 +493,9 @@ export const MobileOnboardingView = ({
               }}
             >
               <span>
-                {currentStep === 2
-                  ? 'Get Started'
-                  : 'Continue'}
+                {currentStep === 3
+                  ? t('next', 'Get Started')
+                  : t('next', 'Continue')}
               </span>
             </button>
           </div>

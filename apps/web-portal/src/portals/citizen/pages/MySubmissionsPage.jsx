@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -363,13 +364,26 @@ SubmissionCard.displayName = 'SubmissionCard';
 export const MySubmissionsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
   const cardRefs = useRef({});
 
   // Lightbox state
   const [lightboxState, setLightboxState] = useState({ isOpen: false, mediaList: [], initialIndex: 0, title: '' });
+
+  // Route safeguard: unverified visitors cannot access submissions
+  useEffect(() => {
+    const isOnboarded = localStorage.getItem('setu_onboarded') === 'true';
+    const hasUserData = Boolean(
+      localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data')
+    );
+    if (!isOnboarded || !hasUserData) {
+      navigate('/onboarding', { replace: true });
+    }
+  }, [navigate]);
 
   // Read highlight param from URL
   useEffect(() => {
@@ -419,11 +433,27 @@ export const MySubmissionsPage = () => {
     setLightboxState({ isOpen: true, mediaList, initialIndex, title });
   };
 
+  const handleBack = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      navigate(-1);
+    }, 280);
+  };
+
   return (
-    <div style={{
-      minHeight: '100vh', backgroundColor: '#f2f2f7',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif'
-    }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f9f9f9',
+        display: 'flex',
+        flexDirection: 'column',
+        animation: isClosing
+          ? 'appleSlideOutRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+          : 'appleSlideInRight 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif',
+        overflowX: 'hidden'
+      }}
+    >
       {/* Inject highlight animation keyframes */}
       <style>{`
         @keyframes cardPulse {
@@ -434,33 +464,51 @@ export const MySubmissionsPage = () => {
       `}</style>
 
       {/* ─── Header ─── */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        backgroundColor: 'rgba(242, 242, 247, 0.88)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '0.5px solid rgba(0, 0, 0, 0.12)',
-        padding: '12px 20px',
-        display: 'flex', alignItems: 'center', gap: '14px'
-      }}>
+      <header
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          backgroundColor: 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px'
+        }}
+      >
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="apple-tap"
           style={{
-            width: '36px', height: '36px', borderRadius: '50%',
-            backgroundColor: 'rgba(0, 0, 0, 0.05)', border: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', flexShrink: 0
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0
           }}
           aria-label="Back"
         >
-          <GoogleIcon name="arrow_back_ios_new" size={16} color="#000000" />
+          <GoogleIcon name="chevron_left" size={24} color="#1a1c1c" />
         </button>
-        <h1 style={{
-          fontSize: '1.125rem', fontWeight: '700', color: '#000000', margin: 0,
-          letterSpacing: '-0.02em',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif'
-        }}>
-          My Submissions
+        <h1
+          style={{
+            fontSize: '1.125rem',
+            fontWeight: '700',
+            color: '#1a1c1c',
+            margin: 0,
+            letterSpacing: '-0.01em',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif'
+          }}
+        >
+          {t('my_submissions', 'My Submissions')}
         </h1>
       </header>
 

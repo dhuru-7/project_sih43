@@ -1,0 +1,1185 @@
+/* ==========================================================================
+   SETU LANDING PAGE - STITCH DESIGN SYSTEM + APPLE FLUID SPEC
+   Official Design Architecture · Dept. of Higher & Technical Education, Govt. of Jharkhand
+   Minimalist, High Contrast, Precision Typography & Tactile Physics
+   ========================================================================== */
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --color-canvas: #FFFFFF;
+  --color-surface-subtle: #F9F9F9;
+  --color-surface-card: #FFFFFF;
+  --color-border-subtle: #E5E5E5;
+  --color-border-strong: #D4D4D4;
+  --color-text-primary: #0A0A0A;
+  --color-text-secondary: #525252;
+  --color-text-tertiary: #737373;
+  --color-accent-emerald: #059669;
+  --color-accent-blue: #2563EB;
+}
+
+/* Canvas & Ambient Geometry */
+.setu-landing-canvas {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #FFFFFF;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apple Crisp Grid Pattern Overlay */
+.setu-grid-pattern {
+  background-size: 36px 36px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+}
+
+/* Ambient Radial Glows (Subtle, non-neon Apple Depth) */
+.setu-landing-glow-top {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 960px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(220, 235, 255, 0.45) 0%, rgba(240, 245, 240, 0.25) 50%, transparent 75%);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.setu-landing-glow-side {
+  position: absolute;
+  top: 900px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(240, 248, 240, 0.4) 0%, transparent 70%);
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Section Wrappers */
+.setu-landing-section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+  position: relative;
+  z-index: 10;
+}
+
+.setu-landing-section-hero {
+  padding-top: 3.5rem;
+  padding-bottom: 5.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   1. HERO SECTION - 2-COLUMN SPLIT (STITCH ARCHITECTURE)
+   ========================================================================== */
+
+.setu-hero-split-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.95fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+/* Hero Left Details */
+.setu-hero-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.setu-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: #F4F4F5;
+  border: 1px solid #E4E4E7;
+  color: #3F3F46;
+  margin-bottom: 1.5rem;
+}
+
+.setu-pill-badge-tag {
+  color: #059669;
+  font-weight: 700;
+}
+
+.setu-hero-title {
+  font-size: clamp(2.4rem, 4.5vw, 3.85rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  color: #0A0A0A;
+  margin: 0 0 1.25rem 0;
+}
+
+.setu-hero-underline {
+  position: relative;
+  text-decoration: underline;
+  text-decoration-color: #D4D4D4;
+  text-decoration-style: wavy;
+  text-underline-offset: 8px;
+}
+
+.setu-hero-subtitle {
+  font-size: clamp(1rem, 1.6vw, 1.1875rem);
+  color: #525252;
+  line-height: 1.65;
+  max-width: 620px;
+  margin: 0 0 2.25rem 0;
+}
+
+/* Hero Action CTAs */
+.setu-hero-cta-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.75rem;
+}
+
+.setu-btn-primary {
+  background: #0A0A0A;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.setu-btn-primary:hover {
+  background: #262626;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  color: #FFFFFF;
+}
+
+.setu-btn-primary:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.setu-btn-secondary {
+  background: #FFFFFF;
+  color: #0A0A0A;
+  border: 1px solid #E5E5E5;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.setu-btn-secondary:hover {
+  background: #F9F9F9;
+  border-color: #D4D4D4;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.setu-btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.setu-hero-login-link {
+  font-size: 0.875rem;
+  color: #737373;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  transition: color 0.15s ease;
+}
+
+.setu-hero-login-link:hover {
+  color: #0A0A0A;
+}
+
+/* 3-Column Stats Divider Strip */
+.setu-hero-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid #E5E5E5;
+  width: 100%;
+}
+
+.setu-hero-stat-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.setu-hero-stat-col:not(:first-child) {
+  border-left: 1px solid #E5E5E5;
+  padding-left: 1.5rem;
+}
+
+.setu-hero-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0A0A0A;
+}
+
+.setu-hero-stat-desc {
+  font-size: 0.75rem;
+  color: #737373;
+  font-weight: 500;
+  margin-top: 0.2rem;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Hero Right: MAC-STYLE LIVE CIVIC BRIDGE CARD
+   ========================================================================== */
+
+.setu-hero-mac-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.03);
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.setu-hero-mac-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 32px 72px -12px rgba(0, 0, 0, 0.14);
+}
+
+/* macOS Traffic Light Dots */
+.setu-mac-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid #F3F3F3;
+}
+
+.setu-traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.setu-traffic-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-red { background-color: #EF4444; }
+.dot-yellow { background-color: #F59E0B; }
+.dot-green { background-color: #10B981; }
+
+.setu-mac-status-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #737373;
+  letter-spacing: 0.02em;
+}
+
+.setu-live-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: setu-pulse 2s infinite ease-in-out;
+}
+
+@keyframes setu-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.7; }
+}
+
+/* Image Visual Box */
+.setu-hero-image-box {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #F9F9F9;
+  border: 1px solid #F0F0F0;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setu-hero-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.5rem;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.setu-hero-mac-card:hover .setu-hero-image-box img {
+  transform: scale(1.03);
+}
+
+/* Overlay Glass Pill */
+.setu-image-overlay-pill {
+  position: absolute;
+  bottom: 0.85rem;
+  left: 0.85rem;
+  right: 0.85rem;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.setu-overlay-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0A0A0A;
+}
+
+.setu-overlay-subtitle {
+  font-size: 0.6875rem;
+  color: #737373;
+}
+
+/* Live Feed Items List */
+.setu-hero-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.setu-hero-feed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F9F9F9;
+  border: 1px solid #EBEBEB;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.setu-hero-feed-item:hover {
+  background: #F3F3F3;
+  border-color: #D4D4D4;
+}
+
+.setu-feed-icon-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 0.5rem;
+  background: #0A0A0A;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.setu-feed-item-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0A0A0A;
+}
+
+.setu-feed-item-sub {
+  font-size: 0.6875rem;
+  color: #737373;
+}
+
+.setu-feed-pill-stage {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid #E5E5E5;
+  background: #FFFFFF;
+  color: #525252;
+}
+
+.setu-feed-pill-stage.deployed {
+  background: #ECFDF5;
+  color: #047857;
+  border-color: #A7F3D0;
+}
+
+/* ==========================================================================
+   2. THE CORE PHILOSOPHY SECTION ("Learning Through Real Impact")
+   ========================================================================== */
+
+.setu-section-header {
+  max-width: 680px;
+  margin-bottom: 3.5rem;
+  text-align: left;
+}
+
+.setu-section-header.center {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.setu-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #737373;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.setu-section-title {
+  font-size: clamp(1.85rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0A0A0A;
+  margin: 0 0 0.85rem 0;
+  line-height: 1.18;
+}
+
+.setu-section-description {
+  font-size: 1rem;
+  color: #525252;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* 3 Bento Cards Grid */
+.setu-philosophy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}
+
+.setu-philosophy-card {
+  background: #F9F9F9;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.5rem;
+  padding: 2.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.setu-philosophy-card:hover {
+  background: #FFFFFF;
+  border-color: #0A0A0A;
+  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+}
+
+.setu-card-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 1rem;
+  background: #0A0A0A;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.25s ease;
+}
+
+.setu-philosophy-card:hover .setu-card-icon-box {
+  transform: scale(1.08);
+}
+
+.setu-card-beneficiary {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #737373;
+  margin-bottom: 0.25rem;
+}
+
+.setu-card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0A0A0A;
+  margin: 0 0 0.85rem 0;
+}
+
+.setu-card-body {
+  font-size: 0.875rem;
+  color: #525252;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.setu-card-footer-link {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #E5E5E5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0A0A0A;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ==========================================================================
+   3. STAKEHOLDER BLUEPRINT - 4-TAB SEGMENTED CONTROLLER
+   ========================================================================== */
+
+.setu-tab-switcher-apple {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #EBEBEB;
+  padding: 0.3rem;
+  border-radius: 1rem;
+  width: fit-content;
+  margin: 2rem auto 3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.setu-tab-apple-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #525252;
+  padding: 0.65rem 1.35rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.setu-tab-apple-btn:hover {
+  color: #0A0A0A;
+}
+
+.setu-tab-apple-btn.active {
+  background: #FFFFFF;
+  color: #0A0A0A;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Active Tab Showcase Pane */
+.setu-tab-pane {
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.75rem;
+  padding: 3rem;
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.04);
+}
+
+.setu-tab-split {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+.setu-tab-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: #F4F4F5;
+  color: #27272A;
+  margin-bottom: 1.25rem;
+}
+
+.setu-tab-heading {
+  font-size: clamp(1.5rem, 2.5vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #0A0A0A;
+  margin: 0 0 1rem 0;
+  line-height: 1.25;
+}
+
+.setu-tab-desc {
+  font-size: 0.9375rem;
+  color: #525252;
+  line-height: 1.65;
+  margin: 0 0 1.75rem 0;
+}
+
+.setu-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.setu-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.setu-check-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0A0A0A;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.setu-check-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0A0A0A;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.setu-check-sub {
+  font-size: 0.8125rem;
+  color: #525252;
+  line-height: 1.5;
+}
+
+/* Right Visual Container inside Tab Pane */
+.setu-tab-visual-card {
+  background: #F9F9F9;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+}
+
+.setu-tab-visual-image-wrap {
+  background: #FFFFFF;
+  border: 1px solid #EAEAEA;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.setu-tab-visual-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.5rem;
+}
+
+.setu-tab-visual-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #525252;
+  padding: 0 0.25rem;
+}
+
+/* ==========================================================================
+   4. PROBLEM-TO-DEPLOYMENT PIPELINE (4 STAGES)
+   ========================================================================== */
+
+.setu-pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.setu-stage-card {
+  background: #F9F9F9;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.setu-stage-card:hover {
+  border-color: #0A0A0A;
+  background: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.setu-stage-card.active {
+  background: #FFFFFF;
+  border-color: #0A0A0A;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.setu-stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.setu-stage-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 0.65rem;
+  background: #0A0A0A;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.setu-stage-tag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #737373;
+}
+
+.setu-stage-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0A0A0A;
+  margin: 0 0 0.5rem 0;
+}
+
+.setu-stage-desc {
+  font-size: 0.8125rem;
+  color: #525252;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.setu-stage-footer {
+  margin-top: 1.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #E5E5E5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  color: #737373;
+}
+
+/* Pipeline Stage Deep Dive Box */
+.setu-stage-detail-box {
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.25rem;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+/* ==========================================================================
+   5. REAL CHALLENGES FILTERABLE SHOWCASE
+   ========================================================================== */
+
+.setu-domain-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.setu-domain-pill {
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  color: #525252;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.55rem 1.15rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.setu-domain-pill:hover {
+  border-color: #0A0A0A;
+  color: #0A0A0A;
+}
+
+.setu-domain-pill.active {
+  background: #0A0A0A;
+  border-color: #0A0A0A;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.setu-challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.setu-challenge-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.setu-challenge-card:hover {
+  border-color: #0A0A0A;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   6. BUILT FOR BHARAT (ENGINEERING ARCHITECTURE BENTO)
+   ========================================================================== */
+
+.setu-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}
+
+.setu-spec-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 1.5rem;
+  padding: 2.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s ease;
+}
+
+.setu-spec-card:hover {
+  border-color: #0A0A0A;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
+}
+
+.setu-spec-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.85rem;
+  background: #F4F4F5;
+  border: 1px solid #E4E4E7;
+  color: #0A0A0A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.setu-spec-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #F0F0F0;
+}
+
+.setu-spec-tag {
+  font-size: 0.6875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: #F4F4F5;
+  color: #3F3F46;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+}
+
+/* ==========================================================================
+   7. BOTTOM ACTION HERO / OBSIDIAN LAUNCH CARD
+   ========================================================================== */
+
+.setu-launch-hero {
+  background-color: #0A0A0A;
+  color: #FFFFFF;
+  border-radius: 2rem;
+  padding: 5rem 2.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.3);
+}
+
+.setu-launch-hero-title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: #FFFFFF;
+  margin: 0 0 1.25rem 0;
+  line-height: 1.15;
+}
+
+.setu-launch-hero-subtitle {
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  color: #A3A3A3;
+  line-height: 1.65;
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+}
+
+.setu-launch-btn-primary {
+  background: #FFFFFF;
+  color: #0A0A0A;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  padding: 0.9rem 2rem;
+  border-radius: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.setu-launch-btn-primary:hover {
+  background: #F5F5F5;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.25);
+  color: #000000;
+}
+
+.setu-launch-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.setu-launch-btn-outline {
+  background: transparent;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.9rem 1.75rem;
+  border-radius: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.setu-launch-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #FFFFFF;
+}
+
+.setu-launch-btn-outline:active {
+  transform: scale(0.97);
+}
+
+/* ==========================================================================
+   8. FOOTER
+   ========================================================================== */
+
+.setu-landing-footer {
+  margin-top: 5rem;
+  border-top: 1px solid #E5E5E5;
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  font-size: 0.8125rem;
+  color: #737373;
+}
+
+.setu-footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.setu-footer-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: #0A0A0A;
+}
+
+.setu-footer-links {
+  display: flex;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.setu-footer-links a {
+  color: #525252;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.setu-footer-links a:hover {
+  color: #0A0A0A;
+}
+
+.setu-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #A3A3A3;
+  padding-top: 1rem;
+  border-top: 1px solid #F5F5F5;
+}
+
+/* ==========================================================================
+   9. RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+@media (max-width: 1080px) {
+  .setu-hero-split-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  .setu-hero-left {
+    align-items: center;
+    text-align: center;
+  }
+  .setu-hero-subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .setu-hero-cta-group {
+    justify-content: center;
+  }
+  .setu-hero-stats-strip {
+    text-align: center;
+  }
+  .setu-tab-split {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .setu-pipeline-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .setu-specs-grid {
+    grid-template-columns: 1fr;
+  }
+  .setu-philosophy-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .setu-landing-section {
+    padding: 3.5rem 1.25rem;
+  }
+  .setu-hero-stats-strip {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .setu-hero-stat-col:not(:first-child) {
+    border-left: none;
+    border-top: 1px solid #E5E5E5;
+    padding-left: 0;
+    padding-top: 1rem;
+  }
+  .setu-pipeline-grid {
+    grid-template-columns: 1fr;
+  }
+  .setu-tab-pane {
+    padding: 1.75rem 1.25rem;
+  }
+  .setu-challenges-grid {
+    grid-template-columns: 1fr;
+  }
+  .setu-hero-cta-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  .setu-btn-primary, .setu-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  .setu-launch-hero {
+    padding: 3.5rem 1.5rem;
+  }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

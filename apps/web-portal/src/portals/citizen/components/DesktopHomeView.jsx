@@ -14,6 +14,48 @@ export const DesktopHomeView = ({
   const navigate = useNavigate();
   const firstName = (userName || 'Rahul').trim().split(/\s+/)[0];
 
+  const [pfpUrl, setPfpUrl] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('setu_user_pfp') || null;
+    }
+    return null;
+  });
+
+  React.useEffect(() => {
+    const handlePfpUpdate = () => {
+      setPfpUrl(localStorage.getItem('setu_user_pfp') || null);
+    };
+    window.addEventListener('setu-pfp-updated', handlePfpUpdate);
+    return () => window.removeEventListener('setu-pfp-updated', handlePfpUpdate);
+  }, []);
+
+  const handleLogout = () => {
+    try {
+      const rawUser = localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data');
+      const sessionId = localStorage.getItem('setu_session_id');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        const rawAadhaar = u.aadhaar ? u.aadhaar.replace(/\D/g, '') : '';
+        fetch('http://localhost:5000/api/v1/auth/aadhaar/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            aadhaarNumber: rawAadhaar,
+            sessionId: sessionId || ''
+          })
+        }).catch(() => {});
+      }
+    } catch (e) {}
+    localStorage.removeItem('setu_user');
+    localStorage.removeItem('setu_session_id');
+    localStorage.removeItem('setu_token');
+    localStorage.removeItem('setu_onboarded');
+    localStorage.removeItem('setu_user_role');
+    localStorage.removeItem('sih_user_data');
+    localStorage.removeItem('sih_auth_token');
+    navigate('/onboarding');
+  };
+
   // Limit home screen submissions to latest 3
   const displayedIssues = issues.slice(0, 3);
   return (
@@ -172,19 +214,20 @@ export const DesktopHomeView = ({
         </div>
 
         {/* Bottom Profile Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
           <div
             onClick={() => setActiveNav('profile')}
             className="apple-tap"
             style={{
               display: 'flex',
               alignItems: 'center',
-              width: '100%',
+              flex: 1,
+              minWidth: 0,
               height: '44px',
               minHeight: '44px',
               maxHeight: '44px',
               boxSizing: 'border-box',
-              padding: '0 5px',
+              padding: '0 8px',
               borderRadius: '0.75rem',
               backgroundColor: activeNav === 'profile' ? '#eeeeee' : 'transparent',
               cursor: 'pointer',
@@ -202,10 +245,15 @@ export const DesktopHomeView = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                overflow: 'hidden'
               }}
             >
-              <GoogleIcon name="person" size={18} color="#ffffff" />
+              {pfpUrl ? (
+                <img src={pfpUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <GoogleIcon name="person" size={18} color="#ffffff" />
+              )}
             </div>
             <div
               style={{
