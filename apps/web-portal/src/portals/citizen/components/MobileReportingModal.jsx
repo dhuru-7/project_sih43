@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { reverseGeocode, extractVideoThumbnail, extractAudioFromMedia } from '../../../services/geoService';
 import { scanAllMedia } from '../../../services/nsfwService';
+import { synthesizeFallbackGrievance } from '../../../services/clientSynthesisService';
 import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -1023,20 +1024,33 @@ export const MobileReportingModal = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(aiPayload)
         });
-        const aiJson = await aiResp.json();
-        if (aiResp.ok && aiJson.status === 'success' && aiJson.data) {
-          aiResult = aiJson.data;
+        const contentType = aiResp.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const aiJson = await aiResp.json();
+          if (aiResp.ok && aiJson.status === 'success' && aiJson.data) {
+            aiResult = aiJson.data;
+          }
         }
       } catch (err) {
         console.warn('AI issue description fallback:', err);
       }
 
-      const generatedTitle = aiResult?.title || notepadText.slice(0, 45) || 'Civic Infrastructure Grievance';
-      const generatedDesc = aiResult?.description || notepadText || 'Citizen reported civic problem with attached evidence.';
-      const generatedCategory = aiResult?.category || 'Urban Development and Infrastructure';
-      const generatedSeverity = aiResult?.severity || 'MEDIUM';
-      const generatedImpactCount = aiResult?.impactCount || '100-250 local residents';
-      const generatedImpactDesc = aiResult?.impactDescription || 'Local residents facing public disruption.';
+      // Contextual fallback synthesis when backend AI is unreachable
+      const smartFallback = synthesizeFallbackGrievance({
+        notepadText: notepadText.trim(),
+        videoTranscripts,
+        mediaItems,
+        locationDetails,
+        reporterType: 'Individual Citizen',
+        groupName: ''
+      });
+
+      const generatedTitle = aiResult?.title || smartFallback.title;
+      const generatedDesc = aiResult?.description || smartFallback.description;
+      const generatedCategory = aiResult?.category || smartFallback.category;
+      const generatedSeverity = aiResult?.severity || smartFallback.severity;
+      const generatedImpactCount = aiResult?.impactCount || smartFallback.impactCount;
+      const generatedImpactDesc = aiResult?.impactDescription || smartFallback.impactDescription;
 
       const now = new Date();
       const formattedDateTime =
@@ -1105,13 +1119,21 @@ export const MobileReportingModal = ({
     } catch (err) {
       console.error('Error during continue:', err);
       const now = new Date();
+      const smartFallback = synthesizeFallbackGrievance({
+        notepadText: notepadText.trim(),
+        videoTranscripts: [],
+        mediaItems,
+        locationDetails,
+        reporterType: 'Individual Citizen',
+        groupName: ''
+      });
       const fallback = {
-        title: notepadText.slice(0, 45) || 'Civic Grievance',
-        description: notepadText || 'Citizen reported civic grievance.',
-        category: 'Urban Development and Infrastructure',
-        severity: 'MEDIUM',
-        impactCount: 'Local community',
-        impactDescription: 'Public disruption reported in locality.',
+        title: smartFallback.title,
+        description: smartFallback.description,
+        category: smartFallback.category,
+        severity: smartFallback.severity,
+        impactCount: smartFallback.impactCount,
+        impactDescription: smartFallback.impactDescription,
         reporterType: 'Individual Citizen',
         groupName: '',
         author: userName,

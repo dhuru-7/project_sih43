@@ -39,7 +39,11 @@ export async function getNsfwModel() {
         await loadExternalScript('https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js');
       }
       if (window.nsfwjs) {
-        nsfwModelInstance = await window.nsfwjs.load();
+        try {
+          nsfwModelInstance = await window.nsfwjs.load('/models/nsfw/');
+        } catch (localErr) {
+          nsfwModelInstance = await window.nsfwjs.load('https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@master/models/mobilenet_v2/');
+        }
         return nsfwModelInstance;
       }
     } catch (err) {
