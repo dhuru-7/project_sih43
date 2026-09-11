@@ -8,6 +8,8 @@ export const DesktopHomeView = ({
   onOpenTara,
   onOpenReport,
   onOpenIssueDetail,
+  onOpenNotifications,
+  unreadCount = 0,
   activeNav,
   setActiveNav,
   userName = 'Rahul'
@@ -113,17 +115,22 @@ export const DesktopHomeView = ({
               { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
               { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
               { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' },
+              { id: 'notifications', label: t('notifications', 'Notifications'), icon: 'notifications', badge: unreadCount > 0 ? String(unreadCount) : null }
             ].map((item) => {
               const isActive = activeNav === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveNav(item.id);
-                    if (item.id === 'report') {
-                      if (onOpenReport) onOpenReport();
-                      else onOpenTara();
+                    if (item.id === 'notifications') {
+                      if (onOpenNotifications) onOpenNotifications();
+                    } else {
+                      setActiveNav(item.id);
+                      if (item.id === 'report') {
+                        if (onOpenReport) onOpenReport();
+                        else onOpenTara();
+                      }
                     }
                   }}
                   className="apple-tap"
@@ -216,7 +223,7 @@ export const DesktopHomeView = ({
         </div>
 
         {/* Bottom Profile Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)', width: '100%' }}>
           <div
             onClick={() => setActiveNav('profile')}
             className="apple-tap"
@@ -224,6 +231,7 @@ export const DesktopHomeView = ({
               display: 'flex',
               alignItems: 'center',
               flex: 1,
+              width: '100%',
               minWidth: 0,
               height: '44px',
               minHeight: '44px',
@@ -280,30 +288,32 @@ export const DesktopHomeView = ({
       <div style={{ flex: 1, marginLeft: '256px', minHeight: '100vh', display: 'flex', flexDirection: 'column', width: 'calc(100% - 256px)' }}>
         {/* Main Content Body */}
         <main className="apple-page-enter" style={{ padding: '2.5rem 3.5rem 4rem 3.5rem', width: '100%', maxWidth: '1080px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2.25rem' }}>
-          {/* Greeting Section */}
-          <section style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-            <div
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: '600',
-                color: '#5e5e5e',
-                letterSpacing: '-0.01em'
-              }}
-            >
-              {t('greeting', 'Namaste')},
+          {/* Greeting Section with Notification Trigger */}
+          <section style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+              <div
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  color: '#5e5e5e',
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                {t('greeting', 'Namaste')},
+              </div>
+              <h1
+                style={{
+                  fontSize: '2.5rem',
+                  fontWeight: '800',
+                  color: '#1a1c1c',
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1.15,
+                  margin: 0
+                }}
+              >
+                {firstName}.
+              </h1>
             </div>
-            <h1
-              style={{
-                fontSize: '2.5rem',
-                fontWeight: '800',
-                color: '#1a1c1c',
-                letterSpacing: '-0.03em',
-                lineHeight: 1.15,
-                margin: 0
-              }}
-            >
-              {firstName}.
-            </h1>
           </section>
 
           {/* Primary Action Card: Hero Bento (styled exactly as in screenshot) */}

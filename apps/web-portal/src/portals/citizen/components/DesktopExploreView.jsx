@@ -517,6 +517,8 @@ export const DesktopExploreView = ({
   onOpenTara,
   onOpenReport,
   onOpenIssueDetail,
+  onOpenNotifications,
+  unreadCount = 0,
   activeNav,
   setActiveNav,
   userName = 'Rampal'
@@ -612,17 +614,22 @@ export const DesktopExploreView = ({
               { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
               { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
               { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' },
+              { id: 'notifications', label: t('notifications', 'Notifications'), icon: 'notifications', badge: unreadCount > 0 ? String(unreadCount) : null }
             ].map((item) => {
               const isActive = activeNav === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveNav(item.id);
-                    if (item.id === 'report') {
-                      if (onOpenReport) onOpenReport();
-                      else onOpenTara();
+                    if (item.id === 'notifications') {
+                      if (onOpenNotifications) onOpenNotifications();
+                    } else {
+                      setActiveNav(item.id);
+                      if (item.id === 'report') {
+                        if (onOpenReport) onOpenReport();
+                        else onOpenTara();
+                      }
                     }
                   }}
                   className="apple-tap"
@@ -715,19 +722,21 @@ export const DesktopExploreView = ({
         </div>
 
         {/* Bottom Profile Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)', width: '100%' }}>
           <div
             onClick={() => setActiveNav('profile')}
             className="apple-tap"
             style={{
               display: 'flex',
               alignItems: 'center',
+              flex: 1,
               width: '100%',
+              minWidth: 0,
               height: '44px',
               minHeight: '44px',
               maxHeight: '44px',
               boxSizing: 'border-box',
-              padding: '0 5px',
+              padding: '0 8px',
               borderRadius: '0.75rem',
               backgroundColor: activeNav === 'profile' ? '#eeeeee' : 'transparent',
               cursor: 'pointer',
@@ -764,7 +773,7 @@ export const DesktopExploreView = ({
               }}
             >
               <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1a1c1c', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {userName || 'Rampal'}
+                {userName || 'Rahul Verma'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 {t('ward_4', 'Ward 4')}

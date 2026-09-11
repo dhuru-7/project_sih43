@@ -1,7 +1,41 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
 export const IssueDetailModal = ({ issue, isOpen, onClose, onUpvote, isUpvoted }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const isUserReport = useMemo(() => {
+    if (!issue?.id) return false;
+    try {
+      const local = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+      return local.some((p) => p.id === issue.id) || issue.id.startsWith('SETU-');
+    } catch {
+      return issue.id.startsWith('SETU-');
+    }
+  }, [issue]);
+
+  const handleDelete = async () => {
+    if (!issue?.id || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await fetch(`${API_BASE_URL}/problems/${issue.id}`, { method: 'DELETE' });
+      try {
+        const local = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+        localStorage.setItem('setu_user_submissions', JSON.stringify(local.filter((p) => p.id !== issue.id)));
+      } catch (e) {}
+      window.dispatchEvent(new CustomEvent('setu_problem_deleted', { detail: { id: issue.id } }));
+      onClose();
+    } catch (err) {
+      console.error('Error deleting report:', err);
+      alert('Failed to delete report. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setShowConfirm(false);
+    }
+  };
   if (!isOpen || !issue) return null;
 
   const statusColors = {
@@ -204,29 +238,94 @@ export const IssueDetailModal = ({ issue, isOpen, onClose, onUpvote, isUpvoted }
             justifyContent: 'space-between'
           }}
         >
-          <button
-            onClick={() => onUpvote(issue.id)}
-            className="apple-metric-btn"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.625rem 1rem',
-              borderRadius: '0.625rem',
-              backgroundColor: isUpvoted ? '#000000' : '#eeeeee',
-              color: isUpvoted ? '#ffffff' : '#1a1c1c',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.875rem'
-            }}
-          >
-            <span className="apple-icon-push">
-              <GoogleIcon name="thumb_up" size={18} fill={isUpvoted} />
-            </span>
-            <span>{isUpvoted ? 'Endorsed' : 'Upvote Challenge'}</span>
-            <span style={{ fontWeight: '700', marginLeft: '0.25rem' }}>{issue.upvotes}</span>
-          </button>
+          {isUserReport ? (
+            showConfirm ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.8125rem', color: '#dc2626', fontWeight: '600' }}>Confirm delete?</span>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="apple-tap"
+                  style={{
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: '0.5rem',
+                    backgroundColor: '#dc2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '0.8125rem',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  disabled={isDeleting}
+                  className="apple-tap"
+                  style={{
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.5rem',
+                    backgroundColor: '#f3f3f3',
+                    color: '#374151',
+                    border: 'none',
+                    fontWeight: '600',
+                    fontSize: '0.8125rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowConfirm(true)}
+                className="apple-tap"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.55rem 0.95rem',
+                  borderRadius: '0.625rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '0.8125rem',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <GoogleIcon name="delete_outline" size={17} color="#dc2626" />
+                <span>Delete Report</span>
+              </button>
+            )
+          ) : (
+            <button
+              onClick={() => onUpvote(issue.id)}
+              className="apple-metric-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.625rem 1rem',
+                borderRadius: '0.625rem',
+                backgroundColor: isUpvoted ? '#000000' : '#eeeeee',
+                color: isUpvoted ? '#ffffff' : '#1a1c1c',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.875rem'
+              }}
+            >
+              <span className="apple-icon-push">
+                <GoogleIcon name="thumb_up" size={18} fill={isUpvoted} />
+              </span>
+              <span>{isUpvoted ? 'Endorsed' : 'Upvote Challenge'}</span>
+              <span style={{ fontWeight: '700', marginLeft: '0.25rem' }}>{issue.upvotes}</span>
+            </button>
+          )}
+
           <button
             onClick={onClose}
             className="apple-tap"

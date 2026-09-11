@@ -9,6 +9,9 @@ def find_duplicate_problems(new_problem: dict, existing_problems: list, geo_radi
     new_lon = new_problem.get("longitude")
     new_cat = new_problem.get("category")
     
+    if new_lat is None or new_lon is None:
+        return duplicates
+
     for prob in existing_problems:
         p_lat = prob.get("latitude")
         p_lon = prob.get("longitude")

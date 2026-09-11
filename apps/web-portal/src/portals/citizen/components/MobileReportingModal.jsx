@@ -1,10 +1,373 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { reverseGeocode, extractVideoThumbnail, extractAudioFromMedia } from '../../../services/geoService';
+import { scanAllMedia } from '../../../services/nsfwService';
 import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
+// =========================================================================
+// REVIEW MEDIA CAROUSEL (40% HEIGHT, EXPLORE-PAGE SWIPE/SWAP, PAUSED BY DEFAULT)
+// =========================================================================
+const ReviewMediaCarousel = ({
+  mediaItems,
+  currentIndex,
+  onIndexChange,
+  isPlaying,
+  setIsPlaying,
+  videoRefs
+}) => {
+  const total = mediaItems.length;
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
+  const isSwipingRef = useRef(false);
+  const isHorizontalGestureRef = useRef(null);
+  const hasMovedRef = useRef(false);
+  const containerRef = useRef(null);
+
+  const pauseAllVideos = () => {
+    Object.values(videoRefs.current).forEach((v) => {
+      if (v) {
+        v.pause();
+      }
+    });
+    setIsPlaying(false);
+  };
+
+  const handlePrev = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (currentIndex > 0) {
+      pauseAllVideos();
+      onIndexChange(currentIndex - 1);
+    }
+  };
+
+  const handleNext = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (currentIndex < total - 1) {
+      pauseAllVideos();
+      onIndexChange(currentIndex + 1);
+    }
+  };
+
+  const handleStart = (clientX, clientY) => {
+    if (total <= 1) return;
+    touchStartRef.current = { x: clientX, y: clientY, time: Date.now() };
+    isSwipingRef.current = true;
+    isHorizontalGestureRef.current = null;
+    hasMovedRef.current = false;
+    setIsDragging(true);
+    setDragOffset(0);
+  };
+
+  const handleMove = (clientX, clientY, e) => {
+    if (!isSwipingRef.current || total <= 1) return;
+    const deltaX = clientX - touchStartRef.current.x;
+    const deltaY = clientY - touchStartRef.current.y;
+
+    if (isHorizontalGestureRef.current === null) {
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        isHorizontalGestureRef.current = Math.abs(deltaX) > Math.abs(deltaY);
+        if (!isHorizontalGestureRef.current) {
+          // Detected vertical scrolling gesture: disengage carousel drag so page scrolls natively
+          isSwipingRef.current = false;
+          setIsDragging(false);
+          return;
+        }
+      }
+    }
+
+    if (isHorizontalGestureRef.current) {
+      if (e && e.cancelable && e.preventDefault) {
+        e.preventDefault();
+      }
+      hasMovedRef.current = true;
+      let effective = deltaX;
+      if (currentIndex === 0 && deltaX > 0) {
+        effective = deltaX * 0.32;
+      } else if (currentIndex === total - 1 && deltaX < 0) {
+        effective = deltaX * 0.32;
+      }
+      setDragOffset(effective);
+    }
+  };
+
+  const handleEnd = () => {
+    if (!isSwipingRef.current) return;
+    isSwipingRef.current = false;
+    setIsDragging(false);
+
+    const elapsed = Date.now() - touchStartRef.current.time;
+    const velocity = Math.abs(dragOffset) / (elapsed || 1);
+    const containerWidth = containerRef.current?.offsetWidth || 350;
+    const threshold = Math.max(40, containerWidth * 0.16);
+
+    if ((dragOffset < -threshold || (dragOffset < -20 && velocity > 0.32)) && currentIndex < total - 1) {
+      pauseAllVideos();
+      onIndexChange(currentIndex + 1);
+    } else if ((dragOffset > threshold || (dragOffset > 20 && velocity > 0.32)) && currentIndex > 0) {
+      pauseAllVideos();
+      onIndexChange(currentIndex - 1);
+    }
+
+    setDragOffset(0);
+    isHorizontalGestureRef.current = null;
+  };
+
+  const toggleVideoPlay = (idx, e) => {
+    if (hasMovedRef.current) return;
+    if (e && e.stopPropagation) e.stopPropagation();
+    const videoEl = videoRefs.current[idx];
+    if (!videoEl) return;
+    if (videoEl.paused) {
+      videoEl.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      videoEl.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onTouchStart={total > 1 ? (e) => handleStart(e.touches[0].clientX, e.touches[0].clientY) : undefined}
+      onTouchMove={total > 1 ? (e) => handleMove(e.touches[0].clientX, e.touches[0].clientY, e) : undefined}
+      onTouchEnd={total > 1 ? handleEnd : undefined}
+      onTouchCancel={total > 1 ? handleEnd : undefined}
+      onMouseDown={total > 1 ? (e) => handleStart(e.clientX, e.clientY) : undefined}
+      onMouseMove={total > 1 ? (e) => handleMove(e.clientX, e.clientY, e) : undefined}
+      onMouseUp={total > 1 ? handleEnd : undefined}
+      onMouseLeave={() => {
+        if (isSwipingRef.current) handleEnd();
+      }}
+      onClickCapture={(e) => {
+        if (hasMovedRef.current) {
+          e.stopPropagation();
+        }
+      }}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '38vh',
+        minHeight: '240px',
+        maxHeight: '340px',
+        backgroundColor: '#000000',
+        overflow: 'hidden',
+        userSelect: 'none',
+        touchAction: 'pan-y',
+        cursor: total > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+      }}
+    >
+      {/* Sliding Strip */}
+      <div
+        style={{
+          display: 'flex',
+          width: `${total * 100}%`,
+          height: '100%',
+          transform: `translateX(calc(-${(currentIndex * 100) / total}% + ${dragOffset}px))`,
+          transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.23, 1, 0.32, 1)',
+          willChange: total > 1 ? 'transform' : 'auto'
+        }}
+      >
+        {mediaItems.map((item, idx) => (
+          <div
+            key={item.id || idx}
+            style={{
+              width: `${100 / total}%`,
+              height: '100%',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#000000',
+              flexShrink: 0
+            }}
+          >
+            {item.type === 'video' ? (
+              <div
+                style={{ width: '100%', height: '100%', position: 'relative', cursor: 'pointer' }}
+                onClick={(e) => toggleVideoPlay(idx, e)}
+              >
+                <video
+                  ref={(el) => {
+                    videoRefs.current[idx] = el;
+                  }}
+                  src={item.url}
+                  loop
+                  playsInline
+                  muted={idx !== currentIndex}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    display: 'block'
+                  }}
+                />
+
+                {/* Paused Play Button Overlay */}
+                {(!isPlaying || idx !== currentIndex) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      border: '1.5px solid rgba(255, 255, 255, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.35)',
+                      pointerEvents: 'none',
+                      zIndex: 5
+                    }}
+                  >
+                    <GoogleIcon name="play_arrow" size={32} color="#ffffff" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <img
+                src={item.url}
+                alt="Attached Evidence"
+                draggable={false}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  display: 'block',
+                  pointerEvents: 'none'
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {total > 1 && (
+        <>
+          {/* Counter Badge */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              backgroundColor: 'rgba(0, 0, 0, 0.65)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              padding: '4px 10px',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              pointerEvents: 'none',
+              zIndex: 10
+            }}
+          >
+            {currentIndex + 1} of {total}
+          </div>
+
+          {/* Prev Chevron Button */}
+          {currentIndex > 0 && (
+            <button
+              type="button"
+              onClick={handlePrev}
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+              aria-label="Previous"
+            >
+              <GoogleIcon name="chevron_left" size={22} color="#ffffff" />
+            </button>
+          )}
+
+          {/* Next Chevron Button */}
+          {currentIndex < total - 1 && (
+            <button
+              type="button"
+              onClick={handleNext}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+              aria-label="Next"
+            >
+              <GoogleIcon name="chevron_right" size={22} color="#ffffff" />
+            </button>
+          )}
+
+          {/* Dots Indicator */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '12px',
+              left: 0,
+              right: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              pointerEvents: 'none',
+              zIndex: 10
+            }}
+          >
+            {mediaItems.map((_, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: idx === currentIndex ? '18px' : '6px',
+                  height: '6px',
+                  borderRadius: '9999px',
+                  backgroundColor: idx === currentIndex ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 export const MobileReportingModal = ({
   isOpen,
@@ -16,6 +379,10 @@ export const MobileReportingModal = ({
 
   // Steps: 'camera' | 'preview' | 'description' | 'processing' | 'review' | 'success'
   const [step, setStep] = useState('camera');
+
+  // NSFW Moderation State
+  const [isNsfwFlagged, setIsNsfwFlagged] = useState(false);
+  const [nsfwReason, setNsfwReason] = useState('');
 
   // Media items: array of { id, type: 'video' | 'image', url, blob, file, name }
   const [mediaItems, setMediaItems] = useState([]);
@@ -35,6 +402,7 @@ export const MobileReportingModal = ({
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [facingMode, setFacingMode] = useState('environment');
   const [cameraError, setCameraError] = useState(null);
+  const [cameraErrorType, setCameraErrorType] = useState(null); // 'denied' | 'prompt' | 'not_found' | 'in_use' | 'generic'
 
   // Notepad Description state (Citizen profile)
   const [notepadText, setNotepadText] = useState('');
@@ -54,11 +422,16 @@ export const MobileReportingModal = ({
   const [voiceSeconds, setVoiceSeconds] = useState(0);
   const voiceRecorderRef = useRef(null);
   const voiceChunksRef = useRef([]);
+  const voiceStreamRef = useRef(null);
+  const voiceAudioCtxRef = useRef(null);
+  const silenceCheckIntervalRef = useRef(null);
+  const maxVoiceTimerRef = useRef(null);
 
   // Synthesized Review data & Final Submission
   const [reviewData, setReviewData] = useState(null);
   const [reviewMediaIndex, setReviewMediaIndex] = useState(0);
-  const [isReviewPlaying, setIsReviewPlaying] = useState(true);
+  const [isReviewPlaying, setIsReviewPlaying] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
   const reviewVideoRefs = useRef({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedProblem, setSubmittedProblem] = useState(null);
@@ -97,37 +470,119 @@ export const MobileReportingModal = ({
     };
   }, [isOpen, step, facingMode]);
 
-  const startCamera = async () => {
-    setCameraError(null);
+  // Query camera permission state safely
+  const getCameraPermissionState = async () => {
     try {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+      if (navigator.permissions && navigator.permissions.query) {
+        const result = await navigator.permissions.query({ name: 'camera' });
+        return result.state; // 'granted' | 'prompt' | 'denied'
       }
-      const constraints = {
+    } catch {
+      // Ignored for browsers that don't support camera query (e.g. some iOS versions)
+    }
+    return null;
+  };
+
+  const startCamera = async (isUserGesture = false) => {
+    setCameraError(null);
+    setCameraErrorType(null);
+
+    // Stop existing stream tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraErrorType('not_found');
+      setCameraError('Camera API is not supported on this browser or connection is not secure (HTTPS required).');
+      return;
+    }
+
+    const permState = await getCameraPermissionState();
+
+    let stream = null;
+    let lastErr = null;
+
+    // Attempt 1: High quality video matching facingMode (VIDEO ONLY - never fail preview on mic!)
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facingMode },
           width: { ideal: 1280 },
           height: { ideal: 720 }
-        },
-        audio: true
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        }
+      });
+    } catch (err1) {
+      console.warn('Camera attempt 1 (HD) failed:', err1);
+      lastErr = err1;
+    }
+
+    // Attempt 2: Flexible video with ideal facingMode
+    if (!stream) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facingMode }
+          }
+        });
+      } catch (err2) {
+        console.warn('Camera attempt 2 (ideal facingMode) failed:', err2);
+        lastErr = err2;
+      }
+    }
+
+    // Attempt 3: Bare minimum video constraint for widest compatibility
+    if (!stream) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+      } catch (err3) {
+        console.warn('Camera attempt 3 (video: true) failed:', err3);
+        lastErr = err3;
+      }
+    }
+
+    if (stream) {
       streamRef.current = stream;
       if (cameraVideoRef.current) {
         cameraVideoRef.current.srcObject = stream;
+        cameraVideoRef.current.play().catch(() => {});
       }
-    } catch (err) {
-      console.warn('Camera error, attempting fallback:', err);
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        streamRef.current = stream;
-        if (cameraVideoRef.current) {
-          cameraVideoRef.current.srcObject = stream;
+      setCameraError(null);
+      setCameraErrorType(null);
+      return;
+    }
+
+    // All attempts failed, classify error
+    console.error('All camera attempts failed:', lastErr);
+
+    if (lastErr) {
+      if (lastErr.name === 'NotAllowedError' || lastErr.name === 'PermissionDeniedError') {
+        if (permState === 'denied') {
+          setCameraErrorType('denied');
+          setCameraError('Camera access is blocked in your browser settings.');
+        } else {
+          setCameraErrorType('prompt');
+          setCameraError('Camera access was not granted. Tap below to grant permission.');
         }
-      } catch (fallbackErr) {
-        console.error('Camera fallback failed:', fallbackErr);
-        setCameraError('Camera access unavailable. You can choose photos or videos from your gallery.');
+      } else if (lastErr.name === 'NotFoundError' || lastErr.name === 'DevicesNotFoundError') {
+        setCameraErrorType('not_found');
+        setCameraError('No camera found on this device.');
+      } else if (lastErr.name === 'NotReadableError' || lastErr.name === 'TrackStartError') {
+        setCameraErrorType('in_use');
+        setCameraError('Camera is currently in use by another app.');
+      } else if (lastErr.name === 'OverconstrainedError') {
+        setCameraErrorType('generic');
+        setCameraError('Camera resolution or constraints not supported.');
+      } else {
+        setCameraErrorType('generic');
+        setCameraError(lastErr.message || 'Camera access unavailable.');
       }
+    } else {
+      setCameraErrorType('generic');
+      setCameraError('Camera access unavailable. You can choose photos or videos from your gallery.');
     }
   };
 
@@ -204,19 +659,36 @@ export const MobileReportingModal = ({
   }, [reviewMediaIndex, step, isReviewPlaying]);
 
   // Record Video Toggle
-  const handleToggleVideoRecord = () => {
+  const handleToggleVideoRecord = async () => {
     if (!isRecordingVideo) {
       if (!streamRef.current) {
-        startCamera();
+        startCamera(true);
         return;
       }
       try {
+        // Optionally attach audio track for recording without crashing if microphone permission is not granted
+        if (streamRef.current.getAudioTracks().length === 0) {
+          try {
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioTrack = audioStream.getAudioTracks()[0];
+            if (audioTrack) {
+              streamRef.current.addTrack(audioTrack);
+            }
+          } catch (audioErr) {
+            console.warn('Microphone not available for video recording, continuing with video only:', audioErr);
+          }
+        }
+
         recordedChunksRef.current = [];
         let recorder;
         try {
           recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/webm;codecs=vp8,opus' });
         } catch {
-          recorder = new MediaRecorder(streamRef.current);
+          try {
+            recorder = new MediaRecorder(streamRef.current, { mimeType: 'video/mp4' });
+          } catch {
+            recorder = new MediaRecorder(streamRef.current);
+          }
         }
 
         recorder.ondataavailable = (e) => {
@@ -303,24 +775,68 @@ export const MobileReportingModal = ({
     setTimeout(() => setShowPlayIcon(false), 700);
   };
 
-  // Voice recording inside Notepad
-  const handleToggleVoiceInNotepad = async () => {
-    if (!isRecordingVoice) {
+  // Voice recording inside Notepad with Silence Detection & Guaranteed Track Release
+  const stopVoiceRecording = useCallback(() => {
+    if (silenceCheckIntervalRef.current) {
+      clearInterval(silenceCheckIntervalRef.current);
+      silenceCheckIntervalRef.current = null;
+    }
+    if (maxVoiceTimerRef.current) {
+      clearTimeout(maxVoiceTimerRef.current);
+      maxVoiceTimerRef.current = null;
+    }
+    if (voiceAudioCtxRef.current) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        voiceChunksRef.current = [];
-        const recorder = new MediaRecorder(stream);
+        voiceAudioCtxRef.current.close();
+      } catch (_) {}
+      voiceAudioCtxRef.current = null;
+    }
+    if (voiceRecorderRef.current && voiceRecorderRef.current.state !== 'inactive') {
+      try {
+        voiceRecorderRef.current.stop();
+      } catch (_) {}
+    }
+    if (voiceStreamRef.current) {
+      try {
+        voiceStreamRef.current.getTracks().forEach((t) => t.stop());
+      } catch (_) {}
+      voiceStreamRef.current = null;
+    }
+    setIsRecordingVoice(false);
+  }, []);
 
-        recorder.ondataavailable = (e) => {
-          if (e.data && e.data.size > 0) {
-            voiceChunksRef.current.push(e.data);
-          }
-        };
+  // Toggle voice note recording with auto silence-shutoff
+  const handleToggleVoiceInNotepad = async () => {
+    if (isRecordingVoice) {
+      stopVoiceRecording();
+      return;
+    }
 
-        recorder.onstop = async () => {
-          stream.getTracks().forEach((t) => t.stop());
-          const audioBlob = new Blob(voiceChunksRef.current, { type: 'audio/webm' });
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      voiceStreamRef.current = stream;
+      voiceChunksRef.current = [];
 
+      const recorder = new MediaRecorder(stream);
+      voiceRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          voiceChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        // Guaranteed release of audio hardware
+        if (voiceStreamRef.current) {
+          try {
+            voiceStreamRef.current.getTracks().forEach((t) => t.stop());
+          } catch (_) {}
+          voiceStreamRef.current = null;
+        }
+
+        const audioBlob = new Blob(voiceChunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size > 0) {
           try {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'grievance_voice.webm');
@@ -340,25 +856,76 @@ export const MobileReportingModal = ({
           } catch (err) {
             console.error('Error transcribing audio:', err);
           }
-        };
+        }
+      };
 
-        recorder.start();
-        voiceRecorderRef.current = recorder;
-        setIsRecordingVoice(true);
-      } catch (err) {
-        console.error('Microphone access denied:', err);
-        alert('Microphone access was denied. You can type grievance notes directly.');
+      recorder.start();
+      setIsRecordingVoice(true);
+
+      // Auto-turn off: Silence detection with Web Audio API
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          voiceAudioCtxRef.current = ctx;
+          const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          let userSpoke = false;
+          let silenceMs = 0;
+
+          silenceCheckIntervalRef.current = setInterval(() => {
+            if (!voiceRecorderRef.current || voiceRecorderRef.current.state === 'inactive') {
+              if (silenceCheckIntervalRef.current) {
+                clearInterval(silenceCheckIntervalRef.current);
+                silenceCheckIntervalRef.current = null;
+              }
+              return;
+            }
+
+            analyser.getByteFrequencyData(dataArray);
+            let total = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+              total += dataArray[i];
+            }
+            const avg = total / dataArray.length;
+
+            if (avg > 14) {
+              userSpoke = true;
+              silenceMs = 0;
+            } else {
+              silenceMs += 150;
+            }
+
+            // Auto stop when user finishes speaking (2.2s silence) or if no speech (5s silence)
+            if ((userSpoke && silenceMs >= 2200) || (!userSpoke && silenceMs >= 5000)) {
+              stopVoiceRecording();
+            }
+          }, 150);
+        }
+      } catch (audioErr) {
+        console.warn('AudioContext silence detection setup error:', audioErr);
       }
-    } else {
-      if (voiceRecorderRef.current && voiceRecorderRef.current.state !== 'inactive') {
-        voiceRecorderRef.current.stop();
-      }
+
+      // Hard safety timer: Stop after 25s maximum
+      maxVoiceTimerRef.current = setTimeout(() => {
+        stopVoiceRecording();
+      }, 25000);
+    } catch (err) {
+      console.error('Microphone access denied:', err);
+      alert('Microphone access was denied. You can type grievance notes directly.');
       setIsRecordingVoice(false);
     }
   };
 
   // Continue from Notepad -> Full-Screen Aura Processing ("Hold on...") -> Transition to Review Card
   const handleContinueFromNotepad = async () => {
+    // Unconditionally kill voice recording and release microphone
+    stopVoiceRecording();
+
     if (!notepadText.trim() && mediaItems.length === 0) {
       alert('Please type or speak your grievance details, or attach media before continuing.');
       return;
@@ -367,6 +934,21 @@ export const MobileReportingModal = ({
     setStep('processing');
 
     try {
+      // 0. NSFWjs Content Moderation Check
+      let isFlagged = false;
+      let flagReason = '';
+      try {
+        const scanRes = await scanAllMedia(mediaItems);
+        if (scanRes && scanRes.flagged) {
+          isFlagged = true;
+          flagReason = scanRes.reason || 'Inappropriate / Adult content detected';
+          setIsNsfwFlagged(true);
+          setNsfwReason(flagReason);
+        }
+      } catch (scanErr) {
+        console.warn('NSFW scanning warning:', scanErr);
+      }
+
       // 1. Process all media items (Images + Videos)
       const imagePayloads = [];
       const videoTranscripts = [];
@@ -395,7 +977,7 @@ export const MobileReportingModal = ({
           // Extract audio track from video and transcribe via Sarvam Saaras v3 STT
           try {
             const audioBlob = await extractAudioFromMedia(item.file || item.blob);
-            if (audioBlob && audioBlob.size > 2000) {
+            if (audioBlob && audioBlob.size > 1000) {
               const formData = new FormData();
               formData.append('audio', audioBlob, 'video_audio.wav');
               const tResp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
@@ -423,14 +1005,15 @@ export const MobileReportingModal = ({
         finalThumbnail = await extractVideoThumbnail(firstVideo.blob || firstVideo.file || firstVideo.url);
       }
 
-      // 3. Process with AI Engine (Sarvam 105B Primary)
+      // 3. Process with AI Engine (Groq LLM Mind with llama-3.3-70b-versatile)
       const aiPayload = {
         text: notepadText.trim(),
         videoTranscript: videoTranscripts.join('; '),
         images: imagePayloads.slice(0, 4),
         locationInfo: locationDetails,
         reporterType: 'Individual Citizen',
-        groupName: ''
+        groupName: '',
+        safetyStatus: isFlagged ? 'FLAGGED_POLICY_VIOLATION' : 'SAFE'
       };
 
       let aiResult = null;
@@ -461,6 +1044,31 @@ export const MobileReportingModal = ({
         ', ' +
         now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
+      // Convert mediaItems blob/file objects to persistent data URLs
+      const persistentEvidence = [];
+      for (const item of mediaItems) {
+        if (item.file || item.blob) {
+          try {
+            const b64 = await new Promise((res) => {
+              const reader = new FileReader();
+              reader.onloadend = () => res(reader.result);
+              reader.onerror = () => res(null);
+              reader.readAsDataURL(item.file || item.blob);
+            });
+            if (b64) {
+              persistentEvidence.push(b64);
+              continue;
+            }
+          } catch (_) {}
+        }
+        persistentEvidence.push(item.url);
+      }
+
+      const finalHeroThumbnail =
+        finalThumbnail ||
+        persistentEvidence[0] ||
+        (mediaItems[0]?.url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80');
+
       const preparedData = {
         title: generatedTitle,
         description: generatedDesc,
@@ -470,6 +1078,7 @@ export const MobileReportingModal = ({
         impactDescription: generatedImpactDesc,
         reporterType: 'Individual Citizen',
         groupName: '',
+        safetyStatus: isFlagged ? 'FLAGGED_POLICY_VIOLATION' : 'SAFE',
         author: isAnonymous ? 'Verified Citizen (Anonymous)' : userName,
         authorId: isAnonymous ? 'cit-anonymous' : `cit-${userName.toLowerCase().replace(/\s+/g, '-')}`,
         address: locationDetails.formatted,
@@ -480,14 +1089,14 @@ export const MobileReportingModal = ({
         pincode: locationDetails.pincode,
         latitude: coordinates?.lat || 23.3441,
         longitude: coordinates?.lng || 85.3096,
-        thumbnail: finalThumbnail || (mediaItems[0]?.url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80'),
-        evidenceUrls: mediaItems.map((m) => m.url),
+        thumbnail: finalHeroThumbnail,
+        evidenceUrls: persistentEvidence,
         dateTime: formattedDateTime
       };
 
       setReviewData(preparedData);
       setReviewMediaIndex(0);
-      setIsReviewPlaying(true);
+      setIsReviewPlaying(false);
 
       // Transition smoothly from aura animation to review card
       setTimeout(() => {
@@ -521,7 +1130,7 @@ export const MobileReportingModal = ({
       };
       setReviewData(fallback);
       setReviewMediaIndex(0);
-      setIsReviewPlaying(true);
+      setIsReviewPlaying(false);
       setStep('review');
     }
   };
@@ -550,9 +1159,59 @@ export const MobileReportingModal = ({
         };
       }
 
+      // Save locally to setu_user_submissions for persistent local availability
+      try {
+        const existing = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+        const updated = [createdProblem, ...existing.filter((p) => p.id !== createdProblem.id)];
+        localStorage.setItem('setu_user_submissions', JSON.stringify(updated));
+      } catch (e) {}
+
       setSubmittedProblem(createdProblem);
-      if (onReportSubmitted) onReportSubmitted(createdProblem);
-      setStep('success');
+
+      const hasViolation = isNsfwFlagged || reviewData?.safetyStatus === 'FLAGGED_POLICY_VIOLATION';
+      if (!hasViolation && onReportSubmitted) {
+        onReportSubmitted(createdProblem);
+      }
+      resetAllAndClose();
+
+      // If content contained policy violation:
+      // Allow user to submit, but after 10 seconds delete report from database,
+      // prevent showing in My Submissions, and push a violation notification to the notification sidebar!
+      if (hasViolation) {
+        setTimeout(async () => {
+          try {
+            const targetId = createdProblem?.id;
+            if (targetId) {
+              await fetch(`${API_BASE_URL}/problems/${targetId}`, {
+                method: 'DELETE'
+              });
+            }
+
+            // Remove from local submissions too
+            try {
+              const cur = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+              localStorage.setItem('setu_user_submissions', JSON.stringify(cur.filter((p) => p.id !== targetId)));
+            } catch (e) {}
+
+            // Save notification to localStorage for NotificationSidebar
+            const stored = JSON.parse(localStorage.getItem('setu_citizen_notifications') || '[]');
+            const newNotif = {
+              id: `notif-${Date.now()}`,
+              type: 'policy_violation',
+              title: 'Report Removed - Policy Violation',
+              message:
+                'Your recent grievance submission contained inappropriate content that violates our Community Safety Guidelines. The report has been permanently deleted and not routed to authorities.',
+              timestamp: new Date().toISOString(),
+              read: false,
+              reportId: targetId
+            };
+            localStorage.setItem('setu_citizen_notifications', JSON.stringify([newNotif, ...stored]));
+            window.dispatchEvent(new CustomEvent('setu_notification_received', { detail: newNotif }));
+          } catch (delErr) {
+            console.error('Auto deletion policy enforcement error:', delErr);
+          }
+        }, 10000);
+      }
     } catch (err) {
       console.error('Error submitting report:', err);
       const fallback = {
@@ -560,15 +1219,21 @@ export const MobileReportingModal = ({
         ...reviewData,
         status: 'SUBMITTED'
       };
+      try {
+        const existing = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+        const updated = [fallback, ...existing.filter((p) => p.id !== fallback.id)];
+        localStorage.setItem('setu_user_submissions', JSON.stringify(updated));
+      } catch (e) {}
       setSubmittedProblem(fallback);
-      if (onReportSubmitted) onReportSubmitted(fallback);
-      setStep('success');
+      if (onReportSubmitted && !isNsfwFlagged) onReportSubmitted(fallback);
+      resetAllAndClose();
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const resetAllAndClose = () => {
+    stopVoiceRecording();
     stopCamera();
     Object.values(videoRefs.current).forEach((v) => {
       if (v) {
@@ -605,11 +1270,12 @@ export const MobileReportingModal = ({
       style={{
         position: 'fixed',
         inset: 0,
+        height: '100dvh',
+        maxHeight: '100dvh',
         zIndex: 9999,
-        backgroundColor: step === 'description' || step === 'processing' ? '#fbfbfa' : step === 'review' ? '#f2f2f7' : '#000000',
+        backgroundColor: step === 'description' || step === 'processing' ? '#fbfbfa' : step === 'review' ? '#ffffff' : '#000000',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
         overflow: 'hidden',
         color: step === 'description' || step === 'processing' || step === 'review' ? '#1c1c1e' : '#ffffff',
         fontFamily: 'var(--font-sans)',
@@ -625,6 +1291,7 @@ export const MobileReportingModal = ({
         style={{ display: 'none' }}
         onChange={handleGallerySelect}
       />
+
 
       {/* ========================================================================= */}
       {/* STEP 1: CAMERA VIEW */}
@@ -695,21 +1362,7 @@ export const MobileReportingModal = ({
                 <span>REC {formatTimer(recordingSeconds)}</span>
               </div>
             ) : (
-              <div
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  padding: '6px 14px',
-                  borderRadius: '9999px',
-                  fontSize: '0.8125rem',
-                  fontWeight: '600',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.15)'
-                }}
-              >
-                VIDEO / PHOTO
-              </div>
+              <div style={{ width: '42px' }} />
             )}
 
             <button
@@ -748,6 +1401,7 @@ export const MobileReportingModal = ({
                 objectFit: 'cover'
               }}
             />
+            {/* Camera Error & Permission Grant Screen */}
             {cameraError && (
               <div
                 style={{
@@ -757,32 +1411,88 @@ export const MobileReportingModal = ({
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '24px',
-                  textAlign: 'center',
-                  backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                  gap: '12px'
+                  padding: '24px 18px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.92)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  overflowY: 'auto',
+                  zIndex: 20
                 }}
               >
-                <GoogleIcon name="videocam_off" size={36} color="#f87171" />
-                <p style={{ color: '#ffffff', fontSize: '0.9375rem', margin: 0, maxWidth: '280px' }}>
-                  {cameraError}
-                </p>
-                <button
-                  onClick={() => galleryInputRef.current && galleryInputRef.current.click()}
+                <div
                   style={{
-                    marginTop: '8px',
-                    padding: '10px 18px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#ffffff',
-                    color: '#000000',
-                    fontWeight: '700',
-                    fontSize: '0.875rem',
-                    border: 'none',
-                    cursor: 'pointer'
+                    width: '100%',
+                    maxWidth: '360px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    gap: '14px'
                   }}
                 >
-                  Open Gallery
-                </button>
+                  {/* Title & Description */}
+                  <div>
+                    <h3
+                      style={{
+                        color: '#ffffff',
+                        fontSize: '1.125rem',
+                        fontWeight: '700',
+                        margin: '0 0 6px 0',
+                        letterSpacing: '-0.02em'
+                      }}
+                    >
+                      {cameraErrorType === 'denied'
+                        ? 'Camera Access Blocked'
+                        : cameraErrorType === 'prompt'
+                        ? 'Camera Permission Needed'
+                        : cameraErrorType === 'in_use'
+                        ? 'Camera In Use'
+                        : cameraErrorType === 'not_found'
+                        ? 'No Camera Found'
+                        : 'Camera Access Unavailable'}
+                    </h3>
+                    <p
+                      style={{
+                        color: '#9ca3af',
+                        fontSize: '0.84375rem',
+                        margin: 0,
+                        lineHeight: 1.45
+                      }}
+                    >
+                      {cameraError}
+                    </p>
+                  </div>
+
+                  {/* Primary Action Button: Grant / Try Again */}
+                  <button
+                    onClick={() => startCamera(true)}
+                    className="apple-tap"
+                    style={{
+                      width: '100%',
+                      padding: '13px 20px',
+                      borderRadius: '9999px',
+                      backgroundColor: '#ffffff',
+                      color: '#000000',
+                      fontWeight: '700',
+                      fontSize: '0.9375rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 20px rgba(255, 255, 255, 0.15)',
+                      marginTop: '4px'
+                    }}
+                  >
+                    <GoogleIcon
+                      name={cameraErrorType === 'denied' ? 'refresh' : 'photo_camera'}
+                      size={20}
+                      color="#000000"
+                    />
+                    {cameraErrorType === 'denied' ? 'Try Again' : 'Grant Camera Permission'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1332,14 +2042,15 @@ export const MobileReportingModal = ({
       {/* ========================================================================= */}
       {step === 'review' && reviewData && (
         <div
-          className="apple-page-enter"
           style={{
             position: 'relative',
             width: '100%',
             height: '100%',
+            flex: 1,
+            minHeight: 0,
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#f2f2f7',
+            backgroundColor: '#ffffff',
             overflow: 'hidden',
             color: '#1c1c1e'
           }}
@@ -1351,11 +2062,12 @@ export const MobileReportingModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-              zIndex: 30
+              zIndex: 30,
+              flexShrink: 0
             }}
           >
             <button
@@ -1401,326 +2113,226 @@ export const MobileReportingModal = ({
             </button>
           </header>
 
-          {/* Scrollable Body */}
+          {/* Scrollable Edge-to-Edge Body */}
           <main
+            data-testid="review-scroll-container"
             style={{
-              flex: 1,
+              flex: '1 1 0%',
+              minHeight: 0,
               overflowY: 'auto',
-              padding: '16px 16px calc(90px + env(safe-area-inset-bottom, 0px)) 16px',
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px'
+              backgroundColor: '#ffffff'
             }}
           >
-            {/* The Main Report Card */}
+            {/* 1. Media Carousel touching screen corners at the top: edge-to-edge */}
+            {mediaItems.length > 0 && (
+              <ReviewMediaCarousel
+                mediaItems={mediaItems}
+                currentIndex={reviewMediaIndex}
+                onIndexChange={(idx) => {
+                  setReviewMediaIndex(idx);
+                  setIsReviewPlaying(false);
+                }}
+                isPlaying={isReviewPlaying}
+                setIsPlaying={setIsReviewPlaying}
+                videoRefs={reviewVideoRefs}
+              />
+            )}
+
+            {/* Content Details: Touching the screen edges, with readable horizontal padding */}
             <div
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '24px',
-                overflow: 'hidden',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
+                padding: '20px 18px calc(80px + env(safe-area-inset-bottom, 0px)) 18px',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                gap: '16px',
+                touchAction: 'pan-y'
               }}
             >
-              {/* Media Carousel on top of card */}
-              {mediaItems.length > 0 && (
-                <div
+              {/* 2. Heading (Title) */}
+              <h2
+                style={{
+                  fontSize: '1.35rem',
+                  fontWeight: '800',
+                  lineHeight: 1.3,
+                  margin: 0,
+                  color: '#000000',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                {reviewData.title}
+              </h2>
+
+              {/* 3. Category */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
                   style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '240px',
-                    backgroundColor: '#000000',
-                    overflow: 'hidden'
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#eff6ff',
+                    color: '#1d4ed8',
+                    fontSize: '0.8125rem',
+                    fontWeight: '700',
+                    letterSpacing: '-0.01em'
                   }}
                 >
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      overflowX: 'auto',
-                      scrollSnapType: 'x mandatory',
-                      WebkitOverflowScrolling: 'touch',
-                      scrollbarWidth: 'none',
-                      msOverflowStyle: 'none'
-                    }}
-                    onScroll={(e) => {
-                      const scrollLeft = e.currentTarget.scrollLeft;
-                      const width = e.currentTarget.offsetWidth;
-                      if (width > 0) {
-                        const index = Math.round(scrollLeft / width);
-                        if (index !== reviewMediaIndex && index >= 0 && index < mediaItems.length) {
-                          setReviewMediaIndex(index);
-                        }
-                      }
-                    }}
-                  >
-                    {mediaItems.map((item, idx) => (
-                      <div
-                        key={item.id || idx}
-                        onClick={item.type === 'video' ? () => setIsReviewPlaying((p) => !p) : undefined}
-                        style={{
-                          flex: '0 0 100%',
-                          width: '100%',
-                          height: '100%',
-                          scrollSnapAlign: 'start',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'relative',
-                          backgroundColor: '#000000',
-                          cursor: item.type === 'video' ? 'pointer' : 'default'
-                        }}
-                      >
-                        {item.type === 'video' ? (
-                          <video
-                            ref={(el) => {
-                              reviewVideoRefs.current[idx] = el;
-                            }}
-                            src={item.url}
-                            autoPlay={idx === reviewMediaIndex}
-                            loop
-                            playsInline
-                            muted={idx !== reviewMediaIndex}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'contain'
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={item.url}
-                            alt="Attached Evidence"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'contain'
-                            }}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <GoogleIcon name="category" size={15} color="#1d4ed8" />
+                  <span>{reviewData.category}</span>
+                </span>
+              </div>
 
-                  {/* Indicator Pill: e.g. "1 of 3" */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.65)',
-                      backdropFilter: 'blur(12px)',
-                      WebkitBackdropFilter: 'blur(12px)',
-                      padding: '4px 10px',
-                      borderRadius: '9999px',
-                      fontSize: '0.75rem',
-                      fontWeight: '700',
-                      color: '#ffffff',
-                      border: '1px solid rgba(255, 255, 255, 0.2)'
-                    }}
-                  >
-                    {reviewMediaIndex + 1} of {mediaItems.length}
-                  </div>
-
-                  {/* Dots Indicator */}
-                  {mediaItems.length > 1 && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        left: 0,
-                        right: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        pointerEvents: 'none'
-                      }}
-                    >
-                      {mediaItems.map((_, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            width: idx === reviewMediaIndex ? '18px' : '6px',
-                            height: '6px',
-                            borderRadius: '9999px',
-                            backgroundColor: idx === reviewMediaIndex ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
-                            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Card Content Body */}
-              <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* Category Badge & Severity Brief Row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '5px 12px',
-                      borderRadius: '9999px',
-                      backgroundColor: '#eff6ff',
-                      color: '#1d4ed8',
-                      fontSize: '0.75rem',
-                      fontWeight: '700',
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
-                    <GoogleIcon name="category" size={14} color="#1d4ed8" />
-                    <span>{reviewData.category}</span>
-                  </span>
-
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '5px 12px',
-                      borderRadius: '9999px',
-                      backgroundColor:
-                        reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
-                          ? '#fee2e2'
-                          : reviewData.severity === 'LOW'
-                          ? '#dcfce7'
-                          : '#fef3c7',
-                      color:
-                        reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
-                          ? '#b91c1c'
-                          : reviewData.severity === 'LOW'
-                          ? '#15803d'
-                          : '#b45309',
-                      fontSize: '0.75rem',
-                      fontWeight: '700'
-                    }}
-                  >
-                    <GoogleIcon
-                      name="priority_high"
-                      size={14}
-                      color={
-                        reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
-                          ? '#b91c1c'
-                          : reviewData.severity === 'LOW'
-                          ? '#15803d'
-                          : '#b45309'
-                      }
-                    />
-                    <span>{reviewData.severity} Severity</span>
+              {/* Location & Date/Time Strip */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid rgba(0, 0, 0, 0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: '#1c1c1e' }}>
+                  <GoogleIcon name="location_on" size={17} color="#71717a" />
+                  <span style={{ fontWeight: '600' }}>
+                    {reviewData.address || reviewData.villageCity || 'Delhi, Outer North Delhi, PIN: 131028'}
                   </span>
                 </div>
 
-                {/* Title */}
-                <div>
-                  <h2
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: '#6e6e73' }}>
+                  <GoogleIcon name="schedule" size={16} color="#8e8e93" />
+                  <span>{reviewData.dateTime}</span>
+                </div>
+              </div>
+
+              {/* 4. Impact Summary */}
+              <div
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: '16px',
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid rgba(22, 163, 74, 0.15)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <GoogleIcon name="groups" size={17} color="#16a34a" />
+                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Impact Summary
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#14532d', marginTop: '2px' }}>
+                  {reviewData.impactCount}
+                </div>
+                <div style={{ fontSize: '0.8125rem', color: '#166534', lineHeight: 1.45 }}>
+                  {reviewData.impactDescription}
+                </div>
+              </div>
+
+              {/* 5. Severity */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 14px',
+                    borderRadius: '9999px',
+                    backgroundColor:
+                      reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
+                        ? '#fee2e2'
+                        : reviewData.severity === 'LOW'
+                        ? '#dcfce7'
+                        : '#fef3c7',
+                    color:
+                      reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
+                        ? '#b91c1c'
+                        : reviewData.severity === 'LOW'
+                        ? '#15803d'
+                        : '#b45309',
+                    fontSize: '0.75rem',
+                    fontWeight: '700'
+                  }}
+                >
+                  <GoogleIcon
+                    name="priority_high"
+                    size={14}
+                    color={
+                      reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
+                        ? '#b91c1c'
+                        : reviewData.severity === 'LOW'
+                        ? '#15803d'
+                        : '#b45309'
+                    }
+                  />
+                  <span>{reviewData.severity} Severity</span>
+                </span>
+              </div>
+
+              {/* 6. Description (4 lines clamp with ...more toggle) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    color: '#8e8e93'
+                  }}
+                >
+                  Description
+                </div>
+                <p
+                  style={{
+                    fontSize: '0.9375rem',
+                    lineHeight: 1.55,
+                    color: '#3a3a3c',
+                    margin: 0,
+                    whiteSpace: 'pre-wrap',
+                    display: isDescExpanded ? 'block' : '-webkit-box',
+                    WebkitLineClamp: isDescExpanded ? 'unset' : 4,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: isDescExpanded ? 'visible' : 'hidden'
+                  }}
+                >
+                  {reviewData.description}
+                </p>
+                {reviewData.description && reviewData.description.length > 140 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDescExpanded((prev) => !prev)}
                     style={{
-                      fontSize: '1.25rem',
-                      fontWeight: '800',
-                      lineHeight: 1.35,
-                      margin: 0,
+                      background: 'none',
+                      border: 'none',
                       color: '#000000',
-                      letterSpacing: '-0.02em'
-                    }}
-                  >
-                    {reviewData.title}
-                  </h2>
-                </div>
-
-                {/* Location & Date/Time Strip */}
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    padding: '12px 14px',
-                    borderRadius: '14px',
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid rgba(0, 0, 0, 0.05)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: '#1c1c1e' }}>
-                    <GoogleIcon name="location_on" size={17} color="#0071e3" />
-                    <span style={{ fontWeight: '600' }}>
-                      {reviewData.address || reviewData.villageCity || 'Ranchi, Jharkhand'}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: '#6e6e73' }}>
-                    <GoogleIcon name="schedule" size={16} color="#8e8e93" />
-                    <span>{reviewData.dateTime}</span>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
+                      fontSize: '0.875rem',
                       fontWeight: '700',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      color: '#8e8e93',
-                      marginBottom: '6px'
+                      padding: '4px 0',
+                      cursor: 'pointer',
+                      alignSelf: 'flex-start',
+                      fontFamily: 'inherit'
                     }}
                   >
-                    Description
-                  </div>
-                  <p
-                    style={{
-                      fontSize: '0.9375rem',
-                      lineHeight: 1.55,
-                      color: '#3a3a3c',
-                      margin: 0,
-                      whiteSpace: 'pre-wrap'
-                    }}
-                  >
-                    {reviewData.description}
-                  </p>
-                </div>
-
-                {/* Impact Summary */}
-                <div
-                  style={{
-                    padding: '14px',
-                    borderRadius: '16px',
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid rgba(22, 163, 74, 0.15)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <GoogleIcon name="groups" size={17} color="#16a34a" />
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#15803d', textTransform: 'uppercase' }}>
-                      Impact Summary
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#14532d', marginTop: '2px' }}>
-                    {reviewData.impactCount}
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: '#166534', lineHeight: 1.45 }}>
-                    {reviewData.impactDescription}
-                  </div>
-                </div>
+                    {isDescExpanded ? 'Show less' : '...more'}
+                  </button>
+                )}
               </div>
             </div>
           </main>
 
-          {/* Sticky Submit Bar */}
+          {/* Anchored Submit Bar: Submit button with no arrow */}
           <footer
             style={{
-              position: 'fixed',
-              bottom: 0,
-              left: 0,
-              right: 0,
+              flexShrink: 0,
               zIndex: 40,
               padding: '12px 18px calc(16px + env(safe-area-inset-bottom, 0px)) 18px',
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -1750,150 +2362,17 @@ export const MobileReportingModal = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
                 opacity: isSubmitting ? 0.7 : 1
               }}
             >
-              {isSubmitting ? (
-                <span>Submitting...</span>
-              ) : (
-                <>
-                  <span>Submit Report</span>
-                  <GoogleIcon name="arrow_forward" size={20} color="#ffffff" />
-                </>
-              )}
+              <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
             </button>
           </footer>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* STEP 6: SUCCESS STATE (CLEAN, NO NATIONAL DATABASE JARGON) */}
-      {/* ========================================================================= */}
-      {step === 'success' && (
-        <div
-          className="apple-page-enter"
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '20px',
-            padding: '32px 24px',
-            textAlign: 'center',
-            backgroundColor: '#f8f9fa'
-          }}
-        >
-          <div
-            style={{
-              width: '76px',
-              height: '76px',
-              borderRadius: '50%',
-              backgroundColor: '#dcfce7',
-              border: '2px solid #16a34a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <GoogleIcon name="check_circle" size={44} color="#16a34a" />
-          </div>
-
-          <div>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: '700',
-                backgroundColor: '#dcfce7',
-                color: '#15803d',
-                padding: '4px 12px',
-                borderRadius: '9999px',
-                letterSpacing: '0.04em'
-              }}
-            >
-              REPORT SUBMITTED
-            </span>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginTop: '12px', marginBottom: '6px', color: '#000000' }}>
-              {submittedProblem?.id || '#SETU-LIVE'}
-            </h2>
-            <p style={{ fontSize: '0.9375rem', color: '#6e6e73', margin: 0, maxWidth: '290px', lineHeight: 1.45 }}>
-              Your grievance has been submitted successfully and assigned for field review.
-            </p>
-          </div>
-
-          <div
-            style={{
-              width: '100%',
-              maxWidth: '340px',
-              backgroundColor: '#ffffff',
-              borderRadius: '16px',
-              padding: '16px',
-              textAlign: 'left',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)'
-            }}
-          >
-            <div style={{ fontSize: '0.75rem', color: '#8e8e93', fontWeight: '600', textTransform: 'uppercase' }}>Title</div>
-            <div style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#000000', marginTop: '2px' }}>
-              {submittedProblem?.title}
-            </div>
-
-            <div style={{ fontSize: '0.75rem', color: '#8e8e93', fontWeight: '600', textTransform: 'uppercase', marginTop: '10px' }}>Category</div>
-            <div style={{ fontSize: '0.875rem', color: '#16a34a', fontWeight: '600', marginTop: '2px' }}>
-              {submittedProblem?.category}
-            </div>
-
-            <div style={{ fontSize: '0.75rem', color: '#8e8e93', fontWeight: '600', textTransform: 'uppercase', marginTop: '10px' }}>Location</div>
-            <div style={{ fontSize: '0.875rem', color: '#3c3c43', marginTop: '2px' }}>
-              {submittedProblem?.address || locationDetails.formatted}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '340px' }}>
-            <button
-              onClick={() => {
-                resetAllAndClose();
-                navigate('/my-submissions');
-              }}
-              className="apple-tap"
-              style={{
-                width: '100%',
-                padding: '16px',
-                borderRadius: '14px',
-                backgroundColor: '#000000',
-                color: '#ffffff',
-                fontWeight: '700',
-                fontSize: '1rem',
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)'
-              }}
-            >
-              View in My Submissions
-            </button>
-            <button
-              onClick={resetAllAndClose}
-              className="apple-tap"
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '14px',
-                backgroundColor: 'transparent',
-                color: '#6e6e73',
-                fontWeight: '600',
-                fontSize: '0.9375rem',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Done
-            </button>
-          </div>
         </div>
       )}
     </div>
   );
 };
+

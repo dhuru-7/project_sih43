@@ -1,9 +1,6 @@
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:5000/api/v1`;
-  }
-  return 'http://localhost:5000/api/v1';
+  return '/api/v1';
 };
 
 const API_BASE_URL = getApiBaseUrl();

@@ -6,7 +6,7 @@ import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
 import { PrivacySecurityDrawer } from './PrivacySecurityDrawer';
 import { useLanguage } from '../../../context/LanguageContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const MobileProfileView = ({
   userName: propUserName,
@@ -19,30 +19,48 @@ export const MobileProfileView = ({
 
   const storedUser = useMemo(() => {
     try {
-      const u = localStorage.getItem('setu_user') || localStorage.getItem('sih_user_data');
-      return u ? JSON.parse(u) : {};
-    } catch (e) {
+      return JSON.parse(localStorage.getItem('setu_user') || '{}');
+    } catch {
       return {};
     }
   }, []);
 
-  // Fetch real submissions from database (no dummy items)
+  // Fetch real submissions from database (merged with local cache)
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
         setLoadingSubmissions(true);
-        const resp = await fetch(`${API_BASE_URL}/problems`);
-        if (resp.ok) {
-          const json = await resp.json();
-          setSubmissions(json.data || []);
+        let dbList = [];
+        try {
+          const resp = await fetch(`${API_BASE_URL}/problems`);
+          if (resp.ok) {
+            const json = await resp.json();
+            dbList = json.data || [];
+          }
+        } catch (dbErr) {
+          console.warn('Could not fetch submissions from DB:', dbErr);
         }
+
+        const localList = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+        const map = new Map();
+        localList.forEach((s) => map.set(s.id, s));
+        dbList.forEach((s) => map.set(s.id, s));
+        setSubmissions(Array.from(map.values()));
       } catch (err) {
-        console.warn('Could not fetch submissions from DB:', err);
+        console.warn('Could not load submissions:', err);
       } finally {
         setLoadingSubmissions(false);
       }
     };
     fetchSubmissions();
+
+    const handleDeleted = (e) => {
+      if (e.detail?.id) {
+        setSubmissions((prev) => prev.filter((p) => p.id !== e.detail.id));
+      }
+    };
+    window.addEventListener('setu_problem_deleted', handleDeleted);
+    return () => window.removeEventListener('setu_problem_deleted', handleDeleted);
   }, []);
 
   const displayName = storedUser.name || propUserName || 'Rahul Verma';

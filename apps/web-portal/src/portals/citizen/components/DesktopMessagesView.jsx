@@ -128,20 +128,22 @@ const INITIAL_CHATS = [
 export const DesktopMessagesView = ({
   onOpenTara,
   onOpenReport,
+  onOpenNotifications,
+  unreadCount = 0,
   activeNav,
   setActiveNav,
-  userName = 'Rampal'
+  userName = 'Rahul Verma'
 }) => {
   const { t } = useLanguage();
   const [chats, setChats] = useState(INITIAL_CHATS);
   const [selectedChatId, setSelectedChatId] = useState('city-maintenance');
   const [searchQuery, setSearchQuery] = useState('');
   const [inputMessage, setInputMessage] = useState('');
+  const [isChatsMenuOpen, setIsChatsMenuOpen] = useState(false);
+  const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
   const [isSqueezed, setIsSqueezed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [isChatsMenuOpen, setIsChatsMenuOpen] = useState(false);
-  const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -177,8 +179,12 @@ export const DesktopMessagesView = ({
       else onOpenTara();
       return;
     }
+    if (targetNav === 'notifications') {
+      if (onOpenNotifications) onOpenNotifications();
+      return;
+    }
     // If the sidebar is already expanded (e.g. user hovered over it),
-    // switch immediately without jitter because the sidebar is already at 256px!
+    // switch immediately because the sidebar is already at 256px!
     if (isSidemenuExpanded) {
       setActiveNav(targetNav);
       return;
@@ -250,10 +256,6 @@ export const DesktopMessagesView = ({
     }
   };
 
-  const isSidemenuExpanded = !isSqueezed || isHovered || isExiting;
-  const sidebarWidth = isSidemenuExpanded ? 256 : 72;
-  const layoutMarginLeft = (!isSqueezed || isExiting) ? 256 : 72;
-
   const [pfpUrl, setPfpUrl] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('setu_user_pfp') || null;
@@ -268,6 +270,10 @@ export const DesktopMessagesView = ({
     window.addEventListener('setu-pfp-updated', handlePfpUpdate);
     return () => window.removeEventListener('setu-pfp-updated', handlePfpUpdate);
   }, []);
+
+  const isSidemenuExpanded = !isSqueezed || isHovered || isExiting;
+  const sidebarWidth = isSidemenuExpanded ? 256 : 72;
+  const layoutMarginLeft = (!isSqueezed || isExiting) ? 256 : 72;
 
   return (
     <div style={{ display: 'flex', width: '100%', height: '100vh', backgroundColor: '#ffffff', color: '#1a1c1c', overflow: 'hidden' }}>
@@ -298,10 +304,10 @@ export const DesktopMessagesView = ({
           boxShadow: isHovered
             ? '6px 0 28px rgba(0, 0, 0, 0.14), 16px 0 48px rgba(0, 0, 0, 0.10)'
             : '0 1px 8px rgba(0, 0, 0, 0.04)',
-          overflowY: 'auto',
-          overflowX: 'hidden',
           transition:
-            'width 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease'
+            'width 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, background-color 0.24s ease, backdrop-filter 0.24s ease',
+          overflowX: 'hidden',
+          overflowY: 'auto'
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -324,7 +330,8 @@ export const DesktopMessagesView = ({
                 color: '#000000',
                 fontFamily: 'var(--font-sans)',
                 whiteSpace: 'nowrap',
-                lineHeight: 1
+                lineHeight: 1,
+                transition: 'opacity 0.18s ease'
               }}
             >
               {isSidemenuExpanded ? 'Setu.' : 'S.'}
@@ -337,14 +344,16 @@ export const DesktopMessagesView = ({
               { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
               { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
               { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' },
+              { id: 'notifications', label: t('notifications', 'Notifications'), icon: 'notifications', badge: unreadCount > 0 ? String(unreadCount) : null }
             ].map((item) => {
-              const isActive = activeNav === item.id || item.id === 'messages';
+              const isActive = (activeNav === item.id || item.id === 'messages') && item.id !== 'notifications';
               return (
                 <button
                   key={item.id}
                   onClick={() => handleNavigateAway(item.id)}
                   title={!isSidemenuExpanded ? item.label : undefined}
+                  className="apple-tap"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -366,7 +375,6 @@ export const DesktopMessagesView = ({
                     transition: 'background-color 0.15s ease'
                   }}
                 >
-                  {/* Icon Box: 24px wide, centered at 10px padding in 44px square */}
                   <div
                     style={{
                       width: '24px',
@@ -384,7 +392,6 @@ export const DesktopMessagesView = ({
                       fill={isActive}
                       color={isActive ? '#000000' : '#5e5e5e'}
                     />
-                    {/* Red dot attached directly to icon */}
                     {item.id === 'messages' && (
                       <span
                         style={{
@@ -402,8 +409,6 @@ export const DesktopMessagesView = ({
                       />
                     )}
                   </div>
-
-                  {/* Label: Smooth horizontal slide & fade, zero vertical/size distortion */}
                   <span
                     style={{
                       marginLeft: '12px',
@@ -419,8 +424,6 @@ export const DesktopMessagesView = ({
                   >
                     {item.label}
                   </span>
-
-                  {/* Badge: Appears cleanly on the right */}
                   {item.badge && (
                     <span
                       style={{
@@ -449,24 +452,27 @@ export const DesktopMessagesView = ({
         </div>
 
         {/* Bottom Profile Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)', width: '100%' }}>
           <div
             onClick={() => handleNavigateAway('profile')}
-            title={!isSidemenuExpanded ? (userName || 'Rampal') : undefined}
+            title={!isSidemenuExpanded ? (userName || 'Rahul Verma') : undefined}
+            className="apple-tap"
             style={{
               display: 'flex',
               alignItems: 'center',
+              flex: 1,
               width: '100%',
+              minWidth: 0,
               height: '44px',
               minHeight: '44px',
               maxHeight: '44px',
               boxSizing: 'border-box',
-              padding: '0 5px',
+              padding: isSidemenuExpanded ? '0 8px' : '0 5px',
               borderRadius: '0.75rem',
               backgroundColor: activeNav === 'profile' ? '#eeeeee' : 'transparent',
               cursor: 'pointer',
               overflow: 'hidden',
-              transition: 'background-color 0.15s ease'
+              transition: 'background-color 0.15s ease, padding 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
           >
             <div
@@ -504,7 +510,7 @@ export const DesktopMessagesView = ({
               }}
             >
               <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1a1c1c', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {userName || 'Rampal'}
+                {userName || 'Rahul Verma'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 {t('ward_4', 'Ward 4')}

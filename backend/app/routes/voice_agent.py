@@ -201,6 +201,9 @@ def describe_issue():
     location_info = None
     reporter_type = None
     group_name = ""
+    video_transcript = ""
+    voice_transcript = ""
+    user_notes = ""
 
     # 1. Handle multipart audio file
     if "audio" in request.files or "file" in request.files:
@@ -209,9 +212,12 @@ def describe_issue():
         filename = audio_file.filename or "recording.webm"
         mime_type = audio_file.mimetype or "audio/webm"
 
-        # Check for location / reporter in form
+        # Check for location / reporter / transcripts in form
         reporter_type = request.form.get("reporter_type") or request.form.get("reporterType")
         group_name = request.form.get("group_name") or request.form.get("groupName") or ""
+        video_transcript = request.form.get("video_transcript") or request.form.get("videoTranscript") or ""
+        voice_transcript = request.form.get("voice_transcript") or request.form.get("voiceTranscript") or ""
+        user_notes = request.form.get("text") or request.form.get("notepadText") or ""
         loc_str = request.form.get("location_info") or request.form.get("locationInfo")
         if loc_str:
             import json
@@ -230,6 +236,7 @@ def describe_issue():
                 language_code="hi-IN"
             )
             transcript = stt_res.get("transcript", "").strip()
+            voice_transcript = transcript
             detected_lang = stt_res.get("language_code", "hi-IN")
         except Exception as e:
             logger.exception("Sarvam STT failed in describe_issue multipart")
@@ -242,6 +249,8 @@ def describe_issue():
         reporter_type = data.get("reporterType") or data.get("reporter_type")
         group_name = data.get("groupName") or data.get("group_name") or ""
         video_transcript = data.get("videoTranscript") or data.get("video_transcript") or ""
+        voice_transcript = data.get("voiceTranscript") or data.get("voice_transcript") or ""
+        user_notes = data.get("text") or data.get("notepadText") or ""
 
         if "audio_base64" in data and data["audio_base64"]:
             try:
@@ -256,18 +265,23 @@ def describe_issue():
                     language_code="hi-IN"
                 )
                 transcript = stt_res.get("transcript", "").strip()
+                voice_transcript = transcript
                 detected_lang = stt_res.get("language_code", "hi-IN")
             except Exception as e:
                 logger.exception("Sarvam STT failed on base64 audio")
-        elif "text" in data and data["text"].strip():
-            transcript = data["text"].strip()
+        elif user_notes.strip():
+            transcript = user_notes.strip()
 
-        # Combine any video speech transcript with user text
-        if video_transcript and video_transcript.strip():
-            if transcript:
-                transcript = f"{transcript}\n[Spoken in Video: {video_transcript.strip()}]"
-            else:
-                transcript = f"[Spoken in Video: {video_transcript.strip()}]"
+        # Combine transcripts for fallback classifiers if needed
+        full_transcript_parts = []
+        if user_notes.strip():
+            full_transcript_parts.append(user_notes.strip())
+        if voice_transcript.strip() and voice_transcript.strip() not in user_notes:
+            full_transcript_parts.append(f"[Spoken Voice Note: {voice_transcript.strip()}]")
+        if video_transcript.strip():
+            full_transcript_parts.append(f"[Spoken in Video: {video_transcript.strip()}]")
+        if full_transcript_parts:
+            transcript = "\n".join(full_transcript_parts)
 
     if not transcript and not images:
         return jsonify({
@@ -283,29 +297,42 @@ def describe_issue():
         except Exception as e:
             logger.warning(f"Visual evidence extraction failed (non-critical): {e}")
 
-    # 4. Formulate structured grievance using Sarvam 105B as PRIMARY engine
+    # 4. Formulate structured grievance using Groq LLM Mind (llama-3.3-70b-versatile) as PRIMARY engine
     issue_meta = None
+    from app.services.groq_service import GroqService
     try:
-        logger.info("Synthesizing civic grievance using Sarvam 105B...")
-        issue_meta = SarvamService.generate_issue_description(
-            transcript=transcript or "Visual civic issue observed and reported with attached media evidence.",
-            visual_summary=visual_summary,
+        logger.info("Synthesizing civic grievance using Groq LLM Mind...")
+        issue_meta = GroqService.synthesize_grievance_report(
+            video_transcripts=video_transcript or "",
+            voice_transcript=voice_transcript or "",
+            user_text=user_notes or transcript or "",
+            visual_summary=visual_summary or "",
             location_info=location_info,
             reporter_type=reporter_type or "Individual Citizen",
             group_name=group_name
         )
-    except Exception as sarvam_err:
-        logger.warning(f"Sarvam 105B generation failed ({sarvam_err}), trying Gemini fallback...")
+    except Exception as groq_err:
+        logger.warning(f"Groq synthesis failed ({groq_err}), falling back to Sarvam 105B...")
         try:
-            issue_meta = GeminiService.generate_issue_description(
-                transcript=transcript or "Visual civic problem reported by citizen.",
-                images=images,
+            issue_meta = SarvamService.generate_issue_description(
+                transcript=transcript or "Visual civic issue observed and reported with attached media evidence.",
+                visual_summary=visual_summary,
                 location_info=location_info,
-                reporter_type=reporter_type,
+                reporter_type=reporter_type or "Individual Citizen",
                 group_name=group_name
             )
-        except Exception as gemini_err:
-            logger.exception(f"Gemini fallback also failed ({gemini_err}), falling back to NLP classifier...")
+        except Exception as sarvam_err:
+            logger.warning(f"Sarvam 105B fallback failed ({sarvam_err}), trying Gemini fallback...")
+            try:
+                issue_meta = GeminiService.generate_issue_description(
+                    transcript=transcript or "Visual civic problem reported by citizen.",
+                    images=images,
+                    location_info=location_info,
+                    reporter_type=reporter_type,
+                    group_name=group_name
+                )
+            except Exception as gemini_err:
+                logger.exception(f"Gemini fallback also failed ({gemini_err}), falling back to NLP classifier...")
 
     if issue_meta:
         return jsonify({
@@ -316,9 +343,10 @@ def describe_issue():
                 "description": issue_meta.get("description", transcript),
                 "category": issue_meta.get("category", "Urban Development and Infrastructure"),
                 "severity": issue_meta.get("severity", "MEDIUM"),
-                "impactCount": issue_meta.get("impact_count", "100-250 local residents"),
-                "impactDescription": issue_meta.get("impact_description", "Affects local residents and daily commuters."),
-                "reporterType": issue_meta.get("reporter_type", reporter_type or "Individual Citizen"),
+                "impactCount": issue_meta.get("impact_count") or issue_meta.get("impactCount") or "100-250 local residents",
+                "impactDescription": issue_meta.get("impact_description") or issue_meta.get("impactDescription") or "Affects local residents and daily commuters.",
+                "department": issue_meta.get("department", "Municipal Corporation"),
+                "reporterType": issue_meta.get("reporter_type") or reporter_type or "Individual Citizen",
                 "groupName": group_name,
                 "language": detected_lang,
                 "visualSummary": visual_summary

@@ -5,7 +5,7 @@ import { Sidebar } from '../components/common/Sidebar';
 
 export const DashboardLayout = () => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#0b0f19', color: '#f9fafb' }}>
       <Navbar />
       <div style={{ display: 'flex', flex: 1 }}>
         <Sidebar />

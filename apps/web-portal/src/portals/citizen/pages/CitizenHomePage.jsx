@@ -14,16 +14,19 @@ import { IssueDetailModal } from '../components/IssueDetailModal';
 import { MobileReportingModal } from '../components/MobileReportingModal';
 import { DesktopReportingModal } from '../components/DesktopReportingModal';
 import { AadhaarWelcomeModal } from '../components/AadhaarWelcomeModal';
+import { NotificationSidebar } from '../components/NotificationSidebar';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { useAuth } from '../../../context/AuthContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+
 const INITIAL_NOTIFICATIONS = [
   {
-    id: 1,
+    id: 'notif-welcome',
     type: 'Status Update',
     time: '10m ago',
-    message: 'Nodal Cell reviewing recently submitted civic grievances.',
-    isNew: true
+    message: 'Nodal Cell reviewing recently submitted civic grievances in your area.',
+    isNew: false
   }
 ];
 
@@ -35,11 +38,32 @@ export const CitizenHomePage = () => {
   const [issues, setIssues] = useState([]);
   const [upvotedSet, setUpvotedSet] = useState(new Set());
 
+  // Notifications State & Persistence
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('setu_notifications');
+      return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+    } catch {
+      return INITIAL_NOTIFICATIONS;
+    }
+  });
+  const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
+  const [submitToast, setSubmitToast] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(() => {
+    try {
+      const saved = localStorage.getItem('setu_notifications');
+      const list = saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+      return list.filter((n) => n.isNew).length;
+    } catch {
+      return 0;
+    }
+  });
+
   // Load real submissions from persistent database
   useEffect(() => {
     const fetchLiveIssues = async () => {
       try {
-        const resp = await fetch('http://localhost:5000/api/v1/problems');
+        const resp = await fetch(`${API_BASE_URL}/problems`);
         if (resp.ok) {
           const json = await resp.json();
           const formatted = (json.data || []).map((p) => ({
@@ -51,7 +75,8 @@ export const CitizenHomePage = () => {
             location: p.address || p.villageCity || p.district || 'Ranchi District',
             author: p.author || 'Citizen',
             assignee: p.department || 'Nodal Technical Evaluation Desk',
-            upvotes: 1,
+            upvotes: p.upvotes || 1,
+            safetyStatus: p.safetyStatus || 'SAFE',
             image: p.thumbnail || (p.evidenceUrls && p.evidenceUrls[0]) || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80',
             description: p.description
           }));
@@ -62,7 +87,52 @@ export const CitizenHomePage = () => {
       }
     };
     fetchLiveIssues();
+
+    // Listen for realtime notifications and deleted problems (e.g. 10s policy violation cleanup)
+    const handleNewNotif = (e) => {
+      const newNotif = e.detail;
+      if (newNotif) {
+        setNotifications((prev) => [newNotif, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      }
+    };
+    const handleProblemDeleted = (e) => {
+      const delId = e.detail?.id;
+      if (delId) {
+        setIssues((prev) => prev.filter((p) => p.id !== delId));
+      }
+    };
+
+    window.addEventListener('setu-new-notification', handleNewNotif);
+    window.addEventListener('setu-problem-deleted', handleProblemDeleted);
+    return () => {
+      window.removeEventListener('setu-new-notification', handleNewNotif);
+      window.removeEventListener('setu-problem-deleted', handleProblemDeleted);
+    };
   }, []);
+
+  const handleOpenNotifications = () => {
+    setIsNotificationSidebarOpen(true);
+    setUnreadCount(0);
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, isNew: false }));
+      try { localStorage.setItem('setu_notifications', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleClearNotification = (id) => {
+    setNotifications((prev) => {
+      const updated = prev.filter((n) => n.id !== id);
+      try { localStorage.setItem('setu_notifications', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleClearAllNotifications = () => {
+    setNotifications([]);
+    try { localStorage.setItem('setu_notifications', JSON.stringify([])); } catch (e) {}
+  };
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -203,6 +273,11 @@ export const CitizenHomePage = () => {
         return item;
       })
     );
+
+    // Call backend upvote endpoint
+    fetch(`${API_BASE_URL}/problems/${id}/upvote`, { method: 'POST' }).catch((e) => {
+      console.warn('Backend upvote error:', e);
+    });
   };
 
   const handleDraftFromTara = (draftText) => {
@@ -242,6 +317,8 @@ export const CitizenHomePage = () => {
     };
     setIssues((prev) => [formatted, ...prev]);
     setUpvotedSet((prev) => new Set(prev).add(formatted.id));
+    setSubmitToast(`Report #${formatted.id.replace('#', '')} submitted successfully.`);
+    setTimeout(() => setSubmitToast(null), 3500);
   };
 
   // Single-session concurrency validation heartbeat
@@ -363,6 +440,8 @@ export const CitizenHomePage = () => {
               onOpenTara={() => setIsTaraOpen(true)}
               onOpenReport={() => setIsReportingOpen(true)}
               onOpenIssueDetail={(issue) => setDetailIssue(issue)}
+              onOpenNotifications={handleOpenNotifications}
+              unreadCount={unreadCount}
               activeNav={activeNav}
               setActiveNav={setActiveNav}
               userName={userName}
@@ -385,6 +464,8 @@ export const CitizenHomePage = () => {
           key="desktop-messages"
           onOpenTara={() => setIsTaraOpen(true)}
           onOpenReport={() => setIsReportingOpen(true)}
+          onOpenNotifications={handleOpenNotifications}
+          unreadCount={unreadCount}
           activeNav={activeNav}
           setActiveNav={setActiveNav}
           userName={userName}
@@ -395,6 +476,8 @@ export const CitizenHomePage = () => {
           onOpenTara={() => setIsTaraOpen(true)}
           onOpenReport={() => setIsReportingOpen(true)}
           onOpenIssueDetail={(issue) => setDetailIssue(issue)}
+          onOpenNotifications={handleOpenNotifications}
+          unreadCount={unreadCount}
           activeNav={activeNav}
           setActiveNav={setActiveNav}
           userName={userName}
@@ -408,6 +491,8 @@ export const CitizenHomePage = () => {
           onOpenTara={() => setIsTaraOpen(true)}
           onOpenReport={() => setIsReportingOpen(true)}
           onOpenReportDetail={(report) => setDetailIssue(report)}
+          onOpenNotifications={handleOpenNotifications}
+          unreadCount={unreadCount}
         />
       ) : (
         <DesktopHomeView
@@ -416,6 +501,8 @@ export const CitizenHomePage = () => {
           onOpenTara={() => setIsTaraOpen(true)}
           onOpenReport={() => setIsReportingOpen(true)}
           onOpenIssueDetail={(issue) => setDetailIssue(issue)}
+          onOpenNotifications={handleOpenNotifications}
+          unreadCount={unreadCount}
           activeNav={activeNav}
           setActiveNav={setActiveNav}
           userName={userName}
@@ -461,6 +548,42 @@ export const CitizenHomePage = () => {
         onSetPfp={handleSetPfpAction}
         userData={storedSetuUser}
       />
+
+      {/* 🔔 Apple-Style Notification Sidebar */}
+      <NotificationSidebar
+        isOpen={isNotificationSidebarOpen}
+        onClose={() => setIsNotificationSidebarOpen(false)}
+        notifications={notifications}
+        onClearNotification={handleClearNotification}
+        onClearAll={handleClearAllNotifications}
+      />
+
+      {/* Floating Success Pill Toast */}
+      {submitToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: isViewportMobile ? '80px' : '28px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#111827',
+            color: '#ffffff',
+            padding: '10px 20px',
+            borderRadius: '9999px',
+            fontSize: '0.875rem',
+            fontWeight: '600',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.22)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            animation: 'applePop 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+          <GoogleIcon name="check_circle" size={18} color="#22c55e" />
+          <span>{submitToast}</span>
+        </div>
+      )}
     </div>
   );
 };

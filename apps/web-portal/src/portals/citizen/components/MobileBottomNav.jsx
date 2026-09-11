@@ -144,8 +144,8 @@ export const MobileBottomNav = ({ activeNav, setActiveNav, onOpenTara, onOpenRep
         >
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <GoogleIcon
-              name="chat_bubble"
-              size={22}
+              name="chat"
+              size={24}
               fill={activeNav === 'messages'}
               color={activeNav === 'messages' ? '#000000' : '#2c2c2e'}
             />

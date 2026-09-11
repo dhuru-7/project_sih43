@@ -10,6 +10,8 @@ export const MobileHomeView = ({
   onOpenTara,
   onOpenReport,
   onOpenIssueDetail,
+  onOpenNotifications,
+  unreadCount = 0,
   activeNav,
   setActiveNav,
   userName = 'Rahul',
@@ -71,6 +73,7 @@ export const MobileHomeView = ({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           <button
+            onClick={onOpenNotifications}
             className="apple-tap"
             style={{
               width: '38px',
@@ -82,11 +85,26 @@ export const MobileHomeView = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              position: 'relative'
             }}
             aria-label="Notifications"
           >
             <GoogleIcon name="notifications" size={20} />
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '1px',
+                  right: '1px',
+                  width: '9px',
+                  height: '9px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ff3b30',
+                  border: '2px solid #ffffff'
+                }}
+              />
+            )}
           </button>
         </div>
       </header>

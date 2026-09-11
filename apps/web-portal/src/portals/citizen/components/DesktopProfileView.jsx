@@ -5,7 +5,7 @@ import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
 import { PrivacySecurityDrawer } from './PrivacySecurityDrawer';
 import { useLanguage } from '../../../context/LanguageContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const DesktopProfileView = ({
   activeNav,
@@ -13,7 +13,9 @@ export const DesktopProfileView = ({
   userName = 'Rahul Verma',
   onOpenTara,
   onOpenReport,
-  onOpenReportDetail
+  onOpenReportDetail,
+  onOpenNotifications,
+  unreadCount = 0
 }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -29,23 +31,42 @@ export const DesktopProfileView = ({
     }
   }, []);
 
-  // Fetch real submissions from database (no dummy items)
+  // Fetch real submissions from database (merged with local cache)
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
         setLoadingSubmissions(true);
-        const resp = await fetch(`${API_BASE_URL}/problems`);
-        if (resp.ok) {
-          const json = await resp.json();
-          setSubmissions(json.data || []);
+        let dbList = [];
+        try {
+          const resp = await fetch(`${API_BASE_URL}/problems`);
+          if (resp.ok) {
+            const json = await resp.json();
+            dbList = json.data || [];
+          }
+        } catch (dbErr) {
+          console.warn('Could not fetch submissions from DB:', dbErr);
         }
+
+        const localList = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+        const map = new Map();
+        localList.forEach((s) => map.set(s.id, s));
+        dbList.forEach((s) => map.set(s.id, s));
+        setSubmissions(Array.from(map.values()));
       } catch (err) {
-        console.warn('Could not fetch submissions from DB:', err);
+        console.warn('Could not load submissions:', err);
       } finally {
         setLoadingSubmissions(false);
       }
     };
     fetchSubmissions();
+
+    const handleDeleted = (e) => {
+      if (e.detail?.id) {
+        setSubmissions((prev) => prev.filter((p) => p.id !== e.detail.id));
+      }
+    };
+    window.addEventListener('setu_problem_deleted', handleDeleted);
+    return () => window.removeEventListener('setu_problem_deleted', handleDeleted);
   }, []);
 
   const displayName = storedUser.name || userName || 'Rahul Verma';
@@ -216,17 +237,22 @@ export const DesktopProfileView = ({
               { id: 'home', label: t('nav_home', 'Home'), icon: 'home', badge: null },
               { id: 'explore', label: t('nav_explore', 'Explore'), icon: 'explore', badge: null },
               { id: 'report', label: t('nav_report', 'Report Issue'), icon: 'add_circle', badge: null, highlight: true },
-              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' }
+              { id: 'messages', label: t('nav_messages', 'Messages'), icon: 'chat', badge: '3' },
+              { id: 'notifications', label: t('notifications', 'Notifications'), icon: 'notifications', badge: unreadCount > 0 ? String(unreadCount) : null }
             ].map((item) => {
               const isActive = activeNav === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveNav(item.id);
-                    if (item.id === 'report') {
-                      if (onOpenReport) onOpenReport();
-                      else onOpenTara();
+                    if (item.id === 'notifications') {
+                      if (onOpenNotifications) onOpenNotifications();
+                    } else {
+                      setActiveNav(item.id);
+                      if (item.id === 'report') {
+                        if (onOpenReport) onOpenReport();
+                        else onOpenTara();
+                      }
                     }
                   }}
                   className="apple-tap"
@@ -319,7 +345,7 @@ export const DesktopProfileView = ({
         </div>
 
         {/* Bottom Profile Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)', width: '100%' }}>
           <div
             onClick={() => setActiveNav('profile')}
             className="apple-tap"
@@ -327,6 +353,7 @@ export const DesktopProfileView = ({
               display: 'flex',
               alignItems: 'center',
               flex: 1,
+              width: '100%',
               minWidth: 0,
               height: '44px',
               minHeight: '44px',
@@ -369,10 +396,10 @@ export const DesktopProfileView = ({
               }}
             >
               <span style={{ fontSize: '0.875rem', fontWeight: '700', color: '#1a1c1c', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {displayName}
+                {userName || 'Rahul Verma'}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#5e5e5e', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {storedUser?.ward || t('ward_4', 'Ward 4')}
+                {t('ward_4', 'Ward 4')}
               </span>
             </div>
           </div>

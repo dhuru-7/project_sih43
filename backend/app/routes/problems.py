@@ -9,7 +9,17 @@ def list_problems():
     status = request.args.get("status")
     author_id = request.args.get("author_id") or request.args.get("authorId")
     author = request.args.get("author")
-    problems = ProblemService.get_all(category=category, status=status, author_id=author_id, author=author)
+    search = request.args.get("search") or request.args.get("q")
+    include_flagged = request.args.get("include_flagged", "false").lower() in ["true", "1", "yes"]
+
+    problems = ProblemService.get_all(
+        category=category,
+        status=status,
+        author_id=author_id,
+        author=author,
+        search=search,
+        include_flagged=include_flagged
+    )
     return jsonify({"count": len(problems), "data": problems}), 200
 
 @problems_bp.route("/<problem_id>", methods=["GET"])
@@ -24,9 +34,47 @@ def submit_problem():
     data = request.get_json() or {}
     if not data.get("title") or not data.get("description"):
         return jsonify({"error": "Title and description are required"}), 400
-        
+
     created = ProblemService.create_problem(data)
     return jsonify({
         "message": "Problem submitted successfully and processed by AI engines",
         "data": created
     }), 201
+
+@problems_bp.route("/<problem_id>", methods=["PATCH", "PUT"])
+def update_problem(problem_id):
+    data = request.get_json() or {}
+    problem = ProblemService.get_by_id(problem_id)
+    if not problem:
+        return jsonify({"error": "Problem not found"}), 404
+
+    updated = ProblemService.update_problem(problem_id, data)
+    return jsonify({
+        "message": "Problem updated successfully",
+        "data": updated
+    }), 200
+
+@problems_bp.route("/<problem_id>/upvote", methods=["POST"])
+def upvote_problem(problem_id):
+    problem = ProblemService.get_by_id(problem_id)
+    if not problem:
+        return jsonify({"error": "Problem not found"}), 404
+
+    updated = ProblemService.upvote(problem_id)
+    return jsonify({
+        "message": "Upvoted successfully",
+        "data": updated
+    }), 200
+
+@problems_bp.route("/<problem_id>", methods=["DELETE"])
+def delete_problem(problem_id):
+    problem = ProblemService.get_by_id(problem_id)
+    if not problem:
+        return jsonify({"error": "Problem not found"}), 404
+
+    success = ProblemService.delete_problem(problem_id)
+    return jsonify({
+        "message": "Problem deleted successfully",
+        "deleted": success,
+        "id": problem_id
+    }), 200

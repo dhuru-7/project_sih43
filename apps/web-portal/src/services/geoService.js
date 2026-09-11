@@ -175,27 +175,117 @@ function bufferToWave(abuffer, totalSamples) {
 }
 
 /**
- * Extracts audio track from a video/audio file or blob into a lightweight WAV blob.
+ * Extracts audio track from a video/audio file or blob into a lightweight WAV or WebM blob.
+ * Uses Web Audio API decodeAudioData with fallback to MediaElementSource fast-capture.
  */
 export async function extractAudioFromMedia(fileOrBlob) {
   if (!fileOrBlob) return null;
-  try {
-    if (fileOrBlob.type && fileOrBlob.type.startsWith('audio/')) {
-      return fileOrBlob;
-    }
+  if (fileOrBlob.type && fileOrBlob.type.startsWith('audio/')) {
+    return fileOrBlob;
+  }
 
+  // Method 1: Try decodeAudioData
+  try {
     const arrayBuffer = await fileOrBlob.arrayBuffer();
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return null;
+    if (AudioContextClass) {
+      const audioCtx = new AudioContextClass();
+      const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+      try { await audioCtx.close(); } catch (e) {}
 
-    const audioCtx = new AudioContextClass();
-    const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
-    try { await audioCtx.close(); } catch (e) {}
-
-    const maxSamples = Math.min(decoded.length, decoded.sampleRate * 60);
-    return bufferToWave(decoded, maxSamples);
+      const maxSamples = Math.min(decoded.length, decoded.sampleRate * 60);
+      const wave = bufferToWave(decoded, maxSamples);
+      if (wave && wave.size > 1500) return wave;
+    }
   } catch (err) {
-    console.warn('Audio track extraction skipped:', err);
+    // decodeAudioData may fail on video containers, proceed to Method 2
+  }
+
+  // Method 2: MediaElementSource capture
+  try {
+    return await new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.muted = false;
+      video.volume = 1.0;
+      video.playsInline = true;
+      video.crossOrigin = 'anonymous';
+      const url = URL.createObjectURL(fileOrBlob);
+      video.src = url;
+
+      let finished = false;
+      const cleanup = () => {
+        if (!finished) {
+          finished = true;
+          try { URL.revokeObjectURL(url); } catch (e) {}
+          video.remove();
+        }
+      };
+
+      video.onloadedmetadata = async () => {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) {
+            cleanup();
+            return resolve(null);
+          }
+
+          const ctx = new AudioContextClass();
+          const source = ctx.createMediaElementSource(video);
+          const dest = ctx.createMediaStreamDestination();
+          source.connect(dest);
+
+          const audioTracks = dest.stream.getAudioTracks();
+          if (!audioTracks || audioTracks.length === 0) {
+            cleanup();
+            return resolve(null);
+          }
+
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+          const recorder = new MediaRecorder(dest.stream, { mimeType });
+          const chunks = [];
+
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+
+          recorder.onstop = () => {
+            cleanup();
+            try { ctx.close(); } catch (e) {}
+            const blob = new Blob(chunks, { type: mimeType });
+            resolve(blob.size > 1000 ? blob : null);
+          };
+
+          recorder.start();
+          video.playbackRate = 4.0;
+          video.play().catch(() => {
+            if (recorder.state !== 'inactive') recorder.stop();
+          });
+
+          video.onended = () => {
+            if (recorder.state !== 'inactive') recorder.stop();
+          };
+
+          setTimeout(() => {
+            if (recorder.state !== 'inactive') recorder.stop();
+          }, 8000);
+        } catch (e) {
+          cleanup();
+          resolve(null);
+        }
+      };
+
+      video.onerror = () => {
+        cleanup();
+        resolve(null);
+      };
+
+      setTimeout(() => {
+        cleanup();
+        resolve(null);
+      }, 9000);
+    });
+  } catch (e) {
+    console.warn('Video audio track extraction skipped:', e);
     return null;
   }
 }

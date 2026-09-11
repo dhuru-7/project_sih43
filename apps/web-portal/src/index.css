@@ -80,8 +80,8 @@
 html, body {
   font-family: var(--font-sans);
   font-weight: 400;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: #f9f9f9;
+  color: #1a1c1c;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -481,7 +481,13 @@ button {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-right: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 1px 12px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, width 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  transition: box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.apple-frosted-sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .apple-frosted-sidebar:hover {

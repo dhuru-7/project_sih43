@@ -16,6 +16,15 @@ export const GeneralSettingsDrawer = ({
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
+  // Active language metadata (resolves undefined ReferenceError)
+  const activeSelectedMeta =
+    (languages || []).find((l) => l.id === selectedLangId) ||
+    languageMeta || {
+      id: 'en',
+      name: 'English',
+      nativeName: 'English'
+    };
+
   useEffect(() => {
     if (isOpen) {
       setSelectedLangId(currentLanguage);
@@ -56,7 +65,9 @@ export const GeneralSettingsDrawer = ({
         right: 0,
         bottom: 0,
         width: '100vw',
-        height: '100dvh',
+        height: '100%',
+        minHeight: '100vh',
+        maxHeight: '100dvh',
         zIndex: 9999999,
         backgroundColor: '#f9f9f9',
         display: 'flex',
@@ -210,10 +221,22 @@ export const GeneralSettingsDrawer = ({
                     style={{
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      color: '#1a1c1c'
+                      color: savedSuccess ? '#16a34a' : '#1a1c1c',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
                     }}
                   >
-                    {isLangDropdownOpen ? t('done', 'Done') : t('change', 'Change')}
+                    {savedSuccess ? (
+                      <>
+                        <GoogleIcon name="check_circle" size={16} color="#16a34a" />
+                        {t('saved', 'Saved')}
+                      </>
+                    ) : isLangDropdownOpen ? (
+                      t('done', 'Done')
+                    ) : (
+                      t('change', 'Change')
+                    )}
                   </span>
                   <div
                     style={{
@@ -363,7 +386,11 @@ export const GeneralSettingsDrawer = ({
                       {t('uidai_aadhaar', 'UIDAI Aadhaar')}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: '#8e8e93' }}>
-                      {t('government_identity_connected', 'Government Identity Connected')}
+                      {userData?.aadhaarNumber
+                        ? `•••• •••• ${String(userData.aadhaarNumber).slice(-4)}`
+                        : userData?.aadhaar
+                        ? `•••• •••• ${String(userData.aadhaar).slice(-4)}`
+                        : t('government_identity_connected', 'Government Identity Connected')}
                     </span>
                   </div>
                 </div>
