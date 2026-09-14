@@ -79,19 +79,35 @@ class GroqService:
         categories_list_str = "\n".join([f"- {cat}" for cat in OFFICIAL_CATEGORIES])
 
         system_prompt = f"""You are the Master AI Civic Grievance Evaluation Engine for the SETU National Innovation & Grievance Ecosystem.
-Your goal is to synthesize multi-modal citizen evidence into a high-precision, executive civic grievance report ready for municipal and nodal administration.
+Your goal is to synthesize multi-modal citizen evidence into a high-precision, authentic civic grievance report.
 
 You must categorize the issue into EXACTLY ONE of the following 17 official categories:
 {categories_list_str}
 
 Guidelines:
-1. Title: Professional, concise (under 12 words), specifying the nature of the issue and location if known.
+1. Title: Professional, concise (under 10 words), stating the core issue and landmark/area (e.g., "Severe Sewage Leakage on MG Road", "Deep Uncovered Pothole near Sector 4").
 2. Category: MUST be an exact match to one of the 17 categories listed above.
-3. Description: Comprehensive, structured, and formal synthesis combining what was seen in the photographic/video evidence, what was spoken in the user's video audio and voice notes, and the specific locality context. Keep it factual and urgent.
+3. Description:
+   - CRITICAL REQUIREMENT: Write the description in the FIRST PERSON from the perspective of the reporting citizen themselves (e.g., "I am reporting an urgent issue regarding...", "In our locality...").
+   - NEVER speak in the third person. DO NOT say "Ground-level civic grievance reported by Individual Citizen", "The citizen reported", "Verified with 1 on-site video recording", or "A complaint was lodged".
+   - Sound natural, direct, concise, and authentic — exactly as if the resident is writing their own complaint to the municipal officer.
+   - You MUST extract and prominently highlight the concrete details mentioned by the user or visible in evidence:
+     * Street Name / Road / Colony / Landmark / Shop / School
+     * Time / Duration (e.g., "since yesterday evening", "around 8:15 PM", "ongoing for the past 3 days")
+     * Specific Problem & Hazard (e.g., broken water main, open drain, overflowing garbage, exposed sparking wire)
+     * Names of any specific places, shops, or landmarks mentioned
+     * Direct impact on commuters, school children, or nearby residents
+     * Polite, urgent call to action for the department to inspect and repair it.
+   - Format: Start with 1-2 direct sentences, followed by structured bullet highlights:
+     • Street / Landmark: [extracted name]
+     • Time / Duration: [extracted time]
+     • Specific Issue: [core problem]
+     • Impact: [who is affected]
+     Conclude with a brief action request.
 4. Severity: One of "LOW", "MEDIUM", "HIGH", or "CRITICAL".
 5. Impact Count: Realistic estimate of citizens affected (e.g., "150-300 residents", "Daily commuters on Ward 14").
-6. Impact Description: Direct public hazards, hygiene risks, or safety impacts.
-7. Department: The most relevant municipal or state department (e.g., "Municipal Corporation (JMC)", "Public Works Department (PWD)", "Jal Sansthan", "State Electricity Board").
+6. Impact Description: Direct public hazards, hygiene risks, or daily convenience disruption in citizen words.
+7. Department: The most relevant municipal or state department (e.g., "Municipal Corporation (JMC)", "Public Works Department (PWD)", "Jal Sansthan / Water Board", "State Electricity Board").
 
 You MUST return ONLY valid JSON matching this exact structure:
 {{
@@ -118,17 +134,16 @@ You MUST return ONLY valid JSON matching this exact structure:
 
         user_content = "Please synthesize an official civic grievance report based on the following multi-modal evidence:\n\n" + "\n\n".join(evidence_sections)
 
-        primary_model = "llama-3.3-70b-versatile"
+        primary_model = "openai/gpt-oss-120b"
         try:
             configured_model = current_app.config.get("GROQ_MODEL")
             if configured_model:
                 primary_model = configured_model
         except RuntimeError:
-            primary_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+            primary_model = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
         candidate_models = [
             primary_model,
-            "openai/gpt-oss-120b",
             "qwen/qwen3.8-27b",
             "groq/compound"
         ]
@@ -149,7 +164,7 @@ You MUST return ONLY valid JSON matching this exact structure:
                     {"role": "user", "content": user_content}
                 ],
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 2048
             }
 
             try:
@@ -157,7 +172,7 @@ You MUST return ONLY valid JSON matching this exact structure:
                 resp = requests.post(GROQ_CHAT_URL, headers=headers, json=payload, timeout=30)
                 if resp.status_code == 200:
                     resp_json = resp.json()
-                    content = resp_json["choices"][0]["message"]["content"].strip()
+                    content = resp_json["choices"][0]["message"].get("content") or ""
                     logger.info(f"Groq synthesis succeeded with model {model}")
                     return cls._clean_and_parse_json(content)
                 else:
@@ -174,8 +189,12 @@ You MUST return ONLY valid JSON matching this exact structure:
 
     @staticmethod
     def _clean_and_parse_json(text: str) -> dict:
-        """Parses LLM output cleanly even if wrapped in markdown code blocks."""
+        """Parses LLM output cleanly even if wrapped in markdown code blocks or reasoning tags."""
+        import re
         cleaned = text.strip()
+        cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL).strip()
+        cleaned = re.sub(r"<thought>.*?</thought>", "", cleaned, flags=re.DOTALL).strip()
+
         if cleaned.startswith("```"):
             lines = cleaned.splitlines()
             if lines[0].startswith("```"):
@@ -190,7 +209,11 @@ You MUST return ONLY valid JSON matching this exact structure:
         if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
             cleaned = cleaned[start_idx:end_idx + 1]
 
-        data = json.loads(cleaned)
+        try:
+            data = json.loads(cleaned, strict=False)
+        except Exception:
+            clean_esc = re.sub(r'[\x00-\x1f\x7f-\x9f]', lambda m: ' ' if m.group(0) in '\r\n\t' else '', cleaned)
+            data = json.loads(clean_esc, strict=False)
 
         # Validate category against official list or normalize
         category = data.get("category", "Urban Development and Infrastructure")
@@ -210,3 +233,39 @@ You MUST return ONLY valid JSON matching this exact structure:
         data["severity"] = sev
 
         return data
+
+    @classmethod
+    def transcribe_audio(cls, audio_bytes: bytes, filename: str = "audio.wav", language: str = "en") -> dict:
+        """
+        Transcribes speech audio or video audio using Groq Whisper Large v3 Turbo.
+        Supports flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, webm.
+        """
+        api_key = cls._get_api_key()
+        if not api_key:
+            raise ValueError("GROQ_API_KEY is not configured.")
+
+        url = "https://api.groq.com/openai/v1/audio/transcriptions"
+        headers = {"Authorization": f"Bearer {api_key}"}
+
+        # Normalize filename extension for Whisper
+        fname = filename
+        if not any(fname.lower().endswith(ext) for ext in [".wav", ".mp3", ".webm", ".mp4", ".m4a", ".ogg", ".flac"]):
+            fname = "audio.webm"
+
+        files = {
+            "file": (fname, audio_bytes, "application/octet-stream")
+        }
+        data = {
+            "model": "whisper-large-v3-turbo",
+            "response_format": "json"
+        }
+
+        response = requests.post(url, headers=headers, files=files, data=data, timeout=30)
+        if response.status_code == 200:
+            res_json = response.json()
+            return {
+                "transcript": res_json.get("text", "").strip(),
+                "language_code": language
+            }
+        else:
+            raise RuntimeError(f"Groq Whisper failed {response.status_code}: {response.text}")

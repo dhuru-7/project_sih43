@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { LandingLayout } from '../layouts/LandingLayout';
 import { AuthLayout } from '../layouts/AuthLayout';
 import { DashboardLayout } from '../layouts/DashboardLayout';
+import { GovernmentLayout } from '../layouts/GovernmentLayout';
 
 // Route Guards
 import { ProtectedRoute } from './ProtectedRoute';
@@ -23,6 +24,10 @@ import { MySubmissionsPage } from '../portals/citizen/pages/MySubmissionsPage';
 
 // Government Pages
 import { GovernmentDashboard } from '../portals/government/pages/Dashboard';
+import { GovernmentIssueInbox } from '../portals/government/pages/IssueInbox';
+import { GovernmentMapView } from '../portals/government/pages/MapView';
+import { GovernmentAssigned } from '../portals/government/pages/Assigned';
+import { GovernmentReportDetail } from '../portals/government/pages/ReportDetail';
 import { GovernmentProblems } from '../portals/government/pages/Problems';
 import { GovernmentChallenges } from '../portals/government/pages/Challenges';
 import { 
@@ -80,12 +85,39 @@ export const AppRoutes = () => {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
+      {/* 🏛️ Setu Govt Portal (Persistent Zero-Jitter Sidebar Shell) */}
+      <Route element={<GovernmentLayout />}>
+        <Route path="/government" element={<GovernmentDashboard />} />
+        <Route path="/government/dashboard" element={<GovernmentDashboard />} />
+        <Route path="/civic-dashboard" element={<GovernmentDashboard />} />
+        <Route path="/admin" element={<GovernmentDashboard />} />
+        <Route path="/admin/dashboard" element={<GovernmentDashboard />} />
+
+        {/* 📥 Setu Govt Portal - Issue Inbox (Stitch Screen: 0880a62941244f0b803d9e84d2b9f9e1) */}
+        <Route path="/government/inbox" element={<GovernmentIssueInbox />} />
+        <Route path="/government/issue-inbox" element={<GovernmentIssueInbox />} />
+        <Route path="/inbox" element={<GovernmentIssueInbox />} />
+
+        {/* 🗺️ Setu Govt Portal - Map View (Stitch Screen: 097b6c64fda845e1bbc8ee81b5957fe1) */}
+        <Route path="/government/map" element={<GovernmentMapView />} />
+        <Route path="/government/map-view" element={<GovernmentMapView />} />
+        <Route path="/map" element={<GovernmentMapView />} />
+
+        {/* 🏛️ Setu Govt Portal - Assigned (Web Layout) (Stitch Screen: 3d13ad36c0f64e8982230e4cbc9357a7) */}
+        <Route path="/government/assigned" element={<GovernmentAssigned />} />
+        <Route path="/assigned" element={<GovernmentAssigned />} />
+
+        {/* 📋 Setu Govt Portal - Detailed Report Page (Full Page Navigation) */}
+        <Route path="/government/reports/:id" element={<GovernmentReportDetail />} />
+        <Route path="/government/issues/:id" element={<GovernmentReportDetail />} />
+        <Route path="/reports/:id" element={<GovernmentReportDetail />} />
+      </Route>
+
       {/* Protected Stakeholder Portals */}
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           {/* 🏛️ Government Portal (Role: GOVERNMENT) */}
           <Route element={<RoleGuard allowedRoles={['GOVERNMENT']} />}>
-            <Route path="/government/dashboard" element={<GovernmentDashboard />} />
             <Route path="/government/problems" element={<GovernmentProblems />} />
             <Route path="/government/departments" element={<GovernmentDepartments />} />
             <Route path="/government/universities" element={<GovernmentUniversities />} />

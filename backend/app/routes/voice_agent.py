@@ -174,11 +174,27 @@ def transcribe_audio():
             }
         }), 200
     except Exception as e:
-        logger.exception("Sarvam STT failed in /transcribe")
-        return jsonify({
-            "status": "error",
-            "message": f"Transcription error: {str(e)}"
-        }), 500
+        logger.warning(f"Sarvam STT failed in /transcribe ({e}), attempting Groq Whisper fallback...")
+        try:
+            from app.services.groq_service import GroqService
+            whisper_res = GroqService.transcribe_audio(
+                audio_bytes=audio_bytes,
+                filename=filename,
+                language="hi"
+            )
+            return jsonify({
+                "status": "success",
+                "data": {
+                    "transcript": whisper_res.get("transcript", "").strip(),
+                    "language": whisper_res.get("language_code", "hi")
+                }
+            }), 200
+        except Exception as groq_e:
+            logger.exception(f"Groq Whisper fallback also failed: {groq_e}")
+            return jsonify({
+                "status": "error",
+                "message": f"Transcription error: {str(e)}"
+            }), 500
 
 @voice_agent_bp.route("/describe-issue", methods=["POST"])
 def describe_issue():
@@ -289,15 +305,21 @@ def describe_issue():
             "message": "No voice audio, text, or images received for grievance description."
         }), 400
 
-    # 3. Extract visual scene summary from photos and video frame thumbnails (if available)
+    # 3. Visual evidence extraction via Gemini Vision — DISABLED per user request.
+    #    Will be re-enabled later. The Groq LLM synthesizes from text inputs alone for now.
     visual_summary = ""
-    if images and len(images) > 0:
-        try:
-            visual_summary = GeminiService.describe_visual_evidence(images)
-        except Exception as e:
-            logger.warning(f"Visual evidence extraction failed (non-critical): {e}")
+    # if images and len(images) > 0:
+    #     try:
+    #         visual_summary = GeminiService.describe_visual_evidence(images)
+    #         logger.info(f"Visual evidence extracted: {visual_summary}")
+    #     except Exception as e:
+    #         logger.warning(f"Visual evidence extraction failed (non-critical): {e}")
 
-    # 4. Formulate structured grievance using Groq LLM Mind (llama-3.3-70b-versatile) as PRIMARY engine
+    # If citizen attached media without typing/speaking notes, use visual summary as primary observation
+    if not transcript.strip() and visual_summary.strip():
+        transcript = f"Visual on-site civic evidence observed: {visual_summary.strip()}"
+
+    # 4. Formulate structured grievance using Groq LLM Mind / Gemini Vision
     issue_meta = None
     from app.services.groq_service import GroqService
     try:
@@ -305,7 +327,7 @@ def describe_issue():
         issue_meta = GroqService.synthesize_grievance_report(
             video_transcripts=video_transcript or "",
             voice_transcript=voice_transcript or "",
-            user_text=user_notes or transcript or "",
+            user_text=user_notes or transcript or (f"Observed in media: {visual_summary}" if visual_summary else ""),
             visual_summary=visual_summary or "",
             location_info=location_info,
             reporter_type=reporter_type or "Individual Citizen",
@@ -315,24 +337,25 @@ def describe_issue():
         logger.warning(f"Groq synthesis failed ({groq_err}), falling back to Sarvam 105B...")
         try:
             issue_meta = SarvamService.generate_issue_description(
-                transcript=transcript or "Visual civic issue observed and reported with attached media evidence.",
+                transcript=transcript or "Civic issue reported with attached media evidence.",
                 visual_summary=visual_summary,
                 location_info=location_info,
                 reporter_type=reporter_type or "Individual Citizen",
                 group_name=group_name
             )
         except Exception as sarvam_err:
-            logger.warning(f"Sarvam 105B fallback failed ({sarvam_err}), trying Gemini fallback...")
+            logger.warning(f"Sarvam fallback failed ({sarvam_err}), trying Gemini...")
             try:
                 issue_meta = GeminiService.generate_issue_description(
-                    transcript=transcript or "Visual civic problem reported by citizen.",
+                    transcript=transcript or "Civic issue reported with attached media evidence.",
                     images=images,
                     location_info=location_info,
                     reporter_type=reporter_type,
-                    group_name=group_name
+                    group_name=group_name,
+                    visual_summary=visual_summary
                 )
             except Exception as gemini_err:
-                logger.exception(f"Gemini fallback also failed ({gemini_err}), falling back to NLP classifier...")
+                logger.exception(f"All AI fallbacks failed ({gemini_err}), falling back to NLP classifier...")
 
     if issue_meta:
         return jsonify({

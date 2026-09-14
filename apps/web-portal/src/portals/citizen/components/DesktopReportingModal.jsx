@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
-import { reverseGeocode, extractVideoThumbnail, extractAudioFromMedia } from '../../../services/geoService';
+import { reverseGeocode, extractVideoThumbnail, extractVideoKeyframes, extractAudioFromMedia } from '../../../services/geoService';
 import { scanAllMedia } from '../../../services/nsfwService';
 import { synthesizeFallbackGrievance } from '../../../services/clientSynthesisService';
 import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
@@ -701,27 +701,34 @@ export const DesktopReportingModal = ({
             imagePayloads.push(item.url);
           }
         } else if (item.type === 'video') {
-          // Extract a frame thumbnail from video as image payload for AI vision
+          // Extract multiple keyframes across video for AI vision
           try {
-            const frameThumb = await extractVideoThumbnail(item.file || item.blob || item.url);
-            if (frameThumb) imagePayloads.push(frameThumb);
+            const keyframes = await extractVideoKeyframes(item.file || item.blob || item.url, 3);
+            if (keyframes && keyframes.length > 0) {
+              imagePayloads.push(...keyframes);
+            }
           } catch (e) {
-            console.warn('Could not extract video frame thumbnail:', e);
+            console.warn('Could not extract video keyframes:', e);
           }
 
-          // Extract audio track from video and transcribe via Sarvam Saaras v3 STT
+          // Extract audio track from video and transcribe via STT
           try {
-            const audioBlob = await extractAudioFromMedia(item.file || item.blob);
-            if (audioBlob && audioBlob.size > 1000) {
-              const formData = new FormData();
-              formData.append('audio', audioBlob, 'video_audio.wav');
-              const tResp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
-                method: 'POST',
-                body: formData
-              });
-              const tJson = await tResp.json();
-              if (tResp.ok && tJson.data && tJson.data.transcript) {
-                videoTranscripts.push(tJson.data.transcript);
+            if (item.transcript && item.transcript.trim()) {
+              videoTranscripts.push(item.transcript.trim());
+            } else {
+              const audioBlob = item.audioBlob || (await extractAudioFromMedia(item.file || item.blob)) || item.file || item.blob;
+              if (audioBlob && audioBlob.size > 800) {
+                const formData = new FormData();
+                const fname = audioBlob.name || (audioBlob.type?.includes('mp4') ? 'video.mp4' : 'video_audio.webm');
+                formData.append('audio', audioBlob, fname);
+                const tResp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
+                  method: 'POST',
+                  body: formData
+                });
+                const tJson = await tResp.json();
+                if (tResp.ok && tJson.data && tJson.data.transcript) {
+                  videoTranscripts.push(tJson.data.transcript);
+                }
               }
             }
           } catch (e) {
@@ -730,21 +737,23 @@ export const DesktopReportingModal = ({
         }
       }
 
-      // 2. Select card hero thumbnail: first image or first frame of video
+      // 2. Select card hero thumbnail: first image or first illuminated keyframe of video
       let finalThumbnail = null;
       const firstImage = mediaItems.find((m) => m.type === 'image');
       const firstVideo = mediaItems.find((m) => m.type === 'video');
       if (firstImage) {
         finalThumbnail = firstImage.url;
+      } else if (imagePayloads.length > 0) {
+        finalThumbnail = imagePayloads[0];
       } else if (firstVideo) {
         finalThumbnail = await extractVideoThumbnail(firstVideo.blob || firstVideo.file || firstVideo.url);
       }
 
-      // 3. Process with AI Engine (Groq LLM Mind with llama-3.3-70b-versatile)
+      // 3. Process with AI Engine (Groq LLM Mind + Gemini Vision)
       const aiPayload = {
         text: notepadText.trim(),
         videoTranscript: videoTranscripts.join('; '),
-        images: imagePayloads.slice(0, 4),
+        images: imagePayloads.slice(0, 6),
         locationInfo: locationDetails,
         reporterType: 'Individual Citizen',
         groupName: '',

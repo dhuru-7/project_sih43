@@ -1,3 +1,4 @@
+import os
 import logging
 import requests
 from flask import current_app
@@ -25,8 +26,15 @@ Conversation Rules for Spoken Voice:
 class GeminiService:
     @staticmethod
     def _get_api_key_and_model():
-        key = current_app.config.get("GEMINI_API_KEY")
-        model = current_app.config.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
+        try:
+            key = current_app.config.get("GEMINI_API_KEY")
+            model = current_app.config.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
+            if key:
+                return key, model
+        except (RuntimeError, AttributeError):
+            pass
+        key = os.getenv("GEMINI_API_KEY")
+        model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
         if not key:
             raise ValueError("GEMINI_API_KEY is not configured.")
         return key, model
@@ -102,10 +110,17 @@ class GeminiService:
             headers = {"Content-Type": "application/json"}
 
             user_parts = [
-                {"text": "Briefly describe the civic issue, physical damage, environmental hazard, or infrastructure defect visible in these photos or video frames in 1-2 factual sentences."}
+                {"text": (
+                    "You are an expert AI civic inspector analyzing on-site photos and video frames submitted by a citizen for a municipal grievance report.\n"
+                    "Carefully inspect the visual evidence and describe the specific civic problem shown:\n"
+                    "- Identify the precise physical defect, hazard, or failure (e.g. broken asphalt road, deep uncovered pothole, overflowing garbage dump, burst water pipeline flooding road, clogged open drain with stagnant sewage, loose dangling electric wire, broken pole, cave-in, fallen tree blocking transit).\n"
+                    "- Note any visible landmarks, shop names, street boards, vehicle numbers, or signs.\n"
+                    "- Describe the physical extent, severity, and immediate danger or disruption to pedestrians, two-wheelers, and residents.\n"
+                    "Write a factual, specific 2-3 sentence visual summary of what is physically shown in this media."
+                )}
             ]
 
-            for img in images[:3]:
+            for img in images[:6]:
                 if isinstance(img, dict) and "data" in img:
                     user_parts.append({
                         "inlineData": {
@@ -140,7 +155,7 @@ class GeminiService:
                 "contents": [{"parts": user_parts}],
                 "generationConfig": {
                     "temperature": 0.1,
-                    "maxOutputTokens": 150
+                    "maxOutputTokens": 250
                 }
             }
 
@@ -160,7 +175,7 @@ class GeminiService:
         return ""
 
     @classmethod
-    def generate_issue_description(cls, transcript: str, images: list = None, location_info: dict = None, reporter_type: str = None, group_name: str = None) -> dict:
+    def generate_issue_description(cls, transcript: str, images: list = None, location_info: dict = None, reporter_type: str = None, group_name: str = None, visual_summary: str = None) -> dict:
         """
         Synthesizes citizen notes, voice transcripts, attached image evidence, and location details
         into a formal civic grievance with title, description, category (1 of 17), severity,
@@ -195,11 +210,17 @@ class GeminiService:
         system_prompt = (
             "You are TARA, the AI Civic Intelligence Engine for SETU (India National Citizen Grievance & Innovation Ecosystem). "
             "A citizen, grassroots collective, civil society organization, or community group has provided a grievance statement, "
-            "audio/video transcript, location details, and photographic evidence. "
-            "Your task is to synthesize this input into a formal, clear, actionable, and high-impact civic report. "
+            "audio/video transcript, location details, and photographic/video evidence. "
+            "Your task is to synthesize this input into a formal, clear, actionable, and authentic civic grievance. "
+            "CRITICAL FORMAT RULES FOR DESCRIPTION: "
+            "1. Write the description strictly in the FIRST PERSON from the perspective of the reporting citizen themselves (e.g., 'I am reporting an urgent issue regarding...', 'In our locality...'). "
+            "2. NEVER speak in the third person. DO NOT say 'Ground-level civic grievance reported by Individual Citizen', 'The citizen reported', or 'Verified with 1 on-site video recording'. "
+            "3. Highlight specific concrete details: Street Name / Road / Landmark, Time / Duration, Specific Problem & Hazard, and Impact on residents/commuters. "
+            "4. Format the description with an opening statement, structured bullet highlights (• Street / Landmark, • Time / Duration, • Specific Issue, • Impact), and a polite request for municipal inspection. "
+            "5. BASE YOUR REPORT DIRECTLY ON THE VISIBLE EVIDENCE: If on-site photos or video frames are provided, describe the EXACT physical defect shown (e.g., pothole, broken pipe, garbage dump, hanging wires) rather than generic text. "
             "Output strictly valid JSON with no markdown wrapping, containing the following keys: "
-            "'title' (concise, formal, max 10 words), "
-            "'description' (2-4 sentences explaining what the issue is, specific hazard/impact, and urgency), "
+            "'title' (concise, formal, max 10 words stating the core issue and area), "
+            "'description' (the first-person structured grievance description), "
             f"'category' (MUST be exactly one of the 17 official categories: {official_categories_str}), "
             "'severity' (one of: 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'), "
             "'impact_count' (string estimate of people impacted, e.g. '150-300 residents' or '500+ daily commuters'), "
@@ -211,6 +232,8 @@ class GeminiService:
         
         # Add textual information
         text_context = f"Reported statement/transcript: \"{transcript}\"\n"
+        if visual_summary and visual_summary.strip():
+            text_context += f"Visual Scene Analysis from Attached Photos/Video: \"{visual_summary.strip()}\"\n"
         if location_info:
             text_context += (
                 f"Location details: Village/Town/City: {location_info.get('villageCity') or location_info.get('village_city') or 'N/A'}, "
@@ -228,7 +251,7 @@ class GeminiService:
 
         # Add image parts if provided (base64 inlineData)
         if images and isinstance(images, list):
-            for img in images[:3]: # up to 3 images
+            for img in images[:6]:
                 if isinstance(img, dict) and "data" in img:
                     user_content_parts.append({
                         "inlineData": {
@@ -248,6 +271,13 @@ class GeminiService:
                         })
                     except Exception:
                         pass
+                elif isinstance(img, str) and len(img) > 100:
+                    user_content_parts.append({
+                        "inlineData": {
+                            "mimeType": "image/jpeg",
+                            "data": img
+                        }
+                    })
 
         payload = {
             "system_instruction": {

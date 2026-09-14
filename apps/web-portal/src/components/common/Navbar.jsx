@@ -50,26 +50,21 @@ export const Navbar = () => {
     }}>
       {/* Brand Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'baseline', textDecoration: 'none', gap: '2px' }} className="group">
-          <span style={{
-            fontSize: '1.875rem',
-            fontWeight: '800',
-            letterSpacing: '-0.04em',
-            color: '#0A0A0A',
-            transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
-            Setu
-          </span>
-          <span style={{
-            display: 'inline-block',
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            backgroundColor: '#0A0A0A',
-            marginLeft: '2px',
-            marginBottom: '1px'
-          }} />
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', height: '44px', padding: '0 10px' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <span style={{
+              fontSize: '1.5rem',
+              fontWeight: '800',
+              letterSpacing: '-0.03em',
+              color: '#000000',
+              fontFamily: 'var(--font-sans)',
+              whiteSpace: 'nowrap',
+              lineHeight: 1
+            }}>
+              Setu.
+            </span>
+          </Link>
+        </div>
         {user && getRoleBadge(user.role)}
       </div>
 

@@ -186,17 +186,26 @@ class SarvamService:
 
         system_prompt = (
             "You are TARA, the AI Civic Intelligence Engine for SETU (India National Citizen Grievance & Innovation Platform). "
-            "A citizen, collective, grassroots body, or civil society group has reported a civic problem. "
+            "A citizen has reported a civic problem using spoken video, voice note, or written text. "
             "Analyze the statement/transcript, visual evidence summary from photos and video frames, and location. "
-            "Synthesize this into a formal, clear, actionable, and high-impact civic report. "
-            "You must respond with ONLY valid JSON (no markdown formatting, no code fences, no introductory or concluding words) containing these exact keys: "
-            "'title' (formal, concise title, under 10 words), "
-            "'description' (2-4 clear sentences detailing the specific issue, specific hazard/disruption, and urgency), "
+            "Synthesize this into an authentic, actionable citizen grievance report. "
+            "CRITICAL REQUIREMENT FOR DESCRIPTION: Write the 'description' in the FIRST PERSON from the perspective of the reporting citizen themselves (e.g., 'I am reporting an urgent issue...', 'In our street...'). "
+            "NEVER use third-person bureaucratic phrasing like 'A grievance was reported by Individual Citizen' or 'Verified with 1 video'. "
+            "Highlight the exact street name, nearby landmark, time/duration, core problem, and impact. "
+            "Format the description with an opening statement, followed by structured bullet details: "
+            "• Street / Landmark: [name]\n"
+            "• Time / Duration: [time]\n"
+            "• Specific Issue: [problem]\n"
+            "• Impact: [who is affected]\n"
+            "and end with a polite request for municipal action. "
+            "You must respond with ONLY valid JSON (no markdown formatting, no code fences) containing these exact keys: "
+            "'title' (direct, under 10 words, stating problem and area), "
+            "'description' (the first-person structured description), "
             f"'category' (MUST be exactly one of the 17 official categories: {cats_str}), "
             "'severity' (MUST be one of: 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'), "
             "'impact_count' (string estimate of people impacted, e.g. '200-500 residents' or '1,000+ daily commuters'), "
-            "'impact_description' (1-2 sentences on who is affected and how), "
-            "'reporter_type' (reporting entity, e.g. 'Individual Citizen', 'Resident Welfare Association (RWA)', 'Self-Help Group (SHG / Sakhi Mandal)', 'Non-Governmental Organization (NGO / CSO)', 'Gram Sabha / Village Committee', 'Youth Club / Nehru Yuva Kendra', 'Farmers Producer Organization (FPO)', 'ASHA / Anganwadi Frontline Worker', 'Traders / Market Association', etc.)."
+            "'impact_description' (1-2 sentences in citizen words on who is affected), "
+            "'reporter_type' (reporting entity, e.g. 'Individual Citizen', 'Resident Welfare Association (RWA)', etc.)."
         )
 
         user_content_lines = []
@@ -256,7 +265,12 @@ class SarvamService:
         if json_match:
             clean_text = json_match.group(0)
 
-        parsed = json.loads(clean_text)
+        try:
+            parsed = json.loads(clean_text, strict=False)
+        except Exception:
+            # Fallback: escape literal unescaped newlines inside string values
+            sanitized = re.sub(r'[\r\n\t]+', ' ', clean_text)
+            parsed = json.loads(sanitized, strict=False)
 
         # Validate & normalize category to 1 of the 17 official categories
         cat = parsed.get("category", "").strip()

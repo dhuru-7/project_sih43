@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
-import { reverseGeocode, extractVideoThumbnail, extractAudioFromMedia } from '../../../services/geoService';
+import { reverseGeocode, extractVideoThumbnail, extractVideoKeyframes, extractAudioFromMedia } from '../../../services/geoService';
 import { scanAllMedia } from '../../../services/nsfwService';
 import { synthesizeFallbackGrievance } from '../../../services/clientSynthesisService';
 import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
@@ -399,6 +399,10 @@ export const MobileReportingModal = ({
   const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const videoAudioRecorderRef = useRef(null);
+  const videoAudioChunksRef = useRef([]);
+  const videoSpeechRecognitionRef = useRef(null);
+  const videoLiveTranscriptRef = useRef('');
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [facingMode, setFacingMode] = useState('environment');
@@ -667,11 +671,12 @@ export const MobileReportingModal = ({
         return;
       }
       try {
-        // Optionally attach audio track for recording without crashing if microphone permission is not granted
-        if (streamRef.current.getAudioTracks().length === 0) {
+        // Guarantee audio track availability for video
+        let audioTrack = streamRef.current.getAudioTracks()[0];
+        if (!audioTrack) {
           try {
             const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const audioTrack = audioStream.getAudioTracks()[0];
+            audioTrack = audioStream.getAudioTracks()[0];
             if (audioTrack) {
               streamRef.current.addTrack(audioTrack);
             }
@@ -680,6 +685,7 @@ export const MobileReportingModal = ({
           }
         }
 
+        // 1. Video MediaRecorder
         recordedChunksRef.current = [];
         let recorder;
         try {
@@ -698,16 +704,102 @@ export const MobileReportingModal = ({
           }
         };
 
+        // 2. Concurrently record pure audio stream for reliable transcription
+        videoAudioChunksRef.current = [];
+        if (audioTrack) {
+          try {
+            const audioOnlyStream = new MediaStream([audioTrack]);
+            const aMime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+              ? 'audio/webm;codecs=opus'
+              : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
+            const audioRec = new MediaRecorder(audioOnlyStream, aMime ? { mimeType: aMime } : {});
+            audioRec.ondataavailable = (e) => {
+              if (e.data && e.data.size > 0) {
+                videoAudioChunksRef.current.push(e.data);
+              }
+            };
+            audioRec.start(250);
+            videoAudioRecorderRef.current = audioRec;
+          } catch (aRecErr) {
+            console.warn('Dedicated audio recorder initialization note:', aRecErr);
+          }
+        }
+
+        // 3. Real-time browser SpeechRecognition during video recording
+        videoLiveTranscriptRef.current = '';
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRec) {
+          try {
+            const recog = new SpeechRec();
+            recog.continuous = true;
+            recog.interimResults = true;
+            recog.lang = 'en-IN';
+            recog.onresult = (event) => {
+              let liveAccumulated = '';
+              for (let i = 0; i < event.results.length; ++i) {
+                liveAccumulated += event.results[i][0].transcript + ' ';
+              }
+              if (liveAccumulated.trim()) {
+                videoLiveTranscriptRef.current = liveAccumulated.trim();
+              }
+            };
+            recog.onerror = (e) => console.warn('SpeechRecognition during video notice:', e);
+            recog.start();
+            videoSpeechRecognitionRef.current = recog;
+          } catch (srErr) {
+            console.warn('SpeechRecognition not started:', srErr);
+          }
+        }
+
         recorder.onstop = () => {
+          // Stop secondary audio recorder if active
+          if (videoAudioRecorderRef.current && videoAudioRecorderRef.current.state !== 'inactive') {
+            try { videoAudioRecorderRef.current.stop(); } catch (_) {}
+          }
+          if (videoSpeechRecognitionRef.current) {
+            try { videoSpeechRecognitionRef.current.stop(); } catch (_) {}
+          }
+
           const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
           const url = URL.createObjectURL(blob);
+
+          const audioBlob = videoAudioChunksRef.current && videoAudioChunksRef.current.length > 0
+            ? new Blob(videoAudioChunksRef.current, { type: 'audio/webm' })
+            : null;
+          const capturedTranscript = videoLiveTranscriptRef.current || '';
+
           const newItem = {
             id: `media-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
             type: 'video',
             url: url,
             blob: blob,
+            audioBlob: audioBlob,
+            transcript: capturedTranscript,
             name: `Clip_${mediaItems.length + 1}.webm`
           };
+
+          // Trigger asynchronous background transcription immediately
+          if (audioBlob && audioBlob.size > 800) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'video_audio.webm');
+            fetch(`${API_BASE_URL}/voice/transcribe`, {
+              method: 'POST',
+              body: formData
+            })
+              .then((res) => res.json())
+              .then((json) => {
+                if (json && json.status === 'success' && json.data && json.data.transcript) {
+                  const srvTranscript = json.data.transcript.trim();
+                  if (srvTranscript) {
+                    setMediaItems((prev) =>
+                      prev.map((m) => (m.id === newItem.id ? { ...m, transcript: srvTranscript } : m))
+                    );
+                  }
+                }
+              })
+              .catch((err) => console.warn('Background transcription error:', err));
+          }
+
           setMediaItems((prev) => {
             const updated = [...prev, newItem];
             setActiveMediaIndex(updated.length - 1);
@@ -727,6 +819,12 @@ export const MobileReportingModal = ({
     } else {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
+      }
+      if (videoAudioRecorderRef.current && videoAudioRecorderRef.current.state !== 'inactive') {
+        try { videoAudioRecorderRef.current.stop(); } catch (_) {}
+      }
+      if (videoSpeechRecognitionRef.current) {
+        try { videoSpeechRecognitionRef.current.stop(); } catch (_) {}
       }
       setIsRecordingVideo(false);
     }
@@ -967,27 +1065,34 @@ export const MobileReportingModal = ({
             imagePayloads.push(item.url);
           }
         } else if (item.type === 'video') {
-          // Extract a frame thumbnail from video as image payload for AI vision
+          // Extract multiple keyframes across video for AI vision
           try {
-            const frameThumb = await extractVideoThumbnail(item.file || item.blob || item.url);
-            if (frameThumb) imagePayloads.push(frameThumb);
+            const keyframes = await extractVideoKeyframes(item.file || item.blob || item.url, 3);
+            if (keyframes && keyframes.length > 0) {
+              imagePayloads.push(...keyframes);
+            }
           } catch (e) {
-            console.warn('Could not extract video frame thumbnail:', e);
+            console.warn('Could not extract video keyframes:', e);
           }
 
-          // Extract audio track from video and transcribe via Sarvam Saaras v3 STT
+          // Extract audio track from video and transcribe via STT
           try {
-            const audioBlob = await extractAudioFromMedia(item.file || item.blob);
-            if (audioBlob && audioBlob.size > 1000) {
-              const formData = new FormData();
-              formData.append('audio', audioBlob, 'video_audio.wav');
-              const tResp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
-                method: 'POST',
-                body: formData
-              });
-              const tJson = await tResp.json();
-              if (tResp.ok && tJson.data && tJson.data.transcript) {
-                videoTranscripts.push(tJson.data.transcript);
+            if (item.transcript && item.transcript.trim()) {
+              videoTranscripts.push(item.transcript.trim());
+            } else {
+              const audioBlob = item.audioBlob || (await extractAudioFromMedia(item.file || item.blob)) || item.file || item.blob;
+              if (audioBlob && audioBlob.size > 800) {
+                const formData = new FormData();
+                const fname = audioBlob.name || (audioBlob.type?.includes('mp4') ? 'video.mp4' : 'video_audio.webm');
+                formData.append('audio', audioBlob, fname);
+                const tResp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
+                  method: 'POST',
+                  body: formData
+                });
+                const tJson = await tResp.json();
+                if (tResp.ok && tJson.data && tJson.data.transcript) {
+                  videoTranscripts.push(tJson.data.transcript);
+                }
               }
             }
           } catch (e) {
@@ -996,21 +1101,23 @@ export const MobileReportingModal = ({
         }
       }
 
-      // 2. Select card hero thumbnail: first image or first frame of video
+      // 2. Select card hero thumbnail: first image or first illuminated keyframe of video
       let finalThumbnail = null;
       const firstImage = mediaItems.find((m) => m.type === 'image');
       const firstVideo = mediaItems.find((m) => m.type === 'video');
       if (firstImage) {
         finalThumbnail = firstImage.url;
+      } else if (imagePayloads.length > 0) {
+        finalThumbnail = imagePayloads[0];
       } else if (firstVideo) {
         finalThumbnail = await extractVideoThumbnail(firstVideo.blob || firstVideo.file || firstVideo.url);
       }
 
-      // 3. Process with AI Engine (Groq LLM Mind with llama-3.3-70b-versatile)
+      // 3. Process with AI Engine (Groq LLM Mind + Gemini Vision)
       const aiPayload = {
         text: notepadText.trim(),
         videoTranscript: videoTranscripts.join('; '),
-        images: imagePayloads.slice(0, 4),
+        images: imagePayloads.slice(0, 6),
         locationInfo: locationDetails,
         reporterType: 'Individual Citizen',
         groupName: '',
@@ -1824,7 +1931,13 @@ export const MobileReportingModal = ({
             </button>
 
             <button
-              onClick={() => setStep('description')}
+              onClick={() => {
+                const videoSpeech = mediaItems.map((m) => m.transcript).filter(Boolean).join(' ').trim();
+                if (!notepadText.trim() && videoSpeech) {
+                  setNotepadText(videoSpeech);
+                }
+                setStep('description');
+              }}
               className="apple-tap"
               style={{
                 pointerEvents: 'auto',
