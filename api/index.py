@@ -391,9 +391,12 @@ def create_standalone_app():
     return app
 
 # WSGI application entry point for Vercel
-try:
-    from app import create_app
-    app = create_app(os.getenv("FLASK_ENV", "production"))
-except Exception as exc:
-    print(f"Standard backend loading failed ({exc}); running standalone serverless app...")
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     app = create_standalone_app()
+else:
+    try:
+        from app import create_app
+        app = create_app(os.getenv("FLASK_ENV", "development"))
+    except Exception as exc:
+        print(f"Standard backend loading failed ({exc}); running standalone serverless app...")
+        app = create_standalone_app()
