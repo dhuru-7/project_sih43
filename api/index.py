@@ -100,6 +100,9 @@ def create_standalone_app():
 
     init_db()
 
+    @app.route("/", methods=["GET"])
+    @app.route("/api", methods=["GET"])
+    @app.route("/health", methods=["GET"])
     @app.route("/api/health", methods=["GET"])
     def health():
         return jsonify({
@@ -108,6 +111,7 @@ def create_standalone_app():
             "version": "1.0.0"
         }), 200
 
+    @app.route("/v1/voice/transcribe", methods=["POST"])
     @app.route("/api/v1/voice/transcribe", methods=["POST"])
     def transcribe():
         audio_bytes = None
@@ -176,6 +180,7 @@ def create_standalone_app():
             }
         }), 200
 
+    @app.route("/v1/voice/describe-issue", methods=["POST"])
     @app.route("/api/v1/voice/describe-issue", methods=["POST"])
     def describe_issue():
         data = request.get_json(silent=True) or {}
@@ -319,6 +324,7 @@ def create_standalone_app():
             }
         }), 200
 
+    @app.route("/v1/problems", methods=["GET", "POST"])
     @app.route("/api/v1/problems", methods=["GET", "POST"])
     def problems():
         if request.method == "POST":
