@@ -122,28 +122,42 @@ export async function extractAudioFromVideo(videoFileOrBlob) {
   }
 }
 
+import { transcribeAudioDirect } from './sarvamClientService';
+
 async function transcribeAudioBlob(blob, fallbackName, apiBaseUrl) {
   if (!blob || blob.size <= 800) return '';
 
-  const formData = new FormData();
   const filename = blob.name || fallbackName || 'speech.wav';
-  formData.append('audio', blob, filename);
 
+  // 1. Try backend proxy first
   try {
+    const formData = new FormData();
+    formData.append('audio', blob, filename);
+
     const response = await fetch(`${apiBaseUrl}/voice/transcribe`, {
       method: 'POST',
       body: formData
     });
 
     const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
+    if (response.ok && contentType.includes('application/json')) {
       const json = await response.json().catch(() => null);
-      if (response.ok && json?.status === 'success') {
-        return (json?.data?.transcript || '').trim();
+      if (json?.status === 'success' && json?.data?.transcript) {
+        return json.data.transcript.trim();
       }
     }
   } catch (err) {
-    console.warn('Transcription request error:', err);
+    console.warn('Backend transcription unavailable, using direct Sarvam STT:', err);
+  }
+
+  // 2. Direct Sarvam Saaras v3 fallback (CORS supported natively by api.sarvam.ai)
+  try {
+    const directTranscript = await transcribeAudioDirect(blob, filename);
+    if (directTranscript) {
+      return directTranscript;
+    }
+  } catch (directErr) {
+    console.warn('Direct Sarvam STT fallback failed:', directErr);
   }
 
   return '';

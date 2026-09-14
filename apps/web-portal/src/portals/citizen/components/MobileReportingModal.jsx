@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
 import { reverseGeocode, extractVideoThumbnail } from '../../../services/geoService';
 import { synthesizeFallbackGrievance } from '../../../services/clientSynthesisService';
+import { generateGrievanceWithSarvam105B } from '../../../services/sarvamClientService';
 import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
 import { collectReportMediaEvidence } from '../../../services/reportMediaService';
 
@@ -1077,7 +1078,16 @@ export const MobileReportingModal = ({
           }
         }
       } catch (err) {
-        console.warn('AI issue description fallback:', err);
+        console.warn('Backend AI issue description unavailable:', err);
+      }
+
+      // Direct client-side Sarvam 105B fallback (enabled by api.sarvam.ai CORS support)
+      if (!aiResult) {
+        try {
+          aiResult = await generateGrievanceWithSarvam105B(aiPayload);
+        } catch (directErr) {
+          console.warn('Direct Sarvam 105B fallback error:', directErr);
+        }
       }
 
       // Contextual fallback synthesis when backend AI is unreachable
