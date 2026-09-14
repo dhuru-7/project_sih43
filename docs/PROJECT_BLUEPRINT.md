@@ -44,16 +44,44 @@ graph LR
 ---
 
 ### 1. 📱 Citizen & Community Reporting Portal
-* **Target Users**: Everyday citizens, Village Youth, Panchayati Raj Institutions (Gram Panchayats), Urban Local Bodies (ULBs), NGOs, and Pragya Kendra operators.
+* **Target Users**: Everyday citizens, Village Youth, Panchayati Raj Institutions (Gram Panchayats), Urban Local Bodies (ULBs), Schools, NGOs, and Pragya Kendra operators.
+* **Design Philosophy**:
+  * **Minimalist & Premium**: High typographic contrast, warm monochrome accents, clutter-free layouts, and spacious cards.
+  * **Apple-Inspired Fluid Interactions**: Smooth 60fps spring animations, backdrop blurs (glassmorphism), tactile button feedback, and non-intrusive modal sheets.
 * **Device Optimization**:
-  * **Mobile-First (Budget Phones)**: Lightweight, 1-tap camera access, big touch buttons, PWA installable (<2MB), WhatsApp share.
-  * **Desktop (Gram Panchayat / CSC PCs)**: Full multi-column view, detailed document upload, public challenge explorer.
+  * **Mobile-First (Budget Phones)**: Lightweight, 1-tap camera access, big touch targets, PWA installable (<2MB), WhatsApp share.
+  * **Desktop (Gram Panchayat / CSC PCs)**: Full multi-column view, detailed document upload, high-resolution media previews, public challenge explorer.
 * **Core Capabilities**:
-  * **Multi-Modal Intake**: Submit problems via text, photos, video clips, and supporting PDF/documents.
-  * **TARA AI Voice Assistant**: Voice-based grievance registration in Hindi and regional dialects for citizens with low digital literacy.
+  * **3-Step AI Reporting**:
+    1. **Capture/Upload**: Record or attach photos/videos from camera or gallery.
+    2. **Describe or Speak**: Speak a voice note in regional dialect or type brief notes in the notepad.
+    3. **Post**: TARA automatically transcribes all speech using **Sarvam Saaras v3**, extracts keyframe evidence, and uses **Sarvam 105B** to draft an authentic first-person grievance with title, official category, severity, urgency, impact summary, and municipal routing.
+  * **Interactive Explore Feed**:
+    * Map and list views of verified civic problems across Jharkhand districts.
+    * Real-time category filtering (all 17 official categories) and status badges (`Reported`, `Assigned`, `In Progress`, `Resolved`).
+    * **Community Upvoting & Verification**: Citizens upvote existing neighborhood issues to highlight collective community priority without duplicate ticket spam.
+  * **Direct Citizen-Government Messaging (`/messages`)**:
+    * Two-way encrypted conversation channel between citizens, municipal officers, university SPOCs, and community leads.
+    * Request clarifying details, upload supplementary site photos, and receive official resolution notifications.
+  * **TARA AI Voice Assistant & Copilot**:
+    * Voice-based grievance registration in Hindi and regional dialects for citizens with low digital literacy, with special focus on Jharkhand accents and dialect patterns.
+    * Citizens can summon TARA at any time to navigate the app, change accessibility settings (high contrast, text size), listen to status updates, and draft responses.
   * **Geo-Tagging**: Auto GPS location capture (`navigator.geolocation`) + manual Jharkhand District / Block / Panchayat picker.
-  * **Community Upvoting**: Community members can upvote and endorse local issues to highlight urgency and crowdsourced priority.
   * **Public Transparency Tracker**: Track ticket lifecycle in real-time (`Submitted ➔ AI Triaged ➔ Assigned to University ➔ Team Formed ➔ Prototype Ready ➔ Resolved`).
+
+### TARA AI Constellation Architecture
+TARA is the single unified intelligence persona that users interact with, backed by an orchestrated constellation of specialized AI models:
+
+* **Acoustic & Speech Intelligence (Sarvam Saaras v3)**:
+  * Industry-leading speech-to-text specifically trained on Indian accents, Hindi, Bhojpuri, Maithili, Santhali, Nagpuri, and colloquial Indian English.
+  * Automatically transcribes both citizen voice recordings and spoken audio inside user-uploaded MP4/WebM videos.
+* **Cognitive Reasoning & Synthesis (Sarvam 105B)**:
+  * 105B parameter Indian-centric foundational LLM that synthesizes raw acoustic transcripts, typed notes, and geographic coordinates.
+  * Formulates authentic first-person citizen grievance reports adhering strictly to official Indian civic categories, severity matrices, and administrative boundaries.
+* **Computer Vision (Gemini 2.5 Flash / Vision)**:
+  * Inspects video keyframes and uploaded photos to extract physical civic evidence (e.g. road craters, open manholes, contaminated water bodies, illegal garbage dumping, snapped high-voltage cables).
+* **Speed & Real-time Prioritization (Groq Llama 3.3 70B)**:
+  * High-throughput inference for real-time deduplication matching, semantic similarity clustering, and administrative routing.
 
 ---
 
@@ -64,8 +92,12 @@ graph LR
   * **District Planning Officers**: DC / DM offices across Jharkhand's 24 districts.
 * **Core Capabilities**:
   * **AI Problem Review Queue**: View incoming tickets triaged by AI (Domain tag, Deduplication score, Severity matrix).
+  * **Clustered Similar Reports**: Officers see related reports grouped by topic, location, and duplicate similarity so repeated citizen submissions become one stronger civic signal.
+  * **Follow-Up Automation via TARA**: Officers can ask TARA to message or call all citizens who reported a similar issue, collect missing details, and summarize responses back into the case file. Officers can still message a specific citizen, NGO, school, ULB, or organization manually.
   * **Task & Challenge Creation**: Convert grassroots problems into official **"State Innovation Challenges"** with defined problem statements and impact metrics.
   * **Institutional Routing & Allocation**: Assign validated challenges to appropriate universities based on academic specialization, labs, and faculty domain expertise (e.g., Water R&D to IIT ISM Dhanbad / BIT Mesra; Agro-tech to Birsa Agricultural University).
+  * **University Capability Suggestions**: AI recommends departments and universities with relevant labs, mentors, and resources for solving each validated challenge.
+  * **Posts & Analytics**: Officers can run awareness posts, monitor report trends, inspect district/category analytics, and track assigned university projects.
   * **Grant & Seed Funding Approval**: Sanction government innovation grants / prototyping budgets for approved university projects.
   * **Claim & Milestone Verification**: Verify university progress updates following SPOC endorsement, inspect field pilot results, and issue official impact certificates.
 
@@ -78,6 +110,7 @@ The university portal is divided into **two specialized sub-roles**:
 * **Responsibilities**:
   * **Receive Assigned Challenges**: Review challenges routed to the university by the Government.
   * **Team Formation & Approval**: Review applications from student/faculty teams, constitute multidisciplinary project squads, and assign designated faculty mentors.
+  * **Team Login Issuance**: After team formation, the SPOC issues team-lead credentials so the team can upload project details and progress updates only for its assigned challenge.
   * **Institutional Governance**: Monitor project milestones, budget utilization, and ensure academic rigor.
   * **Primary Milestone Verification**: First-level verification of team deliverables before submission to the Government and public feed.
 
@@ -94,8 +127,10 @@ The university portal is divided into **two specialized sub-roles**:
 * **Target Users**: Startups, MSMEs, Large Enterprises (Tata Steel, Coal India, NTPC, etc.), Corporate CSR Directors, Venture Funds, and Research Labs.
 * **Core Capabilities**:
   * **Project Discovery Feed**: Explore active university projects solving real Jharkhand problems, filterable by sector (Agro, Clean Water, Solar, Health) and district.
+  * **Domain-Based Recommendation Engine**: Industry users receive suggested projects based on company domain, CSR priorities, sector, geography, and potential impact.
   * **Mentorship & Co-Development**: Industry engineers can offer technical mentorship, lab testing access, or engineering reviews to university teams.
   * **CSR Funding & Grants**: Pledge CSR grants or matching funds for high-potential prototypes needing pilot testing.
+  * **Verified Impact Signals**: Projects verified by both university SPOC and government receive stronger visibility so funders can quickly identify credible high-impact work.
   * **Direct Collaboration & Contact**: Initiate direct messaging and MoU discussions with university teams and SPOCs.
   * **Technology Transfer & Commercialization**: License patents, acquire IP, or incubate student startups for commercial deployment in Jharkhand and across India.
 
@@ -149,17 +184,18 @@ The university portal is divided into **two specialized sub-roles**:
 
 ---
 
-### ⏳ Phase 2: Responsive Citizen Reporting Portal (NEXT UP)
+### 🚧 Phase 2: Responsive Citizen Reporting Portal (CURRENT PROTOTYPE FOCUS)
 - **Routes**: `/report` (Reporting wizard), `/citizen` (Citizen hub), `/track/:id` (Live issue tracker).
 - **Responsive Layout**:
   - Mobile bottom navigation bar + full-screen floating action sheet.
   - Desktop multi-column layout with category cards and recent submissions.
 - **Key Features**:
-  1. Multi-step reporting wizard (Title, Description, Category, Urgency).
-  2. Integrated Camera & Media Upload (Photo/Video capture via browser).
-  3. Jharkhand District/Block selector + 1-click GPS auto-detection.
-  4. TARA AI Voice Reporting overlay (Web Audio mic recording connected to Sarvam/Gemini backend).
-  5. Public problem explorer with upvoting and district filters.
+  1. 3-step reporting wizard: capture/upload media, type or speak optional notes, review and post AI-generated report.
+  2. Integrated camera and gallery upload for photos/videos on mobile and desktop.
+  3. Saaras v3 transcription for voice notes and spoken audio inside uploaded videos.
+  4. Sarvam 105B synthesis for a neat citizen-style title, description, category, severity, urgency, and impact summary.
+  5. Jharkhand GPS auto-detection with fallback location defaults for reliable demos.
+  6. Public problem explorer, awareness feed, local submission persistence, and review screen polish.
 
 ---
 

@@ -171,7 +171,7 @@ export function extractVideoKeyframes(videoSrcOrBlob, maxFrames = 3) {
           const scale = Math.min(1, maxDim / Math.max(origW, origH));
           canvas.width = Math.round(origW * scale);
           canvas.height = Math.round(origH * scale);
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
           // Pass 1: Seek through target timestamps
           for (const time of targetTimes) {
@@ -494,4 +494,3 @@ export async function extractAudioFromMedia(fileOrBlob) {
     return null;
   }
 }
-

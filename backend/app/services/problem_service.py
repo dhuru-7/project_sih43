@@ -7,8 +7,14 @@ from app.ai.classifier import classify_problem
 from app.ai.prioritizer import calculate_priority_score
 from app.ai.deduplicator import find_duplicate_problems
 
-DB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data")
-DB_PATH = os.path.join(DB_DIR, "setu_problems.db")
+import tempfile
+
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    DB_DIR = tempfile.gettempdir()
+    DB_PATH = os.path.join(DB_DIR, "setu_problems.db")
+else:
+    DB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data")
+    DB_PATH = os.path.join(DB_DIR, "setu_problems.db")
 
 def _get_db():
     os.makedirs(DB_DIR, exist_ok=True)

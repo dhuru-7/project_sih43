@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
-import { reverseGeocode, extractVideoThumbnail, extractVideoKeyframes, extractAudioFromMedia } from '../../../services/geoService';
-import { scanAllMedia } from '../../../services/nsfwService';
+import { reverseGeocode, extractVideoThumbnail } from '../../../services/geoService';
 import { synthesizeFallbackGrievance } from '../../../services/clientSynthesisService';
 import { TaraAuraProcessingScreen } from '../../../components/ui/TaraAuraProcessingScreen';
+import { collectReportMediaEvidence } from '../../../services/reportMediaService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -425,6 +425,7 @@ export const MobileReportingModal = ({
   // Voice recording inside Notepad
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [voiceSeconds, setVoiceSeconds] = useState(0);
+  const [voiceTranscripts, setVoiceTranscripts] = useState([]);
   const voiceRecorderRef = useRef(null);
   const voiceChunksRef = useRef([]);
   const voiceStreamRef = useRef(null);
@@ -949,6 +950,7 @@ export const MobileReportingModal = ({
             if (resp.ok && json.status === 'success' && json.data) {
               const transcribed = json.data.transcript;
               if (transcribed) {
+                setVoiceTranscripts((prev) => [...prev, transcribed]);
                 setNotepadText((prev) => (prev ? prev.trim() + '\n\n' + transcribed : transcribed));
               }
             }
@@ -1033,73 +1035,8 @@ export const MobileReportingModal = ({
     setStep('processing');
 
     try {
-      // 0. NSFWjs Content Moderation Check
-      let isFlagged = false;
-      let flagReason = '';
-      try {
-        const scanRes = await scanAllMedia(mediaItems);
-        if (scanRes && scanRes.flagged) {
-          isFlagged = true;
-          flagReason = scanRes.reason || 'Inappropriate / Adult content detected';
-          setIsNsfwFlagged(true);
-          setNsfwReason(flagReason);
-        }
-      } catch (scanErr) {
-        console.warn('NSFW scanning warning:', scanErr);
-      }
-
-      // 1. Process all media items (Images + Videos)
-      const imagePayloads = [];
-      const videoTranscripts = [];
-
-      for (const item of mediaItems) {
-        if (item.type === 'image') {
-          if (item.file) {
-            const reader = new FileReader();
-            const b64 = await new Promise((res) => {
-              reader.onloadend = () => res(reader.result);
-              reader.readAsDataURL(item.file);
-            });
-            if (b64) imagePayloads.push(b64);
-          } else if (item.url && item.url.startsWith('data:')) {
-            imagePayloads.push(item.url);
-          }
-        } else if (item.type === 'video') {
-          // Extract multiple keyframes across video for AI vision
-          try {
-            const keyframes = await extractVideoKeyframes(item.file || item.blob || item.url, 3);
-            if (keyframes && keyframes.length > 0) {
-              imagePayloads.push(...keyframes);
-            }
-          } catch (e) {
-            console.warn('Could not extract video keyframes:', e);
-          }
-
-          // Extract audio track from video and transcribe via STT
-          try {
-            if (item.transcript && item.transcript.trim()) {
-              videoTranscripts.push(item.transcript.trim());
-            } else {
-              const audioBlob = item.audioBlob || (await extractAudioFromMedia(item.file || item.blob)) || item.file || item.blob;
-              if (audioBlob && audioBlob.size > 800) {
-                const formData = new FormData();
-                const fname = audioBlob.name || (audioBlob.type?.includes('mp4') ? 'video.mp4' : 'video_audio.webm');
-                formData.append('audio', audioBlob, fname);
-                const tResp = await fetch(`${API_BASE_URL}/voice/transcribe`, {
-                  method: 'POST',
-                  body: formData
-                });
-                const tJson = await tResp.json();
-                if (tResp.ok && tJson.data && tJson.data.transcript) {
-                  videoTranscripts.push(tJson.data.transcript);
-                }
-              }
-            }
-          } catch (e) {
-            console.warn('Could not transcribe video audio:', e);
-          }
-        }
-      }
+      // 1. Process all media items (videos transcribed via Saaras v3, images collected)
+      const { imagePayloads, videoTranscripts } = await collectReportMediaEvidence(mediaItems, API_BASE_URL);
 
       // 2. Select card hero thumbnail: first image or first illuminated keyframe of video
       let finalThumbnail = null;
@@ -1117,11 +1054,12 @@ export const MobileReportingModal = ({
       const aiPayload = {
         text: notepadText.trim(),
         videoTranscript: videoTranscripts.join('; '),
+        voiceTranscript: voiceTranscripts.join('; '),
         images: imagePayloads.slice(0, 6),
         locationInfo: locationDetails,
         reporterType: 'Individual Citizen',
         groupName: '',
-        safetyStatus: isFlagged ? 'FLAGGED_POLICY_VIOLATION' : 'SAFE'
+        safetyStatus: 'SAFE'
       };
 
       let aiResult = null;
@@ -1212,6 +1150,8 @@ export const MobileReportingModal = ({
         longitude: coordinates?.lng || 85.3096,
         thumbnail: finalHeroThumbnail,
         evidenceUrls: persistentEvidence,
+        videoTranscript: videoTranscripts.join('; '),
+        voiceTranscript: voiceTranscripts.join('; '),
         dateTime: formattedDateTime
       };
 
@@ -1381,6 +1321,7 @@ export const MobileReportingModal = ({
     setActiveMediaIndex(0);
     setReviewMediaIndex(0);
     setNotepadText('');
+    setVoiceTranscripts([]);
     setReviewData(null);
     setSubmittedProblem(null);
     onClose();
@@ -2510,4 +2451,3 @@ export const MobileReportingModal = ({
     </div>
   );
 };
-
