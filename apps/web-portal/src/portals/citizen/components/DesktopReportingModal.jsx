@@ -773,7 +773,7 @@ export const DesktopReportingModal = ({
         impactDescription: generatedImpactDesc,
         reporterType: 'Individual Citizen',
         groupName: '',
-        safetyStatus: isFlagged ? 'FLAGGED_POLICY_VIOLATION' : 'SAFE',
+        safetyStatus: 'SAFE',
         author: isAnonymous ? 'Verified Citizen (Anonymous)' : userName,
         authorId: isAnonymous ? 'cit-anonymous' : `cit-${userName.toLowerCase().replace(/\s+/g, '-')}`,
         address: locationDetails.formatted,
