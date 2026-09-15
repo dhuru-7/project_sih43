@@ -1257,7 +1257,13 @@ export const MobileReportingModal = ({
             reviewData,
             tempProblem,
             isNsfwFlagged,
-            userName
+            userName,
+            mediaItems: (mediaItems || []).map((m) => ({
+              id: m.id,
+              type: m.type,
+              name: m.name || (m.type === 'video' ? 'video.webm' : 'image.jpg'),
+              size: m.file?.size || m.blob?.size || 0
+            }))
           }
         })
       );
@@ -2207,7 +2213,7 @@ export const MobileReportingModal = ({
             {/* Content Details: Touching the screen edges, with readable horizontal padding */}
             <div
               style={{
-                padding: '20px 18px calc(80px + env(safe-area-inset-bottom, 0px)) 18px',
+                padding: '20px 18px calc(110px + env(safe-area-inset-bottom, 0px)) 18px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '16px',
@@ -2391,50 +2397,52 @@ export const MobileReportingModal = ({
             </div>
           </main>
 
-          {/* Anchored Submit Bar: Fading fog gradient with seamless transition */}
+          {/* Bottom Action Pill (Submit) with Natural Gradient Fade matching Language Selection on Onboarding */}
           <footer
             style={{
-              position: 'relative',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
               flexShrink: 0,
-              zIndex: 40,
-              marginTop: '-36px',
-              padding: '36px 18px calc(16px + env(safe-area-inset-bottom, 0px)) 18px',
-              background: 'linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.98) 55%, rgba(255, 255, 255, 0.75) 75%, rgba(255, 255, 255, 0.25) 90%, rgba(255, 255, 255, 0) 100%)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
+              padding: '3.5rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px)) 1.25rem',
+              background: 'linear-gradient(to top, #ffffff 55%, rgba(255, 255, 255, 0.92) 75%, rgba(255, 255, 255, 0) 100%)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 30,
+              border: 'none',
               borderTop: 'none',
               boxShadow: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-              touchAction: 'manipulation'
+              pointerEvents: 'none'
             }}
           >
             <button
               type="button"
               disabled={isSubmitting || isCollapsingToNav}
               onClick={handleSubmitFinalReport}
-              className="apple-tap"
+              className="apple-primary-btn apple-tap"
               style={{
-                pointerEvents: 'auto',
                 width: '100%',
-                height: '52px',
+                maxWidth: '380px',
+                padding: '0.875rem 2rem',
                 borderRadius: '9999px',
                 backgroundColor: '#000000',
-                color: '#ffffff',
+                color: '#FFFFFF',
                 border: 'none',
-                fontSize: '1rem',
-                fontWeight: '700',
-                letterSpacing: '-0.01em',
+                outline: 'none',
+                fontSize: '0.9375rem',
+                fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: isSubmitting || isCollapsingToNav ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
-                opacity: isSubmitting || isCollapsingToNav ? 0.7 : 1,
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.16)',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                pointerEvents: 'auto',
                 touchAction: 'manipulation',
-                WebkitTapHighlightColor: 'transparent'
+                WebkitTapHighlightColor: 'transparent',
+                opacity: isSubmitting || isCollapsingToNav ? 0.7 : 1
               }}
             >
               <span>{isCollapsingToNav ? 'Submitting...' : 'Submit'}</span>
