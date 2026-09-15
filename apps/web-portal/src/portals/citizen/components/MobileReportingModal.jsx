@@ -1215,10 +1215,16 @@ export const MobileReportingModal = ({
     }
   };
 
-  // Submit Final Report from Review Screen
   // Submit Final Report from Review Screen -> Collapse smoothly into Bottom Nav
-  const handleSubmitFinalReport = async () => {
+  const handleSubmitFinalReport = () => {
     if (!reviewData || isSubmitting || isCollapsingToNav) return;
+
+    // 1. Immediately pause video playback so GPU is 100% free for 60fps collapse
+    Object.values(videoRefs.current).forEach((v) => { if (v) v.pause(); });
+    Object.values(reviewVideoRefs.current).forEach((v) => { if (v) v.pause(); });
+    setIsReviewPlaying(false);
+
+    // 2. Set collapse state immediately to start hardware-accelerated CSS collapse on frame 1
     setIsCollapsingToNav(true);
     setIsSubmitting(true);
 
@@ -1228,26 +1234,36 @@ export const MobileReportingModal = ({
       status: 'SUBMITTED'
     };
 
-    // Save preliminary submission to localStorage
-    try {
-      const existing = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
-      const updated = [tempProblem, ...existing.filter((p) => p.id !== tempProblem.id)];
-      localStorage.setItem('setu_user_submissions', JSON.stringify(updated));
-    } catch (e) {}
+    // 3. Defer localStorage writes & event dispatch so the CSS transition begins with 0ms lag
+    setTimeout(() => {
+      try {
+        const sanitizedProblem = {
+          ...tempProblem,
+          evidenceUrls: (tempProblem.evidenceUrls || []).map((u, i) =>
+            typeof u === 'string' && u.startsWith('data:') ? `evidence-media-${i}` : u
+          )
+        };
+        const existing = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+        const updated = [sanitizedProblem, ...existing.filter((p) => p.id !== sanitizedProblem.id)];
+        localStorage.setItem('setu_user_submissions', JSON.stringify(updated.slice(0, 20)));
+      } catch (e) {
+        console.warn('localStorage save warning:', e);
+      }
 
-    // Dispatch event to start the light bluish loading animation in MobileBottomNav
-    window.dispatchEvent(
-      new CustomEvent('setu-report-upload-start', {
-        detail: {
-          reviewData,
-          tempProblem,
-          isNsfwFlagged,
-          userName
-        }
-      })
-    );
+      // Dispatch event to start the light bluish loading animation in MobileBottomNav
+      window.dispatchEvent(
+        new CustomEvent('setu-report-upload-start', {
+          detail: {
+            reviewData,
+            tempProblem,
+            isNsfwFlagged,
+            userName
+          }
+        })
+      );
+    }, 20);
 
-    // After 440ms collapse animation, close modal
+    // 4. After 440ms collapse animation, close modal
     setTimeout(() => {
       resetAllAndClose();
       if (onClose) onClose();
@@ -1313,9 +1329,10 @@ export const MobileReportingModal = ({
         transformOrigin: '50% calc(100% - 47px)',
         borderRadius: isCollapsingToNav ? '9999px' : '0px',
         boxShadow: isCollapsingToNav ? '0 4px 20px rgba(0, 0, 0, 0.08)' : 'none',
-        border: isCollapsingToNav ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+        border: isCollapsingToNav ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid transparent',
         opacity: isCollapsingToNav ? 0 : 1,
         pointerEvents: isCollapsingToNav ? 'none' : 'auto',
+        contain: 'paint',
         willChange: isCollapsingToNav ? 'transform, border-radius, opacity' : 'auto'
       }}
     >
@@ -2377,6 +2394,7 @@ export const MobileReportingModal = ({
           {/* Anchored Submit Bar: Fading fog gradient with seamless transition */}
           <footer
             style={{
+              position: 'relative',
               flexShrink: 0,
               zIndex: 40,
               marginTop: '-36px',
@@ -2389,7 +2407,8 @@ export const MobileReportingModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              pointerEvents: 'none'
+              pointerEvents: 'auto',
+              touchAction: 'manipulation'
             }}
           >
             <button
@@ -2413,7 +2432,9 @@ export const MobileReportingModal = ({
                 justifyContent: 'center',
                 cursor: isSubmitting || isCollapsingToNav ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
-                opacity: isSubmitting || isCollapsingToNav ? 0.7 : 1
+                opacity: isSubmitting || isCollapsingToNav ? 0.7 : 1,
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent'
               }}
             >
               <span>{isCollapsingToNav ? 'Submitting...' : 'Submit'}</span>

@@ -359,7 +359,7 @@ export const MobileBottomNav = ({ activeNav, setActiveNav, onOpenTara, onOpenRep
 
         {/* 3. Center Elevated Action Button (Solid Black Only #000000 with Gemini Shape Morph Animation on other tabs) */}
         <button
-          onClick={isHome ? (onOpenReport || onOpenTara) : (onOpenTara || onOpenReport)}
+          onClick={onOpenReport || onOpenTara}
           className="apple-tap"
           style={{
             position: 'relative',
@@ -378,7 +378,7 @@ export const MobileBottomNav = ({ activeNav, setActiveNav, onOpenTara, onOpenRep
             padding: 0,
             transition: 'transform 0.15s ease, opacity 0.15s ease'
           }}
-          aria-label={isHome ? "Report Issue" : "Tara AI Copilot"}
+          aria-label="Report Issue"
         >
           {/* Black-only Circle / Morphing Shape with Gemini Animation (Solid Black #000000 at all times) */}
           <div
