@@ -441,6 +441,7 @@ export const MobileReportingModal = ({
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const reviewVideoRefs = useRef({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCollapsingToNav, setIsCollapsingToNav] = useState(false);
   const [submittedProblem, setSubmittedProblem] = useState(null);
 
   const galleryInputRef = useRef(null);
@@ -1215,103 +1216,47 @@ export const MobileReportingModal = ({
   };
 
   // Submit Final Report from Review Screen
+  // Submit Final Report from Review Screen -> Collapse smoothly into Bottom Nav
   const handleSubmitFinalReport = async () => {
-    if (!reviewData || isSubmitting) return;
+    if (!reviewData || isSubmitting || isCollapsingToNav) return;
+    setIsCollapsingToNav(true);
     setIsSubmitting(true);
 
+    const tempProblem = {
+      id: `SETU-${Math.floor(1000 + Math.random() * 9000)}`,
+      ...reviewData,
+      status: 'SUBMITTED'
+    };
+
+    // Save preliminary submission to localStorage
     try {
-      const resp = await fetch(`${API_BASE_URL}/problems`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reviewData)
-      });
+      const existing = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
+      const updated = [tempProblem, ...existing.filter((p) => p.id !== tempProblem.id)];
+      localStorage.setItem('setu_user_submissions', JSON.stringify(updated));
+    } catch (e) {}
 
-      let createdProblem = null;
-      if (resp.ok) {
-        const json = await resp.json();
-        createdProblem = json.data;
-      } else {
-        createdProblem = {
-          id: `SETU-${Math.floor(1000 + Math.random() * 9000)}`,
-          ...reviewData,
-          status: 'SUBMITTED'
-        };
-      }
+    // Dispatch event to start the light bluish loading animation in MobileBottomNav
+    window.dispatchEvent(
+      new CustomEvent('setu-report-upload-start', {
+        detail: {
+          reviewData,
+          tempProblem,
+          isNsfwFlagged,
+          userName
+        }
+      })
+    );
 
-      // Save locally to setu_user_submissions for persistent local availability
-      try {
-        const existing = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
-        const updated = [createdProblem, ...existing.filter((p) => p.id !== createdProblem.id)];
-        localStorage.setItem('setu_user_submissions', JSON.stringify(updated));
-      } catch (e) {}
-
-      setSubmittedProblem(createdProblem);
-
-      const hasViolation = isNsfwFlagged || reviewData?.safetyStatus === 'FLAGGED_POLICY_VIOLATION';
-      if (!hasViolation && onReportSubmitted) {
-        onReportSubmitted(createdProblem);
-      }
+    // After 440ms collapse animation, close modal
+    setTimeout(() => {
       resetAllAndClose();
-
-      // If content contained policy violation:
-      // Allow user to submit, but after 10 seconds delete report from database,
-      // prevent showing in My Submissions, and push a violation notification to the notification sidebar!
-      if (hasViolation) {
-        setTimeout(async () => {
-          try {
-            const targetId = createdProblem?.id;
-            if (targetId) {
-              await fetch(`${API_BASE_URL}/problems/${targetId}`, {
-                method: 'DELETE'
-              });
-            }
-
-            // Remove from local submissions too
-            try {
-              const cur = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
-              localStorage.setItem('setu_user_submissions', JSON.stringify(cur.filter((p) => p.id !== targetId)));
-            } catch (e) {}
-
-            // Save notification to localStorage for NotificationSidebar
-            const stored = JSON.parse(localStorage.getItem('setu_citizen_notifications') || '[]');
-            const newNotif = {
-              id: `notif-${Date.now()}`,
-              type: 'policy_violation',
-              title: 'Report Removed - Policy Violation',
-              message:
-                'Your recent grievance submission contained inappropriate content that violates our Community Safety Guidelines. The report has been permanently deleted and not routed to authorities.',
-              timestamp: new Date().toISOString(),
-              read: false,
-              reportId: targetId
-            };
-            localStorage.setItem('setu_citizen_notifications', JSON.stringify([newNotif, ...stored]));
-            window.dispatchEvent(new CustomEvent('setu_notification_received', { detail: newNotif }));
-          } catch (delErr) {
-            console.error('Auto deletion policy enforcement error:', delErr);
-          }
-        }, 10000);
-      }
-    } catch (err) {
-      console.error('Error submitting report:', err);
-      const fallback = {
-        id: `SETU-${Math.floor(1000 + Math.random() * 9000)}`,
-        ...reviewData,
-        status: 'SUBMITTED'
-      };
-      try {
-        const existing = JSON.parse(localStorage.getItem('setu_user_submissions') || '[]');
-        const updated = [fallback, ...existing.filter((p) => p.id !== fallback.id)];
-        localStorage.setItem('setu_user_submissions', JSON.stringify(updated));
-      } catch (e) {}
-      setSubmittedProblem(fallback);
-      if (onReportSubmitted && !isNsfwFlagged) onReportSubmitted(fallback);
-      resetAllAndClose();
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (onClose) onClose();
+    }, 440);
   };
 
   const resetAllAndClose = () => {
+    setIsCollapsingToNav(false);
+    setIsSubmitting(false);
     stopVoiceRecording();
     stopCamera();
     Object.values(videoRefs.current).forEach((v) => {
@@ -1353,13 +1298,25 @@ export const MobileReportingModal = ({
         height: '100dvh',
         maxHeight: '100dvh',
         zIndex: 9999,
-        backgroundColor: step === 'description' || step === 'processing' ? '#fbfbfa' : step === 'review' ? '#ffffff' : '#000000',
+        backgroundColor: step === 'description' || step === 'processing' ? '#fbfbfa' : '#ffffff',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         color: step === 'description' || step === 'processing' || step === 'review' ? '#1c1c1e' : '#ffffff',
         fontFamily: 'var(--font-sans)',
-        transition: 'background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        transition: isCollapsingToNav
+          ? 'transform 0.44s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.44s cubic-bezier(0.7, 0, 1, 1), border-radius 0.44s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.44s ease'
+          : 'background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        transform: isCollapsingToNav
+          ? 'scale(0.88, 0.075)'
+          : 'none',
+        transformOrigin: '50% calc(100% - 47px)',
+        borderRadius: isCollapsingToNav ? '9999px' : '0px',
+        boxShadow: isCollapsingToNav ? '0 4px 20px rgba(0, 0, 0, 0.08)' : 'none',
+        border: isCollapsingToNav ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+        opacity: isCollapsingToNav ? 0 : 1,
+        pointerEvents: isCollapsingToNav ? 'none' : 'auto',
+        willChange: isCollapsingToNav ? 'transform, border-radius, opacity' : 'auto'
       }}
     >
       {/* Hidden Gallery Picker */}
@@ -2138,7 +2095,9 @@ export const MobileReportingModal = ({
             flexDirection: 'column',
             backgroundColor: '#ffffff',
             overflow: 'hidden',
-            color: '#1c1c1e'
+            color: '#1c1c1e',
+            opacity: isCollapsingToNav ? 0 : 1,
+            transition: isCollapsingToNav ? 'opacity 0.14s ease-out' : 'none'
           }}
         >
           {/* Top Bar */}
@@ -2415,27 +2374,31 @@ export const MobileReportingModal = ({
             </div>
           </main>
 
-          {/* Anchored Submit Bar: Submit button with no arrow */}
+          {/* Anchored Submit Bar: Fading fog gradient with seamless transition */}
           <footer
             style={{
               flexShrink: 0,
               zIndex: 40,
-              padding: '12px 18px calc(16px + env(safe-area-inset-bottom, 0px)) 18px',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+              marginTop: '-36px',
+              padding: '36px 18px calc(16px + env(safe-area-inset-bottom, 0px)) 18px',
+              background: 'linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.98) 55%, rgba(255, 255, 255, 0.75) 75%, rgba(255, 255, 255, 0.25) 90%, rgba(255, 255, 255, 0) 100%)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              borderTop: 'none',
+              boxShadow: 'none',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              pointerEvents: 'none'
             }}
           >
             <button
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isCollapsingToNav}
               onClick={handleSubmitFinalReport}
               className="apple-tap"
               style={{
+                pointerEvents: 'auto',
                 width: '100%',
                 height: '52px',
                 borderRadius: '9999px',
@@ -2448,12 +2411,12 @@ export const MobileReportingModal = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                cursor: isSubmitting || isCollapsingToNav ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
-                opacity: isSubmitting ? 0.7 : 1
+                opacity: isSubmitting || isCollapsingToNav ? 0.7 : 1
               }}
             >
-              <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+              <span>{isCollapsingToNav ? 'Submitting...' : 'Submit'}</span>
             </button>
           </footer>
         </div>

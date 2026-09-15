@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { MorphingActionIcon } from '../../../components/ui/MorphingActionIcon';
 import { useLanguage } from '../../../context/LanguageContext';
+import '../../../styles/gemini-animation.css';
 
 const INITIAL_CHATS = [
   {
@@ -386,12 +388,20 @@ export const DesktopMessagesView = ({
                       flexShrink: 0
                     }}
                   >
-                    <GoogleIcon
-                      name={item.icon}
-                      size={20}
-                      fill={isActive}
-                      color={isActive ? '#000000' : '#5e5e5e'}
-                    />
+                    {item.id === 'report' ? (
+                      <MorphingActionIcon
+                        isHome={activeNav === 'home'}
+                        size={20}
+                        color={isActive ? '#000000' : '#4c4546'}
+                      />
+                    ) : (
+                      <GoogleIcon
+                        name={item.icon}
+                        size={20}
+                        fill={isActive}
+                        color={isActive ? '#000000' : '#5e5e5e'}
+                      />
+                    )}
                     {item.id === 'messages' && (
                       <span
                         style={{

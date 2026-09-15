@@ -78,17 +78,17 @@ export const Navbar = () => {
           fontWeight: '500',
           color: '#525252'
         }} className="d-none d-lg-flex">
-          <a href="#philosophy" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
-            Philosophy
-          </a>
-          <a href="#pillars" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
-            Stakeholders
-          </a>
-          <a href="#pipeline" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
+          <a href="#how-it-works" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
             How It Works
           </a>
-          <a href="#specs" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
-            Built for Bharat
+          <a href="#tara-ai" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
+            Tara AI
+          </a>
+          <a href="#portals" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
+            Portals
+          </a>
+          <a href="#explore" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
+            Explore Feed
           </a>
         </nav>
       )}

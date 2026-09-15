@@ -1016,8 +1016,8 @@ export const DesktopReportingModal = ({
         style={{
           width: '100%',
           maxWidth: '820px',
-          height: 'min(640px, calc(100dvh - 32px))',
-          maxHeight: 'calc(100dvh - 32px)',
+          height: 'min(860px, calc(94vh - 24px))',
+          maxHeight: 'calc(94vh - 24px)',
           minHeight: 0,
           backgroundColor: '#ffffff',
           borderRadius: '24px',
@@ -1529,7 +1529,21 @@ export const DesktopReportingModal = ({
             </header>
 
             {/* Body */}
-            <div style={{ flex: 1, minHeight: 0, padding: '20px 28px 36px 28px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div
+              className="desktop-scrollable-modal-body"
+              style={{
+                flex: 1,
+                minHeight: 0,
+                padding: '20px 28px 36px 28px',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
               <div
                 style={{
                   backgroundColor: '#ffffff',
@@ -1683,8 +1697,8 @@ export const DesktopReportingModal = ({
                     </span>
                   </div>
 
-                  {/* 6. Description (4 lines clamp with ...more toggle) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {/* 6. Description (Scrollable container with smooth Apple scrollbar) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div
                       style={{
                         fontSize: '0.75rem',
@@ -1692,27 +1706,47 @@ export const DesktopReportingModal = ({
                         textTransform: 'uppercase',
                         letterSpacing: '0.04em',
                         color: '#8e8e93',
-                        marginBottom: '4px'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
                       }}
                     >
-                      Description
+                      <span>Description</span>
+                      <span style={{ fontSize: '0.725rem', color: '#a1a1aa', textTransform: 'none', fontWeight: '500' }}>
+                        Scroll to view full details
+                      </span>
                     </div>
-                    <p
+
+                    <div
+                      className="desktop-scrollable-desc"
                       style={{
-                        fontSize: '0.9375rem',
-                        lineHeight: 1.6,
-                        color: '#3a3a3c',
-                        margin: 0,
-                        whiteSpace: 'pre-wrap',
-                        display: isDescExpanded ? 'block' : '-webkit-box',
-                        WebkitLineClamp: isDescExpanded ? 'unset' : 4,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: isDescExpanded ? 'visible' : 'hidden'
+                        maxHeight: isDescExpanded ? 'none' : '220px',
+                        overflowY: isDescExpanded ? 'visible' : 'auto',
+                        padding: '14px 16px',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '14px',
+                        border: '1px solid rgba(0, 0, 0, 0.06)',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text',
+                        overscrollBehavior: 'contain'
                       }}
                     >
-                      {reviewData.description}
-                    </p>
-                    {reviewData.description && reviewData.description.length > 150 && (
+                      <p
+                        style={{
+                          fontSize: '0.9375rem',
+                          lineHeight: 1.65,
+                          color: '#27272a',
+                          margin: 0,
+                          whiteSpace: 'pre-wrap',
+                          userSelect: 'text',
+                          WebkitUserSelect: 'text'
+                        }}
+                      >
+                        {reviewData.description}
+                      </p>
+                    </div>
+
+                    {reviewData.description && reviewData.description.length > 200 && (
                       <button
                         type="button"
                         onClick={() => setIsDescExpanded((prev) => !prev)}
@@ -1720,15 +1754,15 @@ export const DesktopReportingModal = ({
                           background: 'none',
                           border: 'none',
                           color: '#000000',
-                          fontSize: '0.875rem',
+                          fontSize: '0.8125rem',
                           fontWeight: '700',
-                          padding: '4px 0',
+                          padding: '2px 0',
                           cursor: 'pointer',
                           alignSelf: 'flex-start',
                           fontFamily: 'inherit'
                         }}
                       >
-                        {isDescExpanded ? 'Show less' : '...more'}
+                        {isDescExpanded ? 'Show less (compact)' : 'Expand full height'}
                       </button>
                     )}
                   </div>

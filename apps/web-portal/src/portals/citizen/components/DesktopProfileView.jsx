@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { MorphingActionIcon } from '../../../components/ui/MorphingActionIcon';
 import { GeneralSettingsDrawer } from './GeneralSettingsDrawer';
+import '../../../styles/gemini-animation.css';
 import { PrivacySecurityDrawer } from './PrivacySecurityDrawer';
 import { useLanguage } from '../../../context/LanguageContext';
 
@@ -288,12 +290,20 @@ export const DesktopProfileView = ({
                       flexShrink: 0
                     }}
                   >
-                    <GoogleIcon
-                      name={item.icon}
-                      size={20}
-                      fill={isActive}
-                      color={isActive ? '#000000' : '#5e5e5e'}
-                    />
+                    {item.id === 'report' ? (
+                      <MorphingActionIcon
+                        isHome={activeNav === 'home'}
+                        size={20}
+                        color={isActive ? '#000000' : '#4c4546'}
+                      />
+                    ) : (
+                      <GoogleIcon
+                        name={item.icon}
+                        size={20}
+                        fill={isActive}
+                        color={isActive ? '#000000' : '#5e5e5e'}
+                      />
+                    )}
                     {item.id === 'messages' && (
                       <span
                         style={{

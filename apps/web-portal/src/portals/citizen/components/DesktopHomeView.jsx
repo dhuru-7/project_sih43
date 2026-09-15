@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { MorphingActionIcon } from '../../../components/ui/MorphingActionIcon';
 import { useLanguage } from '../../../context/LanguageContext';
+import '../../../styles/gemini-animation.css';
 
 export const DesktopHomeView = ({
   issues,
@@ -166,12 +168,20 @@ export const DesktopHomeView = ({
                       flexShrink: 0
                     }}
                   >
-                    <GoogleIcon
-                      name={item.icon}
-                      size={20}
-                      fill={isActive}
-                      color={isActive ? '#000000' : '#5e5e5e'}
-                    />
+                    {item.id === 'report' ? (
+                      <MorphingActionIcon
+                        isHome={activeNav === 'home'}
+                        size={20}
+                        color={isActive ? '#000000' : '#4c4546'}
+                      />
+                    ) : (
+                      <GoogleIcon
+                        name={item.icon}
+                        size={20}
+                        fill={isActive}
+                        color={isActive ? '#000000' : '#5e5e5e'}
+                      />
+                    )}
                     {item.id === 'messages' && (
                       <span
                         style={{

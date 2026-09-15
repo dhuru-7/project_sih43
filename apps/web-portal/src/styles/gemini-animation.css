@@ -1,0 +1,362 @@
+:root {
+  --star: shape(
+    evenodd from 50% 24.787%,
+    curve by 7.143% 18.016% with 0% 0% / 2.9725% 13.814%,
+    curve by 17.882% 7.197% with 4.171% 4.2025% / 17.882% 7.197%,
+    curve by -17.882% 8.6765% with 0% 0% / -13.711% 4.474%,
+    curve by -7.143% 16.5365% with -4.1705% 4.202% / -7.143% 16.5365%,
+    curve by -8.6115% -16.5365% with 0% 0% / -4.441% -12.3345%,
+    curve by -16.4135% -8.6765% with -4.171% -4.2025% / -16.4135% -8.6765%,
+    curve by 16.4135% -7.197% with 0% 0% / 12.2425% -2.9945%,
+    curve by 8.6115% -18.016% with 4.1705% -4.202% / 8.6115% -18.016%,
+    close
+  );
+  --flower: shape(
+    evenodd from 17.9665% 82.0335%,
+    curve by -12.349% -32.0335% with -13.239% -5.129% / -18.021% -15.402%,
+    curve by -0.0275% -22.203% with -3.1825% -9.331% / -3.074% -16.6605%,
+    curve by 12.3765% -9.8305% with 2.3835% -4.3365% / 6.565% -7.579%,
+    curve by 32.0335% -12.349% with 5.129% -13.239% / 15.402% -18.021%,
+    curve by 20.4535% -0.8665% with 8.3805% -2.858% / 15.1465% -3.062%,
+    curve by 11.58% 13.2155% with 5.225% 2.161% / 9.0355% 6.6475%,
+    curve by 12.349% 32.0335% with 13.239% 5.129% / 18.021% 15.402%,
+    curve by 0.5715% 21.1275% with 2.9805% 8.7395% / 3.0745% 15.723%,
+    curve by -12.9205% 10.906% with -2.26% 4.88% / -6.638% 8.472%,
+    curve by -32.0335% 12.349% with -5.129% 13.239% / -15.402% 18.021%,
+    curve by -21.1215% 0.5745% with -8.736% 2.9795% / -15.718% 3.0745%,
+    curve by -10.912% -12.9235% with -4.883% -2.2595% / -8.477% -6.6385%,
+    close
+  );
+  --hexagon: shape(
+    evenodd from 6.47% 67.001%,
+    curve by 0% -34.002% with -1.1735% -7.7% / -1.1735% -26.302%,
+    curve by 7.0415% -12.1965% with 0.7075% -4.641% / 3.3765% -9.2635%,
+    curve by 29.447% -17.001% with 6.0815% -4.8665% / 22.192% -14.1675%,
+    curve by 14.083% 0% with 4.3725% -1.708% / 9.7105% -1.708%,
+    curve by 29.447% 17.001% with 7.255% 2.8335% / 23.3655% 12.1345%,
+    curve by 7.0415% 12.1965% with 3.665% 2.933% / 6.334% 7.5555%,
+    curve by 0% 34.002% with 1.1735% 7.7% / 1.1735% 26.302%,
+    curve by -7.0415% 12.1965% with -0.7075% 4.641% / -3.3765% 9.2635%,
+    curve by -29.447% 17.001% with -6.0815% 4.8665% / -22.192% 14.1675%,
+    curve by -14.083% 0% with -4.3725% 1.708% / -9.7105% 1.708%,
+    curve by -29.447% -17.001% with -7.255% -2.8335% / -23.3655% -12.1345%,
+    curve by -7.0415% -12.1965% with -3.665% -2.933% / -6.334% -7.5555%,
+    close
+  );
+  --cylinder: shape(
+    evenodd from 10.5845% 59.7305%,
+    curve by 0% -19.461% with -0.113% -1.7525% / -0.11% -18.14%,
+    curve by 10.098% -26.213% with 0.837% -10.0375% / 3.821% -19.2625%,
+    curve by 29.3175% -13.0215% with 7.2175% -7.992% / 17.682% -13.0215%,
+    curve by 19.5845% 5.185% with 7.1265% 0% / 13.8135% 1.887%,
+    curve by 9.8595% 7.9775% with 3.7065% 2.1185% / 7.035% 4.8195%,
+    curve by 9.9715% 26.072% with 6.2015% 6.933% / 9.4345% 16.082%,
+    curve by 0% 19.461% with 0.074% 1.384% / 0.0745% 17.7715%,
+    curve by -13.0065% 29.1155% with -0.511% 11.5345% / -5.021% 21.933%,
+    curve by -26.409% 10.119% with -6.991% 6.288% / -16.254% 10.119%,
+    curve by -20.945% -5.9995% with -7.6935% 0% / -14.8755% -2.199%,
+    curve by -8.713% -7.404% with -3.255% -2.0385% / -6.1905% -4.537%,
+    curve by -9.7575% -25.831% with -6.074% -6.9035% / -9.1205% -15.963%,
+    close
+  );
+  --circle: shape(
+    evenodd from 13.482% 79.505%,
+    curve by -7.1945% -12.47% with -1.4985% -1.8575% / -6.328% -10.225%,
+    curve by 0.0985% -33.8965% with -4.1645% -10.7945% / -4.1685% -23.0235%,
+    curve by 6.9955% -12.101% with 1.72% -4.3825% / 4.0845% -8.458%,
+    curve by 30.125% -17.119% with 7.339% -9.1825% / 18.4775% -15.5135%,
+    curve by 13.4165% 0.095% with 4.432% -0.6105% / 8.9505% -0.5855%,
+    curve by 29.364% 16.9% with 11.6215% 1.77% / 22.102% 7.9015%,
+    curve by 7.176% 12.4145% with 3.002% 3.7195% / 5.453% 7.968%,
+    curve by -0.0475% 33.8925% with 4.168% 10.756% / 4.2305% 22.942%,
+    curve by -7.1135% 12.2825% with -1.74% 4.4535% / -4.1455% 8.592%,
+    curve by -29.404% 16.9075% with -7.202% 8.954% / -18.019% 15.137%,
+    curve by -14.19% -0.018% with -4.6635% 0.7255% / -9.4575% 0.7205%,
+    curve by -29.226% -16.8875% with -11.573% -1.8065% / -21.9955% -7.9235%,
+    close
+  );
+}
+
+#geminianimation,
+.geminianimation {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1/1;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: #000000;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.22));
+  pointer-events: none;
+  transition: clip-path 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              filter 0.3s ease;
+
+  div {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background-color: #000000;
+    pointer-events: none;
+  }
+}
+
+/* Home: Circle with plus icon reserved for home only */
+#geminianimation.shape-home,
+.geminianimation.shape-home {
+  clip-path: var(--circle);
+  border-radius: 50% !important;
+  transform: rotate(0deg) !important;
+  animation: none !important;
+  background-color: #000000;
+
+  div {
+    background-color: #000000;
+  }
+}
+
+/* Explore: Flower Shape */
+#geminianimation.shape-explore,
+.geminianimation.shape-explore {
+  clip-path: var(--flower);
+  background-color: #000000;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.28));
+
+  div {
+    background-color: #000000;
+  }
+}
+
+/* Messages: Cylinder Shape */
+#geminianimation.shape-messages,
+.geminianimation.shape-messages {
+  clip-path: var(--cylinder);
+  background-color: #000000;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.28));
+
+  div {
+    background-color: #000000;
+  }
+}
+
+/* Profile: Hexagon Shape */
+#geminianimation.shape-profile,
+.geminianimation.shape-profile {
+  clip-path: var(--hexagon);
+  background-color: #000000;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.28));
+
+  div {
+    background-color: #000000;
+  }
+}
+
+/* Full 1-cycle animation: Only runs when switching from Home to another page (5.6s, 10% faster) */
+#geminianimation.shape-explore.is-cycling,
+.geminianimation.shape-explore.is-cycling {
+  animation: shapeshift-explore 5.6s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+}
+
+#geminianimation.shape-messages.is-cycling,
+.geminianimation.shape-messages.is-cycling {
+  animation: shapeshift-messages 5.6s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+}
+
+#geminianimation.shape-profile.is-cycling,
+.geminianimation.shape-profile.is-cycling {
+  animation: shapeshift-profile 5.6s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+}
+
+/* Fallback for browsers that don't support experimental CSS shape() */
+@supports not (clip-path: shape(from 0 0, line to 10px 10px)) {
+  #geminianimation,
+  .geminianimation {
+    clip-path: none !important;
+  }
+
+  #geminianimation.shape-home,
+  .geminianimation.shape-home {
+    clip-path: none !important;
+    border-radius: 50% !important;
+    animation: none !important;
+  }
+
+  #geminianimation.shape-explore,
+  .geminianimation.shape-explore {
+    clip-path: none !important;
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+  }
+
+  #geminianimation.shape-explore.is-cycling,
+  .geminianimation.shape-explore.is-cycling {
+    clip-path: none !important;
+    animation: fallback-explore 5.6s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards !important;
+  }
+
+  #geminianimation.shape-messages,
+  .geminianimation.shape-messages {
+    clip-path: none !important;
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+
+  #geminianimation.shape-messages.is-cycling,
+  .geminianimation.shape-messages.is-cycling {
+    clip-path: none !important;
+    animation: fallback-messages 5.6s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards !important;
+  }
+
+  #geminianimation.shape-profile,
+  .geminianimation.shape-profile {
+    clip-path: none !important;
+    border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+  }
+
+  #geminianimation.shape-profile.is-cycling,
+  .geminianimation.shape-profile.is-cycling {
+    clip-path: none !important;
+    animation: fallback-profile 5.6s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards !important;
+  }
+}
+
+/* Explore Keyframes: 1 full cycle through 4 shapes, settling on Flower */
+@keyframes shapeshift-explore {
+  0% {
+    clip-path: var(--circle);
+    transform: rotate(0deg);
+  }
+  20% {
+    clip-path: var(--flower);
+  }
+  40% {
+    clip-path: var(--cylinder);
+  }
+  60% {
+    clip-path: var(--hexagon);
+  }
+  80% {
+    clip-path: var(--circle);
+  }
+  100% {
+    clip-path: var(--flower);
+    transform: rotate(360deg);
+  }
+}
+
+/* Messages Keyframes: 1 full cycle through 4 shapes, settling on Cylinder */
+@keyframes shapeshift-messages {
+  0% {
+    clip-path: var(--circle);
+    transform: rotate(0deg);
+  }
+  20% {
+    clip-path: var(--flower);
+  }
+  40% {
+    clip-path: var(--cylinder);
+  }
+  60% {
+    clip-path: var(--hexagon);
+  }
+  80% {
+    clip-path: var(--circle);
+  }
+  100% {
+    clip-path: var(--cylinder);
+    transform: rotate(360deg);
+  }
+}
+
+/* Profile Keyframes: 1 full cycle through 4 shapes, settling on Hexagon */
+@keyframes shapeshift-profile {
+  0% {
+    clip-path: var(--circle);
+    transform: rotate(0deg);
+  }
+  20% {
+    clip-path: var(--flower);
+  }
+  40% {
+    clip-path: var(--cylinder);
+  }
+  60% {
+    clip-path: var(--hexagon);
+  }
+  80% {
+    clip-path: var(--circle);
+  }
+  100% {
+    clip-path: var(--hexagon);
+    transform: rotate(360deg);
+  }
+}
+
+/* Fallback Keyframes for browser engines without experimental shape() */
+@keyframes fallback-explore {
+  0% {
+    border-radius: 50%;
+    transform: rotate(0deg);
+  }
+  20% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+  }
+  40% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  60% {
+    border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+  }
+  80% {
+    border-radius: 50%;
+  }
+  100% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fallback-messages {
+  0% {
+    border-radius: 50%;
+    transform: rotate(0deg);
+  }
+  20% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+  }
+  40% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  60% {
+    border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+  }
+  80% {
+    border-radius: 50%;
+  }
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fallback-profile {
+  0% {
+    border-radius: 50%;
+    transform: rotate(0deg);
+  }
+  20% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+  }
+  40% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  60% {
+    border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+  }
+  80% {
+    border-radius: 50%;
+  }
+  100% {
+    border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+    transform: rotate(360deg);
+  }
+}

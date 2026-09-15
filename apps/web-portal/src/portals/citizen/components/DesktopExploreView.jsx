@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GoogleIcon } from '../../../components/ui/GoogleIcon';
+import { MorphingActionIcon } from '../../../components/ui/MorphingActionIcon';
 import { useLanguage } from '../../../context/LanguageContext';
+import '../../../styles/gemini-animation.css';
 import { getExplorePosts } from '../data/explorePosts';
 
 const BookmarkIcon = ({ isBookmarked, size = 22 }) => {
@@ -665,12 +667,20 @@ export const DesktopExploreView = ({
                       flexShrink: 0
                     }}
                   >
-                    <GoogleIcon
-                      name={item.icon}
-                      size={20}
-                      fill={isActive}
-                      color={isActive ? '#000000' : '#5e5e5e'}
-                    />
+                    {item.id === 'report' ? (
+                      <MorphingActionIcon
+                        isHome={activeNav === 'home'}
+                        size={20}
+                        color={isActive ? '#000000' : '#4c4546'}
+                      />
+                    ) : (
+                      <GoogleIcon
+                        name={item.icon}
+                        size={20}
+                        fill={isActive}
+                        color={isActive ? '#000000' : '#5e5e5e'}
+                      />
+                    )}
                     {item.id === 'messages' && (
                       <span
                         style={{

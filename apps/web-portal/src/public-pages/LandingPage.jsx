@@ -1,640 +1,744 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { GoogleIcon } from '../components/ui/GoogleIcon';
 import '../styles/landing.css';
 
 export const LandingPage = () => {
-  // Stakeholder interactive tab switcher
-  const [activeTab, setActiveTab] = useState('students');
+  // Hero Interactive Simulation State
+  const [heroMode, setHeroMode] = useState('voice'); // 'voice' | 'video'
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationComplete, setSimulationComplete] = useState(true);
 
-  // 4 Stakeholder Tab Details directly from Stitch
-  const STAKEHOLDERS = {
-    students: {
-      tag: 'Pillar 01 · Learn by Solving',
-      title: 'Real engineering challenges with backed government seed grants.',
-      desc: 'University students and faculty researchers choose vetted societal issues uploaded by rural citizens and municipal wards, submit prototype proposals, and unlock direct tranche disbursements.',
-      ctaText: 'Browse Active University Challenges',
-      ctaRoute: '/login?role=university',
-      points: [
-        {
-          title: 'Adopt State Challenges',
-          sub: 'Tackle challenges matched to your lab’s capabilities (e.g., Clean Water at IIT ISM Dhanbad, Agritech at BAU Ranchi).'
-        },
-        {
-          title: 'Secure Prototyping Grants',
-          sub: 'Receive milestone-based government seed funding for lab components, PCB manufacturing, and field trials.'
-        },
-        {
-          title: 'Industry Mentorship',
-          sub: 'Direct technical reviews with senior engineers from Tata Steel, Coal India, and leading innovation hubs.'
-        }
+  // 4 Stakeholders Tab State
+  const [activePortal, setActivePortal] = useState('citizen'); // 'citizen' | 'govt' | 'university' | 'industry'
+
+  const handleTriggerSimulation = () => {
+    setIsSimulating(true);
+    setSimulationComplete(false);
+    setTimeout(() => {
+      setIsSimulating(false);
+      setSimulationComplete(true);
+    }, 1200);
+  };
+
+  // Portal Tab Details
+  const PORTAL_DATA = {
+    citizen: {
+      title: 'Citizens, Schools, NGOs & Local Bodies',
+      desc: 'Report community bottlenecks in seconds through voice or media. Receive real-time updates and communicate directly with municipal officers.',
+      features: [
+        '3-step intake: Speak or snap photos without manual typing',
+        'Direct two-way messaging with assigned municipal engineers',
+        'Explore feed: Official government awareness campaigns and civic updates',
+        'Call Tara anytime for voice updates or hands-free in-app assistance'
       ],
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDW7HaEVeaGwdUmDOsdZC_PHYb1HhwD5tue1WSRLJrs3acv44wWflqjLqLEDwFzrQamvjW8qf9FKKc9tWyjo5CX1M9wwHo9-D0JTIsroqo0Ku7n1DPCxPWvKx5H6o9iv8sisgKruNgYKKFfruga1rc2YixIm_4b7isAAhC0_KglOuSUAcr68rD_rSfwoHRLaXQW-NIBdbyhecnmsaMBh5quNsqWf48lnsX3BwWC5IOZgpHUxT4eYSAzlQ',
-      imageAlt: 'Students collaborating in laboratory',
-      badge: 'Stage: Prototype Testing',
-      badgeClass: 'deployed'
+      ctaText: 'Open Citizen Portal',
+      ctaLink: '/citizen',
+      mockupTitle: 'Citizen Active Grievance',
+      mockupBadge: 'Under Review',
+      mockupContent: {
+        title: 'Drinking Water Contamination in Ward 8',
+        meta1: 'Reported via Voice · 14 mins ago',
+        meta2: 'Assigned to: Ranchi Municipal Corp · Public Health Desk',
+        extra: 'Tara placed verification call to reporter · Confirmed turbidity'
+      }
     },
     govt: {
-      tag: 'Pillar 02 · Mobilize Talent',
-      title: 'Intelligent civic oversight and direct university lab delegation.',
-      desc: 'District collectors and nodal officers gain a state-wide command dashboard to automatically categorize citizen issues, route technical challenges to accredited labs, and approve deliverables.',
-      ctaText: 'Access Govt Nodal Dashboard',
-      ctaRoute: '/government/dashboard',
-      points: [
-        {
-          title: 'AI Problem Triage',
-          sub: 'Automatic grouping of raw citizen reports by domain, district, urgency index, and feasibility.'
-        },
-        {
-          title: 'One-Click University Routing',
-          sub: 'Instant transfer of complex municipal problems to appropriate academic faculties with seed grant allocations.'
-        },
-        {
-          title: 'Milestone Oversight',
-          sub: 'Validate photo proof and laboratory test data before authorising next-phase funding tranches.'
-        }
+      title: 'Government Administration & Nodal Officers',
+      desc: 'Centralized command center that clusters identical grievances, automates citizen follow-ups through Tara, and delegates engineering challenges to universities.',
+      features: [
+        'AI deduplication clustering similar citizen complaints into single challenges',
+        'Single-click automated Tara follow-up calls to gather status updates from citizens',
+        'Intelligent routing to university departments with verified laboratory equipment',
+        'Milestone validation, financial grant disbursement, and certificate issuance'
       ],
-      customRight: (
-        <div style={{ background: '#FFFFFF', borderRadius: '1rem', border: '1px solid #E5E5E5', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid #F3F3F3', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: '#0A0A0A' }}>Nodal Command Desk</span>
-            <span style={{ fontSize: '0.6875rem', background: '#F4F4F5', color: '#525252', padding: '0.2rem 0.55rem', borderRadius: '0.375rem', fontFamily: 'monospace' }}>
-              24 Districts Synchronized
-            </span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{ padding: '0.85rem', background: '#F9F9F9', borderRadius: '0.75rem', border: '1px solid #EBEBEB' }}>
-              <span style={{ fontSize: '0.6875rem', color: '#737373', textTransform: 'uppercase', fontWeight: '600' }}>Pending Routing</span>
-              <p style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0A0A0A', margin: '0.2rem 0 0' }}>42 Issues</p>
-            </div>
-            <div style={{ padding: '0.85rem', background: '#F9F9F9', borderRadius: '0.75rem', border: '1px solid #EBEBEB' }}>
-              <span style={{ fontSize: '0.6875rem', color: '#737373', textTransform: 'uppercase', fontWeight: '600' }}>Active R&amp;D Squads</span>
-              <p style={{ fontSize: '1.35rem', fontWeight: '800', color: '#0A0A0A', margin: '0.2rem 0 0' }}>18 Universities</p>
-            </div>
-          </div>
-          <div style={{ padding: '0.85rem', background: '#0A0A0A', color: '#FFFFFF', borderRadius: '0.75rem', fontSize: '0.75rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', marginBottom: '0.25rem' }}>
-              <span>Tranche Release Verification</span>
-              <span style={{ color: '#34D399' }}>Ready for Audit</span>
-            </div>
-            <p style={{ color: '#D4D4D4', fontSize: '0.6875rem', margin: 0 }}>IIT (ISM) Dhanbad · Solar Inverter Firmware Telemetry verified.</p>
-          </div>
-        </div>
-      )
+      ctaText: 'Access Government Dashboard',
+      ctaLink: '/government/dashboard',
+      mockupTitle: 'Nodal Command Desk',
+      mockupBadge: '42 Issues Clustered',
+      mockupContent: {
+        title: 'Cluster #14: Subarnarekha Basin Fluoride Filtration',
+        meta1: '18 citizen reports merged into 1 State Challenge',
+        meta2: 'Recommended: BIT Mesra Environmental Lab',
+        extra: 'Seed grant allocation: ₹4.5 Lakhs approved for prototype phase'
+      }
     },
-    citizens: {
-      tag: 'Pillar 03 · Grassroots Voice',
-      title: 'Zero-paperwork voice intake in local languages and real-time tracking.',
-      desc: 'Citizens, panchayat heads, and ward commuters report problems effortlessly via browser audio or video without filling forms or installing native apps.',
-      ctaText: 'Try Voice Reporting in Browser',
-      ctaRoute: '/citizen',
-      points: [
-        {
-          title: 'Frictionless Web Intake',
-          sub: '1-tap smartphone camera capture, automatic GPS geotagging, and TARA Voice AI in Hindi, Santali, and Nagpuri.'
-        },
-        {
-          title: 'Transparent Solution Tracking',
-          sub: 'Follow your issue as it moves from submission to student squad R&D to field deployment in your village.'
-        },
-        {
-          title: 'Direct Community Feedback',
-          sub: 'Local residents test and sign off on installed solutions before government closure approval.'
-        }
+    university: {
+      title: 'University SPOCs, Faculty & Student Innovators',
+      desc: 'Turn state-forwarded challenges into funded academic projects. Form multi-disciplinary student squads and develop working physical prototypes.',
+      features: [
+        'SPOC console to review challenges forwarded by government departments',
+        'Student team leads receive dedicated credentials to submit development milestones',
+        'Verifiable milestone tracking unlocking tranche-based grant funding',
+        'Dual institutional verification by university SPOC and state nodal officers'
       ],
-      image: 'https://lh3.googleusercontent.com/aida/AEtjO1ULUp0q1WvqXiM9FHe7R_3gbLsTEV0hjDW-y9BU3Nw6jBCpK9yFyQ6Orlq9elk1aonacjEsLwkPVw3EOqGhgo2BxFoyHgi9Mq-bGH1wdbYVhWgJQX5KPrpVBszwC997T5gGnK_8xESKBTLuHOAlNmSbaEu5rlu816_42MQnGQEbXs766hyYMyuQq3a7NCu5O4aBB7sUTUnu7DOOzpkaTJ7blq1m3HpV0HajFPX_9a-Kiq3WD4rFr0o3Nf0',
-      imageAlt: 'Citizen reporting problem with voice',
-      badge: 'TARA AI Auto-Transcribe ✓',
-      badgeClass: 'deployed',
-      subText: 'Intake Mode: Voice Audio (Santali / Hindi)'
+      ctaText: 'University R&D Portal',
+      ctaLink: '/university/dashboard',
+      mockupTitle: 'Innovation Squad Console',
+      mockupBadge: 'Milestone 2 Verified',
+      mockupContent: {
+        title: 'Low-Cost Arsenic Filter Cartridge (IIT ISM Dhanbad)',
+        meta1: 'Mentor: Dr. S. K. Roy · 4 Student Engineers',
+        meta2: 'Field Testing: Govindpur Ward · Lab Telemetry Verified',
+        extra: 'Eligible for Phase 3 State Grant Disbursement'
+      }
     },
     industry: {
-      tag: 'Pillar 04 · Scale & Incubate',
-      title: 'Co-fund student prototypes and license state-tested IP.',
-      desc: 'Industrial enterprises, mining firms, and tech leaders direct CSR capital directly into high-impact academic solutions, recruit verified engineering talent, and accelerate field deployments.',
-      ctaText: 'Partner as CSR Investor',
-      ctaRoute: '/industry/dashboard',
-      points: [
-        {
-          title: 'Co-Fund University Projects',
-          sub: 'Channel CSR capital into high-impact student prototypes with full milestone telemetry and audited accounting.'
-        },
-        {
-          title: 'Tech Transfer & IP Licensing',
-          sub: 'License validated university technologies and hire the student innovators who built and field-tested them.'
-        },
-        {
-          title: 'Scalable Manufacturing',
-          sub: 'Transition successful lab prototypes into mass-manufactured civic products for statewide deployment.'
-        }
+      title: 'Industry, CSR Funds & Venture Capital',
+      desc: 'Channel CSR capital directly into high-impact, verified student prototypes. Recruit vetted engineering talent and accelerate field deployments.',
+      features: [
+        'Domain-matching algorithm recommending projects tailored to corporate CSR mandates',
+        'Full visibility into prototypes verified by both university SPOCs and government',
+        'Direct co-funding options and joint industry-government certification',
+        'High-impact showcase boosting credibility and deployment scale'
       ],
-      image: 'https://lh3.googleusercontent.com/aida/AEtjO1XycpRsjWoLHjTyyh94JygZfBKe0Q_37yfE0rT4dyEwkXS6DQSY9B9E7FpB2_m_50P3mjQzbrHOU5wyJa8CJpIeG9xfYqFAK7np3-YGBF97mTSbnsDamU0A4nXRDQCnpkrCnJdvftzHbjkN-XusJleqT27rM4taeM4vwoxY0h813jZZVkwNZDn2jzgoije-er98UucTZ42enmlCUA7MgeRuBbuX6JnSdoFlWpjXlj91jQZYNZm1ff1hWQps',
-      imageAlt: 'Industry engineer collaborating with resident',
-      badge: 'Clean Water Rollout Completed',
-      badgeClass: 'deployed',
-      subText: 'Corporate Partner: Tata Steel CSR Initiative'
+      ctaText: 'Industry & CSR Portal',
+      ctaLink: '/industry/dashboard',
+      mockupTitle: 'CSR Allocation Desk',
+      mockupBadge: 'Match 94%',
+      mockupContent: {
+        title: 'Solar Micro-Grid Inverter Firmware Deployment',
+        meta1: 'Domain: Renewable Energy & Rural Electrification',
+        meta2: 'Co-funding Partner: Tata Steel CSR Initiative',
+        extra: 'Impact: 3 Villages Powered · Joint Certification Issued'
+      }
     }
   };
 
   return (
-    <div className="setu-landing-canvas setu-grid-pattern">
-      {/* Ambient Lighting Layers */}
-      <div className="setu-landing-glow-top" />
-      <div className="setu-landing-glow-side" />
-
+    <div className="setu-canvas setu-grid-texture">
       {/* ================================================================= */}
       {/* 1. HERO SECTION                                                   */}
       {/* ================================================================= */}
-      <section className="setu-landing-section setu-landing-section-hero">
-        <div className="setu-hero-split-grid">
-          
-          {/* Left Column: Heading, Subtitle, CTA, Stats */}
-          <div className="setu-hero-left">
-            {/* Main Title */}
-            <h1 className="setu-hero-title">
-              Solving Real-World Challenges with{' '}
-              <span className="setu-hero-underline">University Innovation</span>.
+      <section className="setu-section">
+        <div className="setu-hero-grid">
+          {/* Left Hero Column */}
+          <div>
+            <h1 className="setu-hero-h1">
+              Speak or record. Civic problems turned into working solutions.
             </h1>
-
-            {/* Sub-headline */}
-            <p className="setu-hero-subtitle">
-              The Government of Jharkhand’s digital bridge that turns community problems into funded university R&amp;D challenges—giving student innovators real-world problems to solve and the state grants to build them.
+            <p className="setu-hero-sub">
+              Citizens report in seconds. Municipalities coordinate. University labs engineer the prototypes. Industry funds deployment.
             </p>
 
-            {/* Single Primary CTA matching Stitch */}
-            <div style={{ width: '100%', marginBottom: '2.5rem' }}>
-              <Link
-                to="/citizen"
-                className="setu-btn-primary"
-                style={{
-                  fontSize: '1rem',
-                  padding: '1rem 2rem',
-                  borderRadius: '0.85rem',
-                  display: 'inline-flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}
-              >
-                <span>Get Started with Setu</span>
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+            <div className="setu-hero-actions">
+              <Link to="/citizen" className="setu-btn setu-btn-primary">
+                <span>Report an Issue</span>
+                <GoogleIcon name="arrow_forward" size={16} color="#ffffff" />
               </Link>
+              <a href="#portals" className="setu-btn setu-btn-secondary">
+                <span>Explore Portals</span>
+              </a>
             </div>
 
-            {/* Key Stats / Value Proof Cards */}
-            <div className="setu-hero-stats-strip">
-              <div className="setu-hero-stat-col">
-                <span className="setu-hero-stat-value">100% Web</span>
-                <span className="setu-hero-stat-desc">Instant browser access, zero install</span>
+            <div className="setu-hero-meta-row">
+              <div className="setu-hero-meta-item">
+                <span className="setu-hero-meta-value">15s</span>
+                <span className="setu-hero-meta-label">Average Voice Intake</span>
               </div>
-              <div className="setu-hero-stat-col">
-                <span className="setu-hero-stat-value">Direct Grants</span>
-                <span className="setu-hero-stat-desc">Milestone student prototype funds</span>
+              <div className="setu-hero-meta-item">
+                <span className="setu-hero-meta-value">Sarvam 105B</span>
+                <span className="setu-hero-meta-label">Cognitive Triage Brain</span>
               </div>
-              <div className="setu-hero-stat-col">
-                <span className="setu-hero-stat-value">Field Deployed</span>
-                <span className="setu-hero-stat-desc">Lab prototype to village rollout</span>
+              <div className="setu-hero-meta-item">
+                <span className="setu-hero-meta-value">100% Web</span>
+                <span className="setu-hero-meta-label">Mobile &amp; Desktop Ready</span>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Mac-Style Live Civic Bridge Card */}
-          <div className="setu-hero-right">
-            <div className="setu-hero-mac-card">
-              
-              {/* Window Header */}
-              <div className="setu-mac-titlebar">
-                <div className="setu-traffic-lights">
-                  <span className="setu-traffic-dot dot-red" />
-                  <span className="setu-traffic-dot dot-yellow" />
-                  <span className="setu-traffic-dot dot-green" />
-                  <span style={{ fontSize: '11px', fontWeight: '600', color: '#A3A3A3', marginLeft: '0.5rem' }}>
-                    Setu. Live Civic Bridge
-                  </span>
+          {/* Right Hero Column: Interactive Tara Live Simulation */}
+          <div>
+            <div className="setu-tara-widget">
+              <div className="setu-tara-titlebar">
+                <div className="setu-mac-dots">
+                  <span className="setu-mac-dot red" />
+                  <span className="setu-mac-dot yellow" />
+                  <span className="setu-mac-dot green" />
+                </div>
+                <div className="setu-widget-status">
+                  <span className="setu-status-pulse" />
+                  <span>Tara Live Engine</span>
                 </div>
               </div>
 
-              {/* Authentic Editorial Illustration (University Lab & Students) */}
-              <div className="setu-hero-image-box">
-                <img
-                  src="https://lh3.googleusercontent.com/aida/AEtjO1WP8FP4pozsyhKFGV0B5QIN3WtM7-0lPUZHhK2q67Hn4oSYSRNoTz8e9VuM-QXnEcZaS7F9FNvwd9gkpcAAi9i4Ui70Mk-JcFWBeYvRqkPvgXG9GUCcv0xX7-VuEFjO_UCjebLOvNNUm2Uqay1v5MZvCdiRIFHGF9uQx0gTjx8OJxCWMmxkVVPAPu2Weg0EX84Wlj64qkkCUMcwv6gu-62uGuJ_cZbJVBHHLwOs_41SpAw8i9MUhWk0ncA"
-                  alt="Jharkhand University students collaborating on real-world engineering challenges"
-                  loading="eager"
-                />
-                
-                {/* Overlay Card */}
-                <div className="setu-image-overlay-pill">
-                  <div>
-                    <p className="setu-overlay-title">BIT Mesra · Water Tech Lab</p>
-                    <p className="setu-overlay-subtitle">Working on Fluoride filtration for Bero Block</p>
-                  </div>
+              <div className="setu-tara-widget-body">
+                {/* Mode Selector */}
+                <div className="setu-widget-controls">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHeroMode('voice');
+                      handleTriggerSimulation();
+                    }}
+                    className={`setu-widget-control-btn ${heroMode === 'voice' ? 'active' : ''}`}
+                  >
+                    <GoogleIcon name="mic" size={16} />
+                    <span>Voice Note (Saaras v3)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHeroMode('video');
+                      handleTriggerSimulation();
+                    }}
+                    className={`setu-widget-control-btn ${heroMode === 'video' ? 'active' : ''}`}
+                  >
+                    <GoogleIcon name="videocam" size={16} />
+                    <span>Video Evidence (Vision)</span>
+                  </button>
                 </div>
-              </div>
 
-              {/* Micro-Interaction Live Feed Items */}
-              <div className="setu-hero-feed-list">
-                <div className="setu-hero-feed-item">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div className="setu-feed-icon-badge">🌾</div>
-                    <div>
-                      <h4 className="setu-feed-item-title">Paddy Leaf Blight Diagnostics</h4>
-                      <p className="setu-feed-item-sub">Ormanjhi, Ranchi · Birsa Agricultural University</p>
+                {/* Input Simulation Display */}
+                {heroMode === 'voice' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
+                      <span>Input: Audio (Ranchi Vernacular Hindi)</span>
+                      <span>0:08s</span>
+                    </div>
+                    <div className="setu-audio-waveform">
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.1s' }} />
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.3s' }} />
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.15s' }} />
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.4s' }} />
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.2s' }} />
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.5s' }} />
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.25s' }} />
+                      <div className="setu-wave-bar" style={{ animationDelay: '0.35s' }} />
+                      <span style={{ fontSize: '0.75rem', color: '#4b5563', marginLeft: '0.5rem', fontStyle: 'italic' }}>
+                        "Ward 4 mein main road par pipe phat gaya hai, do din se paani beh raha hai..."
+                      </span>
                     </div>
                   </div>
-                  <span className="setu-feed-pill-stage">Field Trial</span>
-                </div>
-
-                <div className="setu-hero-feed-item">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div className="setu-feed-icon-badge">☀️</div>
-                    <div>
-                      <h4 className="setu-feed-item-title">Solar Micro-Grid Inverter Repair</h4>
-                      <p className="setu-feed-item-sub">Govindpur, Dhanbad · IIT (ISM) Dhanbad</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
+                      <span>Input: Camera Video Frame Analysis</span>
+                      <span>1080p @ 30fps</span>
+                    </div>
+                    <div style={{
+                      height: '42px',
+                      background: '#f4f4f5',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0 1rem',
+                      gap: '8px',
+                      fontSize: '0.75rem',
+                      color: '#059669',
+                      fontWeight: '600'
+                    }}>
+                      <GoogleIcon name="visibility" size={16} color="#059669" />
+                      <span>Vision Model: 42cm pavement fracture &amp; high-pressure potable water leak detected</span>
                     </div>
                   </div>
-                  <span className="setu-feed-pill-stage deployed">Deployed</span>
-                </div>
-              </div>
+                )}
 
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ================================================================= */}
-      {/* 2. CORE PHILOSOPHY SECTION ("Learning Through Real Impact")        */}
-      {/* ================================================================= */}
-      <section id="philosophy" className="setu-landing-section" style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E5E5E5' }}>
-        <div className="setu-section-header">
-          <span className="setu-eyebrow">The Core Philosophy</span>
-          <h2 className="setu-section-title">"Learning Through Real Impact"</h2>
-          <p className="setu-section-description">
-            Why SETU is fundamentally different from traditional grievance portals. We replace endless bureaucratic queues with dynamic academic research squads and verified milestone funding.
-          </p>
-        </div>
-
-        {/* 3-Column Editorial Grid */}
-        <div className="setu-philosophy-grid">
-          {/* Pillar 1: Academic Win */}
-          <div className="setu-philosophy-card">
-            <div>
-              <div className="setu-card-icon-box">🎓</div>
-              <span className="setu-card-beneficiary">For Students &amp; Faculty</span>
-              <h3 className="setu-card-title">The Academic Win</h3>
-              <p className="setu-card-body">
-                Engineering and science students move beyond textbook assignments. They gain rigorous project-based problem solving experience, publish verifiable research credentials, file state patents, and build real hardware &amp; software prototypes with government funding.
-              </p>
-            </div>
-            <div className="setu-card-footer-link">
-              <span>Real CV credentials &amp; grants</span>
-              <span>→</span>
-            </div>
-          </div>
-
-          {/* Pillar 2: Governance Win */}
-          <div className="setu-philosophy-card">
-            <div>
-              <div className="setu-card-icon-box">🏛️</div>
-              <span className="setu-card-beneficiary">For State Departments</span>
-              <h3 className="setu-card-title">The Governance Win</h3>
-              <p className="setu-card-body">
-                Government line departments (Drinking Water &amp; Sanitation, Agriculture, Renewable Energy, Health) get low-cost, hyper-localized R&amp;D solutions tailored to Jharkhand's geography without hiring expensive multi-crore external consultancies.
-              </p>
-            </div>
-            <div className="setu-card-footer-link">
-              <span>High-efficiency state savings</span>
-              <span>→</span>
-            </div>
-          </div>
-
-          {/* Pillar 3: Citizen Win */}
-          <div className="setu-philosophy-card">
-            <div>
-              <div className="setu-card-icon-box">👥</div>
-              <span className="setu-card-beneficiary">For Local Communities</span>
-              <h3 className="setu-card-title">The Citizen Win</h3>
-              <p className="setu-card-body">
-                Grassroots community issues don't sit stagnant in an untracked complaints ledger. An elite state university laboratory takes direct, accountable ownership of creating and testing an engineered fix for their village or town.
-              </p>
-            </div>
-            <div className="setu-card-footer-link">
-              <span>Transparent resolution loop</span>
-              <span>→</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================================================================= */}
-      {/* 3. INTERACTIVE PORTALS & STAKEHOLDER WALKTHROUGH                  */}
-      {/* ================================================================= */}
-      <section id="pillars" className="setu-landing-section" style={{ backgroundColor: '#FAFAFA', borderBottom: '1px solid #E5E5E5' }}>
-        <div className="setu-section-header center">
-          <span className="setu-eyebrow">Stakeholder Blueprint</span>
-          <h2 className="setu-section-title">Unified Portals for Every Participant</h2>
-          <p className="setu-section-description">
-            Explore how Setu connects citizens, students, government nodal officers, and CSR partners in one synchronized ecosystem.
-          </p>
-        </div>
-
-        {/* Stakeholder Interactive Switcher Tabs */}
-        <div className="setu-tab-switcher-apple">
-          <button
-            onClick={() => setActiveTab('students')}
-            className={`setu-tab-apple-btn ${activeTab === 'students' ? 'active' : ''}`}
-          >
-            <span>🎓</span>
-            <span>Students &amp; Labs</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('govt')}
-            className={`setu-tab-apple-btn ${activeTab === 'govt' ? 'active' : ''}`}
-          >
-            <span>🏛️</span>
-            <span>Govt Nodal</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('citizens')}
-            className={`setu-tab-apple-btn ${activeTab === 'citizens' ? 'active' : ''}`}
-          >
-            <span>📱</span>
-            <span>Citizens &amp; Wards</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('industry')}
-            className={`setu-tab-apple-btn ${activeTab === 'industry' ? 'active' : ''}`}
-          >
-            <span>🏢</span>
-            <span>Industry &amp; CSR</span>
-          </button>
-        </div>
-
-        {/* Active Tab Pane Showcase */}
-        <div className="setu-tab-pane">
-          <div className="setu-tab-split">
-            {/* Left Column: Details & Benefits */}
-            <div>
-              <div className="setu-tab-tag">{STAKEHOLDERS[activeTab].tag}</div>
-              <h3 className="setu-tab-heading">{STAKEHOLDERS[activeTab].title}</h3>
-              <p className="setu-tab-desc">{STAKEHOLDERS[activeTab].desc}</p>
-
-              <ul className="setu-checklist">
-                {STAKEHOLDERS[activeTab].points.map((pt, i) => (
-                  <li key={i} className="setu-check-item">
-                    <span className="setu-check-circle">✓</span>
+                {/* Synthesis Output */}
+                <div className="setu-synthesis-card">
+                  <div className="setu-synthesis-header">
                     <div>
-                      <strong className="setu-check-title">{pt.title}</strong>
-                      <span className="setu-check-sub">{pt.sub}</span>
+                      <span style={{ fontSize: '0.6875rem', color: '#059669', fontWeight: '700', textTransform: 'uppercase' }}>
+                        {isSimulating ? 'Sarvam 105B Reasoning...' : 'Synthesized by Sarvam 105B'}
+                      </span>
+                      <h4 className="setu-synthesis-title">
+                        {heroMode === 'voice'
+                          ? 'Main Road Potable Water Pipeline Rupture & Localized Flooding'
+                          : 'Severe Pavement Fracture and Potable Main Line Burst'}
+                      </h4>
                     </div>
-                  </li>
-                ))}
-              </ul>
-
-              <div style={{ paddingTop: '0.5rem' }}>
-                <Link
-                  to={STAKEHOLDERS[activeTab].ctaRoute}
-                  className="setu-btn-primary"
-                  style={{ fontSize: '0.75rem', padding: '0.75rem 1.5rem', borderRadius: '0.75rem' }}
-                >
-                  <span>{STAKEHOLDERS[activeTab].ctaText}</span>
-                  <span>→</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Column: Visual */}
-            <div>
-              {STAKEHOLDERS[activeTab].customRight ? (
-                STAKEHOLDERS[activeTab].customRight
-              ) : (
-                <div className="setu-tab-visual-card">
-                  <div className="setu-tab-visual-image-wrap">
-                    <img src={STAKEHOLDERS[activeTab].image} alt={STAKEHOLDERS[activeTab].imageAlt} />
-                  </div>
-                  <div className="setu-tab-visual-footer">
-                    <span>{STAKEHOLDERS[activeTab].subText || ''}</span>
-                    <span className={`setu-feed-pill-stage ${STAKEHOLDERS[activeTab].badgeClass || ''}`}>
-                      {STAKEHOLDERS[activeTab].badge}
+                    <span style={{
+                      fontSize: '0.6875rem',
+                      fontWeight: '700',
+                      background: '#fee2e2',
+                      color: '#b91c1c',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      High Urgency
                     </span>
                   </div>
+
+                  <div className="setu-synthesis-meta-grid">
+                    <div className="setu-meta-row">
+                      <span className="setu-meta-k">Category</span>
+                      <span className="setu-meta-v">Water Resources &amp; Infrastructure</span>
+                    </div>
+                    <div className="setu-meta-row">
+                      <span className="setu-meta-k">Location</span>
+                      <span className="setu-meta-v">Ward 4, Ranchi District</span>
+                    </div>
+                    <div className="setu-meta-row">
+                      <span className="setu-meta-k">Action Desk</span>
+                      <span className="setu-meta-v">Ranchi Municipal Corp</span>
+                    </div>
+                    <div className="setu-meta-row">
+                      <span className="setu-meta-k">Academic Match</span>
+                      <span className="setu-meta-v">BIT Mesra Civil &amp; Hydro Lab</span>
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                {/* Action Trigger in Widget */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.25rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleTriggerSimulation}
+                    disabled={isSimulating}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#2563eb',
+                      fontSize: '0.8125rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <GoogleIcon name="refresh" size={14} color="#2563eb" />
+                    <span>{isSimulating ? 'Processing...' : 'Re-run Model Extraction'}</span>
+                  </button>
+                </div>
+
+                {/* Subtle chromatic perimeter aura */}
+                <div className="setu-tara-mini-aura" />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      <hr className="setu-divider" />
+
       {/* ================================================================= */}
-      {/* 4. THE 4-STEP PROBLEM-TO-DEPLOYMENT PIPELINE                      */}
+      {/* 2. THE 3-STEP CITIZEN FLOW                                        */}
       {/* ================================================================= */}
-      <section id="pipeline" className="setu-landing-section" style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E5E5E5' }}>
-        <div className="setu-section-header">
-          <span className="setu-eyebrow">Lifecycle Workflow</span>
-          <h2 className="setu-section-title">The 4-Step Problem-to-Deployment Pipeline</h2>
-          <p className="setu-section-description">
-            A transparent, accountable bridge carrying every issue from grassroots discovery to certified public delivery.
+      <section id="how-it-works" className="setu-section">
+        <div className="setu-headline-block">
+          <h2 className="setu-h2">Three steps from problem to verified dispatch.</h2>
+          <p className="setu-sub">
+            Designed for zero barrier to entry. No government forms, no complicated drop-down menus, no required typing.
           </p>
         </div>
 
-        {/* 4 Steps Grid directly matching Stitch */}
-        <div className="setu-pipeline-grid">
+        <div className="setu-steps-grid">
           {/* Step 1 */}
-          <div className="setu-stage-card">
+          <div className="setu-step-card">
             <div>
-              <div className="setu-stage-header">
-                <span className="setu-stage-number">01</span>
-                <span className="setu-stage-tag">Discovery</span>
-              </div>
-              <h3 className="setu-stage-title">Grassroots Intake</h3>
-              <p className="setu-stage-desc">
-                A citizen or ward councillor logs a local challenge (e.g. arsenic/fluoride in drinking tubewells, paddy blights, or micro-grid failures) using simple voice or photo capture.
+              <span className="setu-step-num">01 / INTAKE</span>
+              <h3 className="setu-step-title">Record or Attach</h3>
+              <p className="setu-step-desc">
+                Tap the record button to speak naturally in your local dialect, or attach camera photos and videos directly from your mobile or desktop gallery.
               </p>
             </div>
-            <div className="setu-stage-footer">
-              <span>TARA AI Intake</span>
-              <span style={{ fontWeight: '600', color: '#0A0A0A' }}>Geotagged ✓</span>
+            <div className="setu-step-footer">
+              <GoogleIcon name="mic" size={16} color="#059669" />
+              <span>Speech &amp; Gallery Evidence</span>
             </div>
           </div>
 
           {/* Step 2 */}
-          <div className="setu-stage-card">
+          <div className="setu-step-card">
             <div>
-              <div className="setu-stage-header">
-                <span className="setu-stage-number">02</span>
-                <span className="setu-stage-tag">Validation</span>
-              </div>
-              <h3 className="setu-stage-title">Govt State Challenge</h3>
-              <p className="setu-stage-desc">
-                The Department Nodal Desk reviews clustered reports, verifies the civic urgency, and officially creates a funded State R&amp;D Challenge with earmarked grant budgets.
+              <span className="setu-step-num">02 / ANALYSIS</span>
+              <h3 className="setu-step-title">Autonomous Extraction</h3>
+              <p className="setu-step-desc">
+                Saaras v3 transcribes Indian accents. Sarvam 105B structures the title, category, severity, and urgency. Computer Vision inspects video frames for structural defects.
               </p>
             </div>
-            <div className="setu-stage-footer">
-              <span>Grant Earmark</span>
-              <span style={{ fontWeight: '600', color: '#0A0A0A' }}>Nodal Approved ✓</span>
+            <div className="setu-step-footer">
+              <GoogleIcon name="neurology" size={16} color="#2563eb" />
+              <span>Saaras v3 + Sarvam 105B</span>
             </div>
           </div>
 
           {/* Step 3 */}
-          <div className="setu-stage-card">
+          <div className="setu-step-card">
             <div>
-              <div className="setu-stage-header">
-                <span className="setu-stage-number">03</span>
-                <span className="setu-stage-tag">R&amp;D</span>
-              </div>
-              <h3 className="setu-stage-title">University Innovation</h3>
-              <p className="setu-stage-desc">
-                University SPOCs form student/faculty squads. The team designs, builds, and tests prototypes in university labs, uploading telemetry for milestone releases.
+              <span className="setu-step-num">03 / DISPATCH</span>
+              <h3 className="setu-step-title">Instant Civic Routing</h3>
+              <p className="setu-step-desc">
+                The structured issue is published to the public grid, clustered with similar municipal reports, and forwarded to authorized government officers and university labs.
               </p>
             </div>
-            <div className="setu-stage-footer">
-              <span>Lab Prototyping</span>
-              <span style={{ fontWeight: '600', color: '#0A0A0A' }}>Milestone Tranches ✓</span>
-            </div>
-          </div>
-
-          {/* Step 4 */}
-          <div className="setu-stage-card">
-            <div>
-              <div className="setu-stage-header">
-                <span className="setu-stage-number">04</span>
-                <span className="setu-stage-tag">Outcome</span>
-              </div>
-              <h3 className="setu-stage-title">Verified Deployment</h3>
-              <p className="setu-stage-desc">
-                The finished hardware or system is installed in the target village or ward, field-tested by residents, and signed off by district authorities with full public audit trails.
-              </p>
-            </div>
-            <div className="setu-stage-footer">
-              <span>Public Impact</span>
-              <span style={{ fontWeight: '700', color: '#047857' }}>Certified Live ✓</span>
+            <div className="setu-step-footer">
+              <GoogleIcon name="check_circle" size={16} color="#059669" />
+              <span>Verified &amp; Geotagged</span>
             </div>
           </div>
         </div>
       </section>
 
+      <hr className="setu-divider" />
+
       {/* ================================================================= */}
-      {/* 5. TECHNICAL HIGHLIGHTS (BUILT FOR BHARAT)                         */}
+      {/* 3. MEET TARA - THE AGENT CONSTELLATION                            */}
       {/* ================================================================= */}
-      <section id="specs" className="setu-landing-section" style={{ backgroundColor: '#FAFAFA', borderBottom: '1px solid #E5E5E5' }}>
-        <div className="setu-section-header">
-          <span className="setu-eyebrow">Engineering Architecture</span>
-          <h2 className="setu-section-title">Built for Bharat: High-Performance Technical Stack</h2>
-          <p className="setu-section-description">
-            Designed specifically for rural connectivity constraints, diverse Indian dialects, and transparent grant stewardship.
+      <section id="tara-ai" className="setu-section">
+        <div className="setu-headline-block">
+          <h2 className="setu-h2">Meet Tara: The Agent Constellation.</h2>
+          <p className="setu-sub">
+            One unified conversational interface backed by specialized state-of-the-art models working in unison.
           </p>
         </div>
 
-        {/* 3 Tech Cards directly matching Stitch */}
-        <div className="setu-specs-grid">
-          {/* Tech Feature 1 */}
-          <div className="setu-spec-card">
+        <div className="setu-tara-bento">
+          {/* Card 1: Saaras v3 Speech */}
+          <div className="setu-bento-card">
             <div>
-              <div className="setu-spec-icon-box">⚡</div>
-              <h3 className="setu-card-title">Zero-Install Web App</h3>
-              <p className="setu-card-body">
-                Functions seamlessly on low-cost Android 4G smartphones via standard Chrome or browser engines without requiring Google Play Store downloads or device storage overhead.
+              <div className="setu-bento-icon">
+                <GoogleIcon name="record_voice_over" size={24} />
+              </div>
+              <h3 className="setu-bento-title">Saaras v3 Speech Engine</h3>
+              <p className="setu-bento-desc">
+                Engineered specifically for Indian regional dialects, colloquial expressions, and state accents. Accurately understands spoken Hindi, Khortha, Santali, and Nagpuri even in noisy ambient environments.
               </p>
             </div>
-            <div className="setu-spec-tag-list">
-              <span className="setu-spec-tag">PWA Offline Sync</span>
-              <span className="setu-spec-tag">&lt; 1.2MB Bundle</span>
-            </div>
+            <span className="setu-bento-spec">STT Model: saaras:v3</span>
           </div>
 
-          {/* Tech Feature 2 */}
-          <div className="setu-spec-card">
+          {/* Card 2: Sarvam 105B Reasoning */}
+          <div className="setu-bento-card setu-bento-card-dark">
             <div>
-              <div className="setu-spec-icon-box">🤖</div>
-              <h3 className="setu-card-title">AI Matchmaking Engine</h3>
-              <p className="setu-card-body">
-                Natural Language Processing models match complex unstructured citizen descriptions (in Hindi, Santali, or Khortha) directly with university department faculty specializations and verified lab equipment.
+              <div className="setu-bento-icon">
+                <GoogleIcon name="psychology" size={24} />
+              </div>
+              <h3 className="setu-bento-title">Sarvam 105B Cognitive Brain</h3>
+              <p className="setu-bento-desc">
+                India's high-capacity foundation model for deep reasoning. Performs instantaneous duplicate clustering, urgency ranking, departmental triage, and academic laboratory matchmaking.
               </p>
             </div>
-            <div className="setu-spec-tag-list">
-              <span className="setu-spec-tag">Bhashini AI Core</span>
-              <span className="setu-spec-tag">Dialect Transcribe</span>
-            </div>
+            <span className="setu-bento-spec">Reasoning Core: Sarvam 105B</span>
           </div>
 
-          {/* Tech Feature 3 */}
-          <div className="setu-spec-card">
+          {/* Card 3: Computer Vision */}
+          <div className="setu-bento-card">
             <div>
-              <div className="setu-spec-icon-box">🛡️</div>
-              <h3 className="setu-card-title">Milestone Proof-of-Work</h3>
-              <p className="setu-card-body">
-                Cryptographic timestamping, GPS EXIF verification, and IoT sensor telemetry required for student grant tranches. Nodal review portals ensure verifiable delivery before state funds release.
+              <div className="setu-bento-icon">
+                <GoogleIcon name="camera" size={24} />
+              </div>
+              <h3 className="setu-bento-title">Multimodal Computer Vision</h3>
+              <p className="setu-bento-desc">
+                Inspects uploaded videos and photos frame by frame. Captures physical nuances the citizen may not have verbalized, such as road crack depths, structural erosion, or electrical wire hazards.
               </p>
             </div>
-            <div className="setu-spec-tag-list">
-              <span className="setu-spec-tag">EXIF Tamper Check</span>
-              <span className="setu-spec-tag">DBT Grant API</span>
+            <span className="setu-bento-spec">Vision: Keyframe Semantic Classifier</span>
+          </div>
+
+          {/* Card 4: Voice Calling & App Takeover */}
+          <div className="setu-bento-card">
+            <div>
+              <div className="setu-bento-icon">
+                <GoogleIcon name="phone_in_talk" size={24} />
+              </div>
+              <h3 className="setu-bento-title">Autonomous Calling &amp; App Control</h3>
+              <p className="setu-bento-desc">
+                Citizens can voice-call Tara anytime for progress updates or hands-free app navigation (adjusting font size, reading messages). Government officers can command Tara to call all reporters of an issue to verify resolution status.
+              </p>
             </div>
+            <span className="setu-bento-spec">Voice Agent: Two-Way Telephony &amp; DOM Control</span>
           </div>
         </div>
       </section>
 
-      {/* ================================================================= */}
-      {/* 6. BOTTOM ACTION HERO / LAUNCH PORTALS                            */}
-      {/* ================================================================= */}
-      <section id="launch" className="setu-landing-section" style={{ backgroundColor: '#0A0A0A', color: '#FFFFFF', padding: '6rem 2rem' }}>
-        <div style={{ maxWidth: '64rem', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
-          
-          <h2 className="setu-launch-hero-title">
-            Connect Your Community or Lab to Setu.
-          </h2>
+      <hr className="setu-divider" />
 
-          <p className="setu-launch-hero-subtitle">
-            Whether you are a citizen reporting an infrastructural bottleneck or a student researcher ready to build a state-funded solution, Setu bridges the gap today.
+      {/* ================================================================= */}
+      {/* 4. FOUR STAKEHOLDER PORTALS (TABBED SWITCHER)                     */}
+      {/* ================================================================= */}
+      <section id="portals" className="setu-section">
+        <div className="setu-headline-block">
+          <h2 className="setu-h2">A unified ecosystem for four stakeholders.</h2>
+          <p className="setu-sub">
+            Tailored consoles connecting grassroots citizens, public administrators, university researchers, and industry leaders.
           </p>
+        </div>
 
-          {/* Single "Let's go" Button directly matching Stitch */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Link
-              to="/citizen"
-              className="setu-launch-btn-primary"
-            >
-              Let's go
+        {/* Tab Switcher */}
+        <div className="setu-tabs-container">
+          <button
+            type="button"
+            onClick={() => setActivePortal('citizen')}
+            className={`setu-tab-trigger ${activePortal === 'citizen' ? 'active' : ''}`}
+          >
+            <GoogleIcon name="person" size={18} />
+            <span>Citizen Portal</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActivePortal('govt')}
+            className={`setu-tab-trigger ${activePortal === 'govt' ? 'active' : ''}`}
+          >
+            <GoogleIcon name="account_balance" size={18} />
+            <span>Government Officer</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActivePortal('university')}
+            className={`setu-tab-trigger ${activePortal === 'university' ? 'active' : ''}`}
+          >
+            <GoogleIcon name="school" size={18} />
+            <span>University R&amp;D</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActivePortal('industry')}
+            className={`setu-tab-trigger ${activePortal === 'industry' ? 'active' : ''}`}
+          >
+            <GoogleIcon name="domain" size={18} />
+            <span>Industry &amp; CSR</span>
+          </button>
+        </div>
+
+        {/* Tab Details Box */}
+        <div className="setu-portal-display-box">
+          <div>
+            <h3 className="setu-portal-title">{PORTAL_DATA[activePortal].title}</h3>
+            <p className="setu-portal-desc">{PORTAL_DATA[activePortal].desc}</p>
+
+            <ul className="setu-feature-list">
+              {PORTAL_DATA[activePortal].features.map((feat, idx) => (
+                <li key={idx} className="setu-feature-item">
+                  <span className="setu-feature-check">✓</span>
+                  <span>{feat}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Link to={PORTAL_DATA[activePortal].ctaLink} className="setu-btn setu-btn-primary">
+              <span>{PORTAL_DATA[activePortal].ctaText}</span>
+              <GoogleIcon name="arrow_forward" size={16} color="#ffffff" />
             </Link>
           </div>
 
-          <p style={{ fontSize: '0.75rem', color: '#737373', marginTop: '2.5rem', marginBottom: 0 }}>
-            Government of Jharkhand · Supported by State Universities &amp; CSR Industry Partners
+          {/* Right Mockup Preview Card */}
+          <div>
+            <div className="setu-mockup-card">
+              <div className="setu-mockup-header">
+                <span className="setu-mockup-title">{PORTAL_DATA[activePortal].mockupTitle}</span>
+                <span className="setu-mockup-badge">{PORTAL_DATA[activePortal].mockupBadge}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: '700', color: '#111827', margin: 0 }}>
+                  {PORTAL_DATA[activePortal].mockupContent.title}
+                </h4>
+                <p style={{ fontSize: '0.8125rem', color: '#6b7280', margin: 0 }}>
+                  {PORTAL_DATA[activePortal].mockupContent.meta1}
+                </p>
+                <div style={{
+                  padding: '0.75rem',
+                  background: '#ffffff',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  fontSize: '0.8125rem',
+                  color: '#374151'
+                }}>
+                  <strong style={{ color: '#111827' }}>Status: </strong>
+                  {PORTAL_DATA[activePortal].mockupContent.meta2}
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', margin: '0.25rem 0 0 0' }}>
+                  ⚡ {PORTAL_DATA[activePortal].mockupContent.extra}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr className="setu-divider" />
+
+      {/* ================================================================= */}
+      {/* 5. EXPLORE FEED & COMMUNITY AWARENESS SHOWCASE                     */}
+      {/* ================================================================= */}
+      <section id="explore" className="setu-section">
+        <div className="setu-headline-block">
+          <h2 className="setu-h2">Explore Feed: Civic education &amp; progress spotlight.</h2>
+          <p className="setu-sub">
+            Government departments run official awareness campaigns, share educational advisories, and celebrate verified student solutions deployed across the state.
           </p>
+        </div>
+
+        <div className="setu-explore-grid">
+          {/* Post 1 */}
+          <div className="setu-explore-card">
+            <div className="setu-explore-img-wrap">
+              <img
+                src="https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80"
+                alt="Civic clean water initiative"
+                className="setu-explore-img"
+              />
+            </div>
+            <div className="setu-explore-content">
+              <div>
+                <span className="setu-explore-author">Drinking Water &amp; Sanitation Dept · Ranchi</span>
+                <h4 className="setu-explore-card-title">Clean Groundwater Filtration Pilot Launched in Bero Block</h4>
+                <p className="setu-explore-card-desc">
+                  Following 42 clustered citizen reports on tubewell fluoride levels, BIT Mesra water researchers have deployed an autonomous testing unit.
+                </p>
+              </div>
+              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
+                <span>Official Campaign</span>
+                <span style={{ color: '#059669', fontWeight: '600' }}>Active Field Trial</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Post 2 */}
+          <div className="setu-explore-card">
+            <div className="setu-explore-img-wrap">
+              <img
+                src="https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&q=80"
+                alt="Solar energy and infrastructure"
+                className="setu-explore-img"
+              />
+            </div>
+            <div className="setu-explore-content">
+              <div>
+                <span className="setu-explore-author">Energy &amp; Renewable Resources · Dhanbad</span>
+                <h4 className="setu-explore-card-title">Solar Micro-Grid Telemetry Handover to Govindpur Panchayat</h4>
+                <p className="setu-explore-card-desc">
+                  IIT ISM Dhanbad student innovators designed a modular inverter firmware repair, eliminating recurring blackout cycles for 120 households.
+                </p>
+              </div>
+              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
+                <span>University Prototype</span>
+                <span style={{ color: '#2563eb', fontWeight: '600' }}>Govt Certified</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Post 3 */}
+          <div className="setu-explore-card">
+            <div className="setu-explore-img-wrap">
+              <img
+                src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80"
+                alt="Public health awareness"
+                className="setu-explore-img"
+              />
+            </div>
+            <div className="setu-explore-content">
+              <div>
+                <span className="setu-explore-author">Health &amp; Family Welfare · Jamshedpur</span>
+                <h4 className="setu-explore-card-title">Vector-Borne Disease Containment Advisory</h4>
+                <p className="setu-explore-card-desc">
+                  Monsoon hygiene guidelines and ward-level drainage sanitization schedules issued for urban local bodies and rural health centres.
+                </p>
+              </div>
+              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
+                <span>Public Health Advisory</span>
+                <span style={{ color: '#059669', fontWeight: '600' }}>3.2k Engaged</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr className="setu-divider" />
+
+      {/* ================================================================= */}
+      {/* 6. END-TO-END WORKFLOW PIPELINE                                   */}
+      {/* ================================================================= */}
+      <section className="setu-section">
+        <div className="setu-headline-block">
+          <h2 className="setu-h2">The resolution lifecycle.</h2>
+          <p className="setu-sub">
+            How a 15-second voice note becomes an engineered public product with state-backed accountability.
+          </p>
+        </div>
+
+        <div className="setu-pipeline-row">
+          <div className="setu-pipeline-node">
+            <span className="setu-pipeline-index">STAGE 01</span>
+            <h4 className="setu-pipeline-node-title">Citizen Intake</h4>
+            <p className="setu-pipeline-node-desc">
+              Voice note or gallery video uploaded. Saaras v3 transcribes dialect; Sarvam 105B structures urgency and location.
+            </p>
+          </div>
+
+          <div className="setu-pipeline-node">
+            <span className="setu-pipeline-index">STAGE 02</span>
+            <h4 className="setu-pipeline-node-title">Triage &amp; Cluster</h4>
+            <p className="setu-pipeline-node-desc">
+              Identical issues merged into unified problem statements. Nodal desk reviews severity and allocates seed grant budget.
+            </p>
+          </div>
+
+          <div className="setu-pipeline-node">
+            <span className="setu-pipeline-index">STAGE 03</span>
+            <h4 className="setu-pipeline-node-title">University R&amp;D</h4>
+            <p className="setu-pipeline-node-desc">
+              Assigned to university department based on lab capability. Student &amp; mentor squad builds and submits milestone telemetry.
+            </p>
+          </div>
+
+          <div className="setu-pipeline-node">
+            <span className="setu-pipeline-index">STAGE 04</span>
+            <h4 className="setu-pipeline-node-title">Field Deployment</h4>
+            <p className="setu-pipeline-node-desc">
+              Prototype installed in the community. Verified by university SPOC and government. Co-funded by industry CSR.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* ================================================================= */}
-      {/* 7. FOOTER                                                         */}
+      {/* 7. BOTTOM GATEWAY & LAUNCHPAD                                     */}
       {/* ================================================================= */}
-      <footer style={{ backgroundColor: '#FFFFFF', borderTop: '1px solid #E5E5E5', padding: '3rem 2rem', fontSize: '0.75rem', color: '#525252' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.04em', color: '#0A0A0A' }}>
-                Setu.
-              </span>
-              <span style={{ color: '#D4D4D4' }}>|</span>
-              <span style={{ fontSize: '0.75rem', color: '#737373' }}>
-                Department of Higher &amp; Technical Education, Government of Jharkhand
-              </span>
-            </div>
+      <section className="setu-section setu-section-compact">
+        <div className="setu-gateway-box">
+          <h2 className="setu-gateway-title">
+            Ready to solve civic challenges together?
+          </h2>
+          <p className="setu-gateway-sub">
+            Access your dedicated portal to report issues, review state challenges, or build university prototypes.
+          </p>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-              <a href="#" style={{ color: '#525252', textDecoration: 'none' }}>Privacy Policy</a>
-              <a href="#" style={{ color: '#525252', textDecoration: 'none' }}>DBT Guidelines</a>
-              <a href="#" style={{ color: '#525252', textDecoration: 'none' }}>University Accreditation</a>
-              <a href="#" style={{ color: '#525252', textDecoration: 'none' }}>Support &amp; Help Desk</a>
-            </div>
+          <div className="setu-gateway-actions">
+            <Link to="/citizen" className="setu-btn setu-btn-emerald">
+              <span>Citizen Portal</span>
+            </Link>
+            <Link to="/government/dashboard" className="setu-btn setu-btn-secondary">
+              <span>Government Nodal</span>
+            </Link>
+            <Link to="/university/dashboard" className="setu-btn setu-btn-secondary">
+              <span>University Labs</span>
+            </Link>
+            <Link to="/industry/dashboard" className="setu-btn setu-btn-secondary">
+              <span>Industry &amp; CSR</span>
+            </Link>
+          </div>
+        </div>
+      </section>
 
-            <div style={{ color: '#A3A3A3', whiteSpace: 'nowrap' }}>
-              © 2025 Setu Jharkhand. All rights reserved.
-            </div>
+      {/* ================================================================= */}
+      {/* 8. MINIMALIST FOOTER                                              */}
+      {/* ================================================================= */}
+      <footer className="setu-footer">
+        <div className="setu-footer-inner">
+          <div className="setu-footer-brand">
+            <span style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.03em', color: '#111827' }}>
+              Setu.
+            </span>
+            <span style={{ color: '#d1d5db' }}>|</span>
+            <span>Government of Jharkhand · Academic &amp; Civic Innovation Platform</span>
+          </div>
+
+          <div className="setu-footer-links">
+            <Link to="/citizen" className="setu-footer-link">Citizen Intake</Link>
+            <Link to="/government/dashboard" className="setu-footer-link">Government Desk</Link>
+            <Link to="/university/dashboard" className="setu-footer-link">University R&amp;D</Link>
+            <Link to="/industry/dashboard" className="setu-footer-link">Industry CSR</Link>
+          </div>
+
+          <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
+            Built for Smart India Hackathon · Powered by Sarvam AI &amp; Saaras v3
           </div>
         </div>
       </footer>
-
     </div>
   );
 };

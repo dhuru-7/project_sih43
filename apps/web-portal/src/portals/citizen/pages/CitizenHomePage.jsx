@@ -88,7 +88,7 @@ export const CitizenHomePage = () => {
     };
     fetchLiveIssues();
 
-    // Listen for realtime notifications and deleted problems (e.g. 10s policy violation cleanup)
+    // Listen for realtime notifications, upload complete, and deleted problems
     const handleNewNotif = (e) => {
       const newNotif = e.detail;
       if (newNotif) {
@@ -102,12 +102,35 @@ export const CitizenHomePage = () => {
         setIssues((prev) => prev.filter((p) => p.id !== delId));
       }
     };
+    const handleUploadComplete = (e) => {
+      const newProblem = e.detail;
+      if (!newProblem) return;
+      const formatted = {
+        id: newProblem.id || `#SETU-${Math.floor(1000 + Math.random() * 9000)}`,
+        title: newProblem.title,
+        status: 'pending',
+        statusBadge: 'Pending',
+        time: 'Just now',
+        location: newProblem.address || 'Bero Block, Ranchi District',
+        author: userName || 'Citizen (You)',
+        assignee: 'Nodal Technical Evaluation Desk',
+        upvotes: 1,
+        image: (newProblem.evidenceUrls && newProblem.evidenceUrls[0]) || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80',
+        description: newProblem.description
+      };
+      setIssues((prev) => [formatted, ...prev.filter((p) => p.id !== formatted.id)]);
+      setUpvotedSet((prev) => new Set(prev).add(formatted.id));
+      setSubmitToast('Report Submitted');
+      setTimeout(() => setSubmitToast(null), 4000);
+    };
 
     window.addEventListener('setu-new-notification', handleNewNotif);
     window.addEventListener('setu-problem-deleted', handleProblemDeleted);
+    window.addEventListener('setu-report-upload-complete', handleUploadComplete);
     return () => {
       window.removeEventListener('setu-new-notification', handleNewNotif);
       window.removeEventListener('setu-problem-deleted', handleProblemDeleted);
+      window.removeEventListener('setu-report-upload-complete', handleUploadComplete);
     };
   }, []);
 
@@ -317,8 +340,8 @@ export const CitizenHomePage = () => {
     };
     setIssues((prev) => [formatted, ...prev]);
     setUpvotedSet((prev) => new Set(prev).add(formatted.id));
-    setSubmitToast(`Report #${formatted.id.replace('#', '')} submitted successfully.`);
-    setTimeout(() => setSubmitToast(null), 3500);
+    setSubmitToast('Report Submitted');
+    setTimeout(() => setSubmitToast(null), 4000);
   };
 
   // Single-session concurrency validation heartbeat
@@ -561,14 +584,16 @@ export const CitizenHomePage = () => {
       {/* Floating Success Pill Toast */}
       {submitToast && (
         <div
+          role="status"
+          aria-live="polite"
           style={{
             position: 'fixed',
-            bottom: isViewportMobile ? '80px' : '28px',
+            bottom: isViewportMobile ? '92px' : '28px',
             left: '50%',
-            transform: 'translateX(-50%)',
+            transform: 'translate(-50%, 0)',
             backgroundColor: '#111827',
             color: '#ffffff',
-            padding: '10px 20px',
+            padding: '10px 22px',
             borderRadius: '9999px',
             fontSize: '0.875rem',
             fontWeight: '600',
@@ -577,7 +602,9 @@ export const CitizenHomePage = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            animation: 'applePop 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+            animation: 'appleToastPop 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
+            pointerEvents: 'none',
+            letterSpacing: '-0.01em'
           }}
         >
           <GoogleIcon name="check_circle" size={18} color="#22c55e" />
