@@ -14,7 +14,7 @@ class Config:
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173,https://sih26043.vercel.app")
     JWT_EXPIRATION_HOURS = 24
     FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "./serviceAccountKey.json")
-    SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+    SARVAM_API_KEY = os.getenv("SARVAM_API_KEY", "sk_4epvscwg_NfXygGdgX2p496s19l0VhjQP")
 
 class DevelopmentConfig(Config):
     DEBUG = True

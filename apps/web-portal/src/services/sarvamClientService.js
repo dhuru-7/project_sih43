@@ -5,7 +5,7 @@
 
 const SARVAM_API_KEY =
   import.meta.env.VITE_SARVAM_API_KEY ||
-  'sk_u6a1ad1y_d17Zk95M94q4G7f9H3j2K1L5';
+  'sk_4epvscwg_NfXygGdgX2p496s19l0VhjQP';
 
 const OFFICIAL_CATEGORIES = [
   'Education',

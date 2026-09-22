@@ -49,7 +49,7 @@ def create_standalone_app():
     Provides Sarvam Saaras v3 STT, Sarvam 105B reasoning, and SQLite problems storage.
     """
     app = Flask(__name__)
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
     db_path = os.path.join(tempfile.gettempdir(), "setu_problems.db")
 
@@ -111,6 +111,8 @@ def create_standalone_app():
             "version": "1.0.0"
         }), 200
 
+    @app.route("/voice/transcribe", methods=["POST"])
+    @app.route("/api/voice/transcribe", methods=["POST"])
     @app.route("/v1/voice/transcribe", methods=["POST"])
     @app.route("/api/v1/voice/transcribe", methods=["POST"])
     def transcribe():
@@ -180,6 +182,8 @@ def create_standalone_app():
             }
         }), 200
 
+    @app.route("/voice/describe-issue", methods=["POST"])
+    @app.route("/api/voice/describe-issue", methods=["POST"])
     @app.route("/v1/voice/describe-issue", methods=["POST"])
     @app.route("/api/v1/voice/describe-issue", methods=["POST"])
     def describe_issue():
@@ -190,6 +194,7 @@ def create_standalone_app():
         location = data.get("locationInfo") or {}
         reporter_type = data.get("reporterType") or "Individual Citizen"
         group_name = data.get("groupName") or ""
+        core_issue = video_transcript or voice_transcript or text or "Observed physical issue documented via on-site evidence."
 
         cats_str = ", ".join([f"'{c}'" for c in OFFICIAL_CATEGORIES])
         system_prompt = (
@@ -473,12 +478,13 @@ def create_standalone_app():
     return app
 
 # WSGI application entry point for Vercel
-if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+try:
     app = create_standalone_app()
-else:
+except Exception as exc:
+    print(f"Standard serverless init error ({exc}); creating fallback...")
     try:
         from app import create_app
-        app = create_app(os.getenv("FLASK_ENV", "development"))
-    except Exception as exc:
-        print(f"Standard backend loading failed ({exc}); running standalone serverless app...")
-        app = create_standalone_app()
+        app = create_app(os.getenv("FLASK_ENV", "production"))
+    except Exception:
+        from flask import Flask
+        app = Flask(__name__)
