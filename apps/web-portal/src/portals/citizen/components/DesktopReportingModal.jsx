@@ -687,7 +687,7 @@ export const DesktopReportingModal = ({
         finalThumbnail = await extractVideoThumbnail(firstVideo.blob || firstVideo.file || firstVideo.url);
       }
 
-      // 3. Process with AI Engine (Groq LLM Mind + Gemini Vision)
+      // 3. Process with AI Engine (Sarvam 105B + Saaras v3)
       const aiPayload = {
         text: notepadText.trim(),
         videoTranscript: videoTranscripts.join('; '),
@@ -739,9 +739,13 @@ export const DesktopReportingModal = ({
       const generatedTitle = aiResult?.title || smartFallback.title;
       const generatedDesc = aiResult?.description || smartFallback.description;
       const generatedCategory = aiResult?.category || smartFallback.category;
+      const generatedSubcategory = aiResult?.subcategory || smartFallback.subcategory || '';
+      const generatedIssueType = aiResult?.issueType || smartFallback.issueType || generatedTitle;
       const generatedSeverity = aiResult?.severity || smartFallback.severity;
-      const generatedImpactCount = aiResult?.impactCount || smartFallback.impactCount;
-      const generatedImpactDesc = aiResult?.impactDescription || smartFallback.impactDescription;
+      const generatedUrgency = aiResult?.urgency || smartFallback.urgency || generatedSeverity;
+      const generatedPotentialImpact = aiResult?.potentialImpact || smartFallback.potentialImpact || [];
+      const generatedAiObservations = aiResult?.aiObservations || smartFallback.aiObservations || {};
+      const generatedSuggestedRouting = aiResult?.suggestedRouting || smartFallback.suggestedRouting || {};
 
       const now = new Date();
       const formattedDateTime =
@@ -778,9 +782,15 @@ export const DesktopReportingModal = ({
         title: generatedTitle,
         description: generatedDesc,
         category: generatedCategory,
+        subcategory: generatedSubcategory,
+        issueType: generatedIssueType,
         severity: generatedSeverity,
-        impactCount: generatedImpactCount,
-        impactDescription: generatedImpactDesc,
+        urgency: generatedUrgency,
+        potentialImpact: generatedPotentialImpact,
+        aiObservations: generatedAiObservations,
+        suggestedRouting: generatedSuggestedRouting,
+        impactCount: aiResult?.impactCount || smartFallback.impactCount || 'Local vicinity',
+        impactDescription: aiResult?.impactDescription || smartFallback.impactDescription || '',
         reporterType: 'Individual Citizen',
         groupName: '',
         safetyStatus: 'SAFE',
@@ -823,7 +833,13 @@ export const DesktopReportingModal = ({
         title: smartFallback.title,
         description: smartFallback.description,
         category: smartFallback.category,
+        subcategory: smartFallback.subcategory,
+        issueType: smartFallback.issueType,
         severity: smartFallback.severity,
+        urgency: smartFallback.urgency,
+        potentialImpact: smartFallback.potentialImpact,
+        aiObservations: smartFallback.aiObservations,
+        suggestedRouting: smartFallback.suggestedRouting,
         impactCount: smartFallback.impactCount,
         impactDescription: smartFallback.impactDescription,
         reporterType: 'Individual Citizen',
@@ -983,6 +999,50 @@ export const DesktopReportingModal = ({
     const m = Math.floor(sec / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
+  };
+
+  const getStatusDot = (val) => {
+    const v = String(val || 'MEDIUM').toUpperCase().trim();
+    if (v === 'CRITICAL' || v === 'HIGH') return '#ff3b30';
+    if (v === 'LOW') return '#34c759';
+    return '#ff9500';
+  };
+
+  const getImpactTheme = (severity, urgency) => {
+    const sev = String(severity || 'MEDIUM').toUpperCase().trim();
+    const urg = String(urgency || 'MEDIUM').toUpperCase().trim();
+
+    if (sev === 'CRITICAL' || sev === 'HIGH' || urg === 'CRITICAL') {
+      return {
+        level: 'Critical Impact',
+        borderColor: '#ef4444',
+        bgColor: 'rgba(254, 242, 242, 0.65)',
+        badgeBg: '#fee2e2',
+        badgeColor: '#b91c1c',
+        badgeBorder: '#fca5a5',
+        bulletColor: '#ef4444'
+      };
+    }
+    if (sev === 'LOW' && (urg === 'LOW' || urg === 'MEDIUM')) {
+      return {
+        level: 'Low Impact',
+        borderColor: '#22c55e',
+        bgColor: 'rgba(240, 253, 244, 0.65)',
+        badgeBg: '#dcfce7',
+        badgeColor: '#15803d',
+        badgeBorder: '#86efac',
+        bulletColor: '#22c55e'
+      };
+    }
+    return {
+      level: 'Moderate Impact',
+      borderColor: '#f59e0b',
+      bgColor: 'rgba(254, 252, 232, 0.65)',
+      badgeBg: '#fef3c7',
+      badgeColor: '#b45309',
+      badgeBorder: '#fcd34d',
+      bulletColor: '#f59e0b'
+    };
   };
 
   if (!isOpen) return null;
@@ -1325,7 +1385,7 @@ export const DesktopReportingModal = ({
                   <GoogleIcon name="arrow_back" size={20} color="#1c1c1e" />
                 </button>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: '800', margin: 0, color: '#000000' }}>
-                  Grievance Notes
+                  Report Notes
                 </h2>
               </div>
 
@@ -1362,7 +1422,7 @@ export const DesktopReportingModal = ({
                     handleContinueFromNotepad();
                   }
                 }}
-                placeholder="Describe your grievance in detail here... or tap the Mic below to speak. (Press ⌘+Enter to continue)"
+                placeholder="Describe the problem in detail here... or tap the Mic below to speak. (Press ⌘+Enter to continue)"
                 style={{
                   flex: 1,
                   width: '100%',
@@ -1505,58 +1565,30 @@ export const DesktopReportingModal = ({
                   <GoogleIcon name="arrow_back" size={20} color="#1c1c1e" />
                 </button>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: '800', margin: 0, color: '#000000', letterSpacing: '-0.02em' }}>
-                  Review Grievance
+                  Review Report
                 </h2>
               </div>
-
-              <button
-                onClick={resetAndClose}
-                className="apple-tap"
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f2f2f7',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
-              >
-                <GoogleIcon name="close" size={20} color="#1c1c1e" />
-              </button>
             </header>
 
-            {/* Body */}
+            {/* Body: Touch corners, separated by lines */}
             <div
               className="desktop-scrollable-modal-body"
               style={{
                 flex: 1,
                 minHeight: 0,
-                padding: '20px 28px 36px 28px',
+                padding: 0,
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '20px',
                 overscrollBehavior: 'contain',
-                WebkitOverflowScrolling: 'touch'
+                WebkitOverflowScrolling: 'touch',
+                backgroundColor: '#ffffff'
               }}
             >
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(0, 0, 0, 0.08)',
-                  overflow: 'hidden',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                {/* 1. Media Carousel on top of Card: 40% height, swappable like explore posts, paused by default */}
-                {mediaItems.length > 0 && (
+              {/* 1. Media Carousel touching corners at the top: edge-to-edge */}
+              {mediaItems.length > 0 && (
+                <div style={{ borderBottom: '1px solid #e5e5ea', width: '100%' }}>
                   <ReviewMediaCarousel
                     mediaItems={mediaItems}
                     currentIndex={reviewMediaIndex}
@@ -1568,174 +1600,172 @@ export const DesktopReportingModal = ({
                     setIsPlaying={setIsReviewPlaying}
                     videoRefs={reviewVideoRefs}
                   />
-                )}
+                </div>
+              )}
 
-                {/* Card Details */}
-                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {/* 2. Heading (Title) */}
-                  <h3
-                    style={{
-                      fontSize: '1.375rem',
-                      fontWeight: '800',
-                      color: '#000000',
-                      margin: 0,
-                      lineHeight: 1.3,
-                      letterSpacing: '-0.02em'
-                    }}
-                  >
-                    {reviewData.title}
-                  </h3>
-
-                  {/* 3. Category */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 14px',
-                        borderRadius: '9999px',
-                        backgroundColor: '#eff6ff',
-                        color: '#1d4ed8',
-                        fontSize: '0.8125rem',
-                        fontWeight: '700'
-                      }}
-                    >
-                      <GoogleIcon name="category" size={16} color="#1d4ed8" />
-                      <span>{reviewData.category}</span>
-                    </span>
-                  </div>
-
-                  {/* Location & Date/Time Strip */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '12px',
-                      padding: '14px 16px',
-                      borderRadius: '14px',
-                      backgroundColor: '#f8f9fa',
-                      border: '1px solid rgba(0, 0, 0, 0.05)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#1c1c1e' }}>
-                      <GoogleIcon name="location_on" size={18} color="#71717a" />
-                      <span style={{ fontWeight: '600' }}>
-                        {reviewData.address || reviewData.villageCity || 'Delhi, Outer North Delhi, PIN: 131028'}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: '#6e6e73' }}>
-                      <GoogleIcon name="schedule" size={18} color="#8e8e93" />
-                      <span>{reviewData.dateTime}</span>
-                    </div>
-                  </div>
-
-                  {/* 4. Impact Summary */}
-                  <div
-                    style={{
-                      padding: '16px',
-                      borderRadius: '16px',
-                      backgroundColor: '#f0fdf4',
-                      border: '1px solid rgba(22, 163, 74, 0.15)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '4px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <GoogleIcon name="groups" size={18} color="#16a34a" />
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#15803d', textTransform: 'uppercase' }}>
-                        Impact Summary
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '1rem', fontWeight: '700', color: '#14532d', marginTop: '2px' }}>
-                      {reviewData.impactCount}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#166534', lineHeight: 1.45 }}>
-                      {reviewData.impactDescription}
-                    </div>
-                  </div>
-
-                  {/* 5. Severity */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 14px',
-                        borderRadius: '9999px',
-                        backgroundColor:
-                          reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
-                            ? '#fee2e2'
-                            : reviewData.severity === 'LOW'
-                            ? '#dcfce7'
-                            : '#fef3c7',
-                        color:
-                          reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
-                            ? '#b91c1c'
-                            : reviewData.severity === 'LOW'
-                            ? '#15803d'
-                            : '#b45309',
-                        fontSize: '0.8125rem',
-                        fontWeight: '700'
-                      }}
-                    >
-                      <GoogleIcon
-                        name="priority_high"
-                        size={15}
-                        color={
-                          reviewData.severity === 'CRITICAL' || reviewData.severity === 'HIGH'
-                            ? '#b91c1c'
-                            : reviewData.severity === 'LOW'
-                            ? '#15803d'
-                            : '#b45309'
-                        }
-                      />
-                      <span>{reviewData.severity} Severity</span>
-                    </span>
-                  </div>
-
-                  {/* 6. Description (Scrollable container with smooth Apple scrollbar) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Edge-to-Edge Sections separated by lines */}
+              {(() => {
+                const impactTheme = getImpactTheme(reviewData.severity, reviewData.urgency);
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    {/* Section 1: Title, Location/Time, and All Pills Placed Together */}
                     <div
                       style={{
-                        fontSize: '0.75rem',
-                        fontWeight: '700',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                        color: '#8e8e93',
+                        padding: '26px 32px 24px 32px',
+                        borderBottom: '1px solid #e5e5ea',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
+                        flexDirection: 'column',
+                        gap: '12px'
                       }}
                     >
-                      <span>Description</span>
-                      <span style={{ fontSize: '0.725rem', color: '#a1a1aa', textTransform: 'none', fontWeight: '500' }}>
-                        Scroll to view full details
-                      </span>
+                      <h3
+                        style={{
+                          fontSize: '1.5rem',
+                          fontWeight: '800',
+                          color: '#000000',
+                          margin: 0,
+                          lineHeight: 1.3,
+                          letterSpacing: '-0.025em'
+                        }}
+                      >
+                        {reviewData.title}
+                      </h3>
+
+                      {/* Location & Date/Time: Apple secondary styling directly below title */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '0.875rem',
+                            color: '#636366',
+                            fontWeight: '500'
+                          }}
+                        >
+                          <GoogleIcon name="location_on" size={16} color="#8e8e93" />
+                          <span style={{ color: '#1c1c1e', fontWeight: '600' }}>
+                            {reviewData.address || reviewData.villageCity || 'Location captured automatically'}
+                          </span>
+                        </div>
+                        {reviewData.dateTime && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              fontSize: '0.875rem',
+                              color: '#636366',
+                              fontWeight: '500'
+                            }}
+                          >
+                            <GoogleIcon name="schedule" size={15} color="#8e8e93" />
+                            <span>{reviewData.dateTime}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* All Metadata Pills Placed Together in a Unified Cluster (No indicator dots) */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        {/* Category */}
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '6px 14px',
+                            borderRadius: '9999px',
+                            backgroundColor: '#f2f2f7',
+                            color: '#1c1c1e',
+                            border: '1px solid rgba(0, 0, 0, 0.08)',
+                            fontSize: '0.8125rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          {reviewData.category}
+                        </span>
+
+                        {/* Subcategory */}
+                        {reviewData.subcategory && (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '6px 12px',
+                              borderRadius: '9999px',
+                              backgroundColor: '#f2f2f7',
+                              color: '#3a3a3c',
+                              border: '1px solid rgba(0, 0, 0, 0.08)',
+                              fontSize: '0.8125rem',
+                              fontWeight: '600'
+                            }}
+                          >
+                            {reviewData.subcategory}
+                          </span>
+                        )}
+
+                        {/* Severity */}
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '6px 13px',
+                            borderRadius: '9999px',
+                            backgroundColor: '#f2f2f7',
+                            color: '#1c1c1e',
+                            border: '1px solid rgba(0, 0, 0, 0.08)',
+                            fontSize: '0.8125rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          <span>{reviewData.severity || 'Medium'} Severity</span>
+                        </span>
+
+                        {/* Urgency */}
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '6px 13px',
+                            borderRadius: '9999px',
+                            backgroundColor: '#f2f2f7',
+                            color: '#1c1c1e',
+                            border: '1px solid rgba(0, 0, 0, 0.08)',
+                            fontSize: '0.8125rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          <span>{reviewData.urgency || 'Medium'} Urgency</span>
+                        </span>
+                      </div>
                     </div>
 
+                    {/* Section 2: Description (Pitch Black Heading) */}
                     <div
-                      className="desktop-scrollable-desc"
                       style={{
-                        maxHeight: isDescExpanded ? 'none' : '220px',
-                        overflowY: isDescExpanded ? 'visible' : 'auto',
-                        padding: '14px 16px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '14px',
-                        border: '1px solid rgba(0, 0, 0, 0.06)',
-                        userSelect: 'text',
-                        WebkitUserSelect: 'text',
-                        overscrollBehavior: 'contain'
+                        padding: '24px 32px',
+                        borderBottom: '1px solid #e5e5ea',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px'
                       }}
                     >
+                      <h4
+                        style={{
+                          fontSize: '1.0625rem',
+                          fontWeight: '700',
+                          color: '#000000',
+                          margin: 0,
+                          letterSpacing: '-0.015em'
+                        }}
+                      >
+                        Description
+                      </h4>
+
                       <p
                         style={{
                           fontSize: '0.9375rem',
                           lineHeight: 1.65,
-                          color: '#27272a',
+                          color: '#1c1c1e',
                           margin: 0,
                           whiteSpace: 'pre-wrap',
                           userSelect: 'text',
@@ -1746,28 +1776,130 @@ export const DesktopReportingModal = ({
                       </p>
                     </div>
 
-                    {reviewData.description && reviewData.description.length > 200 && (
-                      <button
-                        type="button"
-                        onClick={() => setIsDescExpanded((prev) => !prev)}
+                    {/* Section 3: Potential Impact (Edge-to-edge, touching corners) */}
+                    <div
+                      style={{
+                        padding: '24px 32px',
+                        borderBottom: '1px solid #e5e5ea',
+                        backgroundColor: '#ffffff',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px'
+                      }}
+                    >
+                      <h4
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#000000',
-                          fontSize: '0.8125rem',
+                          fontSize: '1.0625rem',
                           fontWeight: '700',
-                          padding: '2px 0',
-                          cursor: 'pointer',
-                          alignSelf: 'flex-start',
-                          fontFamily: 'inherit'
+                          color: '#000000',
+                          margin: 0,
+                          letterSpacing: '-0.015em'
                         }}
                       >
-                        {isDescExpanded ? 'Show less (compact)' : 'Expand full height'}
-                      </button>
-                    )}
+                        Potential Impact
+                      </h4>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {Array.isArray(reviewData.potentialImpact) && reviewData.potentialImpact.length > 0 ? (
+                          reviewData.potentialImpact.map((item, idx) => (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.875rem', color: '#1c1c1e', lineHeight: 1.5 }}>
+                              <span style={{ color: '#000000', fontWeight: '700', lineHeight: 1.5 }}>•</span>
+                              <span>{item}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ fontSize: '0.875rem', color: '#1c1c1e', lineHeight: 1.5 }}>
+                            {reviewData.impactDescription || 'Maintenance and operational concern in the surrounding area.'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Section 4: Evidence & Observations (Pitch Black Heading) */}
+                    <div
+                      style={{
+                        padding: '24px 32px',
+                        borderBottom: '1px solid #e5e5ea',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      <h4
+                        style={{
+                          fontSize: '1.0625rem',
+                          fontWeight: '700',
+                          color: '#000000',
+                          margin: 0,
+                          letterSpacing: '-0.015em'
+                        }}
+                      >
+                        Evidence & Observations
+                      </h4>
+
+                      {reviewData.aiObservations?.observed?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '4px' }}>
+                          <div style={{ fontSize: '0.8125rem', fontWeight: '700', color: '#1c1c1e' }}>
+                            Observed
+                          </div>
+                          {reviewData.aiObservations.observed.map((obs, idx) => (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.875rem', color: '#1c1c1e', lineHeight: 1.5 }}>
+                              <span style={{ color: '#8e8e93' }}>•</span>
+                              <span>{obs}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {reviewData.aiObservations?.potential_inference?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '4px' }}>
+                          <div style={{ fontSize: '0.8125rem', fontWeight: '700', color: '#1c1c1e' }}>
+                            Potential Inference
+                          </div>
+                          {reviewData.aiObservations.potential_inference.map((inf, idx) => (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.875rem', color: '#2c2c2e', lineHeight: 1.5 }}>
+                              <span style={{ color: '#8e8e93' }}>•</span>
+                              <span>{inf}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section 5: Suggested Routing (Pitch Black Heading) */}
+                    <div
+                      style={{
+                        padding: '24px 32px',
+                        borderBottom: '1px solid #e5e5ea',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                      }}
+                    >
+                      <h4
+                        style={{
+                          fontSize: '1.0625rem',
+                          fontWeight: '700',
+                          color: '#000000',
+                          margin: 0,
+                          letterSpacing: '-0.015em'
+                        }}
+                      >
+                        Suggested Routing
+                      </h4>
+                      <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e' }}>
+                        {reviewData.suggestedRouting?.stakeholders || reviewData.department || 'Relevant utility / infrastructure stakeholders'}
+                      </div>
+                      {reviewData.suggestedRouting?.collaboration_potential && (
+                        <div style={{ fontSize: '0.8125rem', color: '#636366', lineHeight: 1.5, paddingTop: '4px' }}>
+                          <span style={{ fontWeight: '700', color: '#1c1c1e' }}>Collaboration Potential: </span>
+                          {reviewData.suggestedRouting.collaboration_potential}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
 
             {/* Footer: Submit button with no arrow */}
@@ -1822,7 +1954,7 @@ export const DesktopReportingModal = ({
                   opacity: isSubmitting ? 0.7 : 1
                 }}
               >
-                <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+                <span>{isSubmitting ? 'Submitting...' : 'Submit Report'}</span>
               </button>
             </footer>
           </div>

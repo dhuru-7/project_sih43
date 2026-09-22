@@ -862,7 +862,7 @@ export const DesktopProfileView = ({
                         >
                           <GoogleIcon name="tune" size={20} color="#1a1c1c" />
                         </div>
-                        <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: '600', color: '#1a1c1c' }}>
+                        <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem', fontWeight: '500', color: '#1a1c1c' }}>
                           {t('general', 'General')}
                         </span>
                       </div>
@@ -1011,20 +1011,6 @@ export const DesktopProfileView = ({
                       >
                         {t('my_submissions', 'My Submissions')}
                       </h3>
-                      {submissions.length > 0 && (
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: '700',
-                            padding: '2px 8px',
-                            borderRadius: '9999px',
-                            backgroundColor: '#f2f2f7',
-                            color: '#1c1c1e'
-                          }}
-                        >
-                          {submissions.length}
-                        </span>
-                      )}
                     </div>
                     <div
                       onClick={() => navigate('/my-submissions')}

@@ -532,7 +532,7 @@ export const CitizenHomePage = () => {
         />
       )}
 
-      {/* 📱 Mobile Reporting Modal (In-App Camera, Gallery, Swipe Preview, Saaras + Gemini Description) */}
+      {/* 📱 Mobile Reporting Modal (In-App Camera, Gallery, Swipe Preview, Saaras + Sarvam 105B Description) */}
       <MobileReportingModal
         isOpen={isReportingOpen && isViewportMobile}
         onClose={() => setIsReportingOpen(false)}
@@ -540,7 +540,7 @@ export const CitizenHomePage = () => {
         userName={userName}
       />
 
-      {/* 💻 Desktop Reporting Modal (Multi-File Select, + Add More, Saaras + Gemini Description) */}
+      {/* 💻 Desktop Reporting Modal (Multi-File Select, + Add More, Saaras + Sarvam 105B Description) */}
       <DesktopReportingModal
         isOpen={isReportingOpen && !isViewportMobile}
         onClose={() => setIsReportingOpen(false)}

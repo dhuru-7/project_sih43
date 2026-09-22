@@ -594,7 +594,7 @@ export const MobileProfileView = ({
                     >
                       <GoogleIcon name="tune" size={18} color="#1c1c1e" />
                     </div>
-                    <span style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1c1c1e' }}>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: '500', color: '#1c1c1e' }}>
                       {t('general', 'General')}
                     </span>
                   </div>
@@ -638,23 +638,7 @@ export const MobileProfileView = ({
                       {t('my_submissions', 'My Submissions')}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {submissions.length > 0 && (
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                          backgroundColor: '#f2f2f7',
-                          color: '#3a3a3c'
-                        }}
-                      >
-                        {submissions.length}
-                      </span>
-                    )}
-                    <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
-                  </div>
+                  <GoogleIcon name="chevron_right" size={18} color="#c7c7cc" />
                 </button>
               </li>
 

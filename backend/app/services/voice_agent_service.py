@@ -2,7 +2,6 @@ import time
 import uuid
 import logging
 from app.services.sarvam_service import SarvamService
-from app.services.gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)
 
@@ -97,24 +96,16 @@ class VoiceAgentService:
             "content": transcript
         })
 
-        # 3. Fast Brain: Gemini 3.5 Flash Lite (<1.0s latency) with Sarvam 105B fallback
+        # 3. Brain: Sarvam 105B Indic conversational model
         reply_text = ""
         try:
-            gemini_messages = []
-            for h in session["history"]:
-                if h["role"] == "user":
-                    gemini_messages.append({"role": "user", "parts": [{"text": h["content"]}]})
-                elif h["role"] == "assistant":
-                    gemini_messages.append({"role": "model", "parts": [{"text": h["content"]}]})
-
-            reply_text = GeminiService.generate_chat_response(gemini_messages)
-        except Exception as e:
-            logger.warning(f"Gemini Flash Lite turn failed ({e}), falling back to Sarvam 105B...")
             reply_text = SarvamService.chat_completion(
                 session["history"],
                 model="sarvam-105b-conversations",
-                max_tokens=40
+                max_tokens=60
             )
+        except Exception as e:
+            logger.warning(f"Sarvam 105B turn failed ({e})")
 
         if not reply_text or not reply_text.strip():
             reply_text = "नमस्ते जी, मैं समझ रही हूँ। कृपया बताइए मैं आपकी किस प्रकार सहायता कर सकती हूँ?"

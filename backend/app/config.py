@@ -15,10 +15,6 @@ class Config:
     JWT_EXPIRATION_HOURS = 24
     FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "./serviceAccountKey.json")
     SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 class DevelopmentConfig(Config):
     DEBUG = True

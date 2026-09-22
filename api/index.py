@@ -193,27 +193,49 @@ def create_standalone_app():
 
         cats_str = ", ".join([f"'{c}'" for c in OFFICIAL_CATEGORIES])
         system_prompt = (
-            "You are TARA, the AI Civic Intelligence Engine for SETU (India National Citizen Grievance & Innovation Platform).\n"
-            "A citizen has reported a civic problem using spoken video, voice note, or written text.\n"
-            "Synthesize this into an authentic, actionable citizen grievance report.\n"
-            "CRITICAL REQUIREMENT FOR DESCRIPTION: Write the 'description' in the FIRST PERSON from the perspective of the reporting citizen themselves (e.g. 'I am reporting an urgent issue...', 'In our street...').\n"
-            "NEVER use third-person bureaucratic phrasing like 'A grievance was reported by Individual Citizen'.\n"
-            "Highlight the exact street name, nearby landmark, time/duration, core problem, and impact.\n"
-            "Format the description with an opening statement, followed by structured bullet details:\n"
-            "• Street / Landmark: [name]\n"
-            "• Time / Duration: [time]\n"
-            "• Specific Issue: [problem]\n"
-            "• Impact: [who is affected]\n"
-            "and end with a polite request for municipal action.\n"
+            "You are TARA, the AI Civic Intelligence Engine for SETU.\n"
+            "A citizen has reported a real-world problem using photos, video frames, voice notes, or text.\n"
+            "Analyze the input and synthesize an evidence-grounded, structured problem report.\n\n"
+            "CRITICAL PHILOSOPHY & EVIDENCE RULES:\n"
+            "1. Setu connects problems to appropriate stakeholders, government bodies, and potential academic/industry research collaborators. "
+            "Do NOT assume every issue is a municipal complaint. Do NOT state that the municipality will resolve it or is responsible.\n"
+            "2. TITLE: Direct, factual, and problem-focused (under 10 words). Describe WHAT the problem is (e.g. 'Tangled Overhead Utility Wires', 'Waterlogging on Road', 'Damaged Road Surface', 'Uncollected Waste Accumulation', 'Broken Streetlight', 'Blocked Drainage'). "
+            "NEVER use titles like 'Complaint Against Municipality', 'Urgent Civic Grievance', 'Societal Challenge: Utility', or 'Request for Municipal Intervention'.\n"
+            "3. DESCRIPTION: Factual, concise, and neutral. Describe the observed problem directly from a problem perspective. "
+            "DO NOT use first-person complaint letters (NO 'I am reporting...', NO 'In our locality...', NO 'I kindly request the municipal authority...', NO 'Please resolve...', NO 'The concerned authority must...'). "
+            "DO NOT invent unverified hazards or assumptions: never state 'risk of electrocution', 'live electrical wires', 'illegal wiring', or 'imminent catastrophe' unless directly proven by evidence. "
+            "When inferring potential consequences, always use qualified phrasing ('potential', 'may', or 'appears').\n"
+            "4. POTENTIAL IMPACT: Provide a list of 2-4 concise, evidence-supported or qualified bullet points (e.g. ['Difficult inspection and maintenance', 'Potential safety concern for nearby residents and workers', 'Visual and infrastructure clutter', 'Possible obstruction around nearby structures']). "
+            "NEVER invent numbers of affected people (no fake '50-100 residents at risk of electrocution'), deaths, injuries, or financial loss.\n"
+            "5. SEVERITY vs URGENCY: Keep them separate. "
+            "- severity: Potential physical seriousness of the issue ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'). "
+            "- urgency: How quickly operational attention may be needed ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'). Do not mark high urgency merely because the citizen used dramatic words like 'urgent'.\n"
+            "6. AI OBSERVATIONS: "
+            "- observed: List of 2-3 directly visible or verified physical facts. "
+            "- potential_inference: 1-2 reasonable, qualified conclusions using 'may', 'appears', or 'potential'.\n"
+            "7. SUGGESTED ROUTING: "
+            "- stakeholders: Domain-relevant authority or entity (e.g. 'Relevant utility / infrastructure stakeholders', 'Urban infrastructure / roads authority', 'Sanitation / local body', 'Water supply & drainage board'). Do NOT default to municipality. "
+            "- collaboration_potential: Potential opportunity for university, engineering, or industry collaboration (e.g. 'Potential opportunity for university/engineering teams to explore safer cable organization and infrastructure management solutions.').\n\n"
             "Respond with ONLY valid JSON (no markdown fences) containing these exact keys:\n"
-            "'title' (direct, under 10 words, stating problem and area),\n"
-            "'description' (the first-person structured description),\n"
-            f"'category' (MUST be exactly one of: {cats_str}),\n"
-            "'severity' (MUST be one of: 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'),\n"
-            "'impact_count' (e.g. '100-250 local residents'),\n"
-            "'impact_description' (1-2 sentences on who is affected),\n"
-            "'department' (appropriate municipal department),\n"
-            f"'reporter_type' ('{reporter_type}')."
+            "{\n"
+            '  "title": "Factual problem title",\n'
+            f'  "category": "Exactly one of: {cats_str}",\n'
+            '  "subcategory": "Subcategory name (e.g. Utility Infrastructure)",\n'
+            '  "issue_type": "Specific issue type (e.g. Unmanaged Overhead Cabling)",\n'
+            '  "severity": "LOW | MEDIUM | HIGH | CRITICAL",\n'
+            '  "urgency": "LOW | MEDIUM | HIGH | CRITICAL",\n'
+            '  "description": "Factual neutral description without complaint letter phrasing",\n'
+            '  "potential_impact": ["Impact point 1", "Impact point 2"],\n'
+            '  "ai_observations": {\n'
+            '    "observed": ["Observed physical detail 1", "Observed physical detail 2"],\n'
+            '    "potential_inference": ["Qualified inference 1"]\n'
+            '  },\n'
+            '  "suggested_routing": {\n'
+            '    "stakeholders": "Relevant stakeholders",\n'
+            '    "collaboration_potential": "University / industry research & solution potential"\n'
+            '  },\n'
+            f'  "reporter_type": "{reporter_type}"\n'
+            "}"
         )
 
         user_parts = []
@@ -224,7 +246,7 @@ def create_standalone_app():
         if text:
             user_parts.append(f"Written notes: '{text}'")
         if not user_parts:
-            user_parts.append("Visual civic issue reported with attached evidence.")
+            user_parts.append("Visual problem reported with attached evidence.")
 
         loc_str = location.get("formatted") or location.get("villageCity") or ""
         if loc_str:
@@ -247,7 +269,7 @@ def create_standalone_app():
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message}
                     ],
-                    "max_tokens": 550,
+                    "max_tokens": 600,
                     "temperature": 0.2
                 },
                 timeout=25
@@ -279,16 +301,59 @@ def create_standalone_app():
                 if sev not in ["LOW", "MEDIUM", "HIGH", "CRITICAL"]:
                     sev = "MEDIUM"
 
+                urg = str(parsed.get("urgency", "MEDIUM")).upper().strip()
+                if urg not in ["LOW", "MEDIUM", "HIGH", "CRITICAL"]:
+                    urg = "MEDIUM"
+
+                pot_impact = parsed.get("potential_impact")
+                if isinstance(pot_impact, str):
+                    pot_impact = [s.strip(" •-") for s in pot_impact.split("\n") if s.strip()]
+                elif not isinstance(pot_impact, list) or not pot_impact:
+                    pot_impact = [
+                        "Inspection and maintenance operational concern",
+                        "Potential safety concern for surrounding area",
+                        "Infrastructure clutter and access constraint"
+                    ]
+
+                ai_obs = parsed.get("ai_observations") or {}
+                if not isinstance(ai_obs, dict):
+                    ai_obs = {}
+                obs = ai_obs.get("observed") or ["Observed physical condition documented via submitted media."]
+                inf = ai_obs.get("potential_inference") or ["Potential operational impact subject to on-site evaluation."]
+
+                routing = parsed.get("suggested_routing") or {}
+                if isinstance(routing, str):
+                    stakeholders = routing
+                    collab = "Potential opportunity for university/engineering teams to explore structured solutions."
+                else:
+                    stakeholders = routing.get("stakeholders") or "Relevant utility / infrastructure stakeholders"
+                    collab = routing.get("collaboration_potential") or "Potential opportunity for university/engineering teams to explore structured solutions."
+
+                title_res = parsed.get("title") or (core_issue[:45] + "..." if len(core_issue) > 45 else core_issue.capitalize()) if (video_transcript or voice_transcript or text) else "Observed Problem Report"
+                desc_res = parsed.get("description") or user_message
+
                 return jsonify({
                     "status": "success",
                     "data": {
-                        "title": parsed.get("title", "Civic Issue Needs Inspection"),
-                        "description": parsed.get("description", user_message),
+                        "title": title_res,
+                        "description": desc_res,
                         "category": matched_cat,
+                        "subcategory": parsed.get("subcategory") or "General Infrastructure",
+                        "issueType": parsed.get("issue_type") or title_res,
                         "severity": sev,
-                        "impactCount": str(parsed.get("impact_count", "100-250 local residents")),
-                        "impactDescription": str(parsed.get("impact_description", "Disruption reported by local residents.")),
-                        "department": parsed.get("department", "Municipal Corporation"),
+                        "urgency": urg,
+                        "potentialImpact": pot_impact,
+                        "aiObservations": {
+                            "observed": obs if isinstance(obs, list) else [str(obs)],
+                            "potential_inference": inf if isinstance(inf, list) else [str(inf)]
+                        },
+                        "suggestedRouting": {
+                            "stakeholders": stakeholders,
+                            "collaboration_potential": collab
+                        },
+                        "impactCount": "Local vicinity",
+                        "impactDescription": " • ".join(pot_impact[:3]),
+                        "department": stakeholders,
                         "reporterType": reporter_type,
                         "groupName": group_name,
                         "language": "hi-IN"
@@ -297,27 +362,38 @@ def create_standalone_app():
         except Exception as e:
             print(f"Sarvam 105B synthesis error: {e}")
 
-        # Fallback to structured response based on user input
+        # Fallback to structured neutral response based on user input
         address = location.get("formatted") or location.get("villageCity") or "Local Area"
-        core_issue = video_transcript or voice_transcript or text or "civic problem requiring municipal attention"
+        core_issue = video_transcript or voice_transcript or text or "Observed physical issue documented via on-site evidence."
+        fallback_title = core_issue[:45] + "..." if len(core_issue) > 45 else core_issue.capitalize()
+        default_impact = [
+            "Inspection and maintenance operational concern",
+            "Potential safety concern for surrounding area",
+            "Infrastructure clutter and access constraint"
+        ]
+
         return jsonify({
             "status": "success",
             "data": {
-                "title": core_issue[:45] + "..." if len(core_issue) > 45 else core_issue.capitalize(),
-                "description": (
-                    f"I am reporting an urgent civic problem at {address}. {core_issue}\n\n"
-                    f"Details:\n"
-                    f"• Street / Landmark: {address}\n"
-                    f"• Time / Duration: Reported today\n"
-                    f"• Specific Issue: {core_issue}\n"
-                    f"• Impact: Disruption of public movement and safety hazard for nearby residents.\n\n"
-                    f"Requesting the concerned departmental authorities to inspect the site and resolve this issue promptly."
-                ),
+                "title": fallback_title,
+                "description": f"Problem observed at {address}. {core_issue}",
                 "category": "Urban Development and Infrastructure",
+                "subcategory": "General Infrastructure",
+                "issueType": fallback_title,
                 "severity": "MEDIUM",
-                "impactCount": "100-250 local residents",
-                "impactDescription": f"Public safety and daily convenience disruption reported near {address}.",
-                "department": "Municipal Corporation",
+                "urgency": "MEDIUM",
+                "potentialImpact": default_impact,
+                "aiObservations": {
+                    "observed": ["Observed physical condition documented via submitted media."],
+                    "potential_inference": ["Potential operational impact subject to on-site evaluation."]
+                },
+                "suggestedRouting": {
+                    "stakeholders": "Relevant utility / infrastructure stakeholders",
+                    "collaboration_potential": "Potential opportunity for university/engineering teams to explore structured solutions."
+                },
+                "impactCount": "Local vicinity",
+                "impactDescription": " • ".join(default_impact),
+                "department": "Relevant utility / infrastructure stakeholders",
                 "reporterType": reporter_type,
                 "groupName": group_name,
                 "language": "hi-IN"

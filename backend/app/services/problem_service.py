@@ -65,7 +65,13 @@ def _init_db():
             ("upvotes", "INTEGER DEFAULT 1"),
             ("safety_status", "TEXT DEFAULT 'SAFE'"),
             ("raw_transcripts", "TEXT"),
-            ("updated_at", "TEXT")
+            ("updated_at", "TEXT"),
+            ("urgency", "TEXT DEFAULT 'MEDIUM'"),
+            ("subcategory", "TEXT"),
+            ("issue_type", "TEXT"),
+            ("potential_impact", "TEXT"),
+            ("suggested_routing", "TEXT"),
+            ("ai_observations", "TEXT")
         ]
         for col_name, col_type in migration_cols:
             try:
@@ -99,8 +105,35 @@ class ProblemService:
         else:
             item["rawTranscripts"] = {}
 
+        if item.get("potential_impact"):
+            try:
+                item["potentialImpact"] = json.loads(item["potential_impact"])
+            except Exception:
+                item["potentialImpact"] = [item["potential_impact"]]
+        else:
+            item["potentialImpact"] = []
+
+        if item.get("ai_observations"):
+            try:
+                item["aiObservations"] = json.loads(item["ai_observations"])
+            except Exception:
+                item["aiObservations"] = {}
+        else:
+            item["aiObservations"] = {}
+
+        if item.get("suggested_routing"):
+            try:
+                item["suggestedRouting"] = json.loads(item["suggested_routing"])
+            except Exception:
+                item["suggestedRouting"] = {"stakeholders": item.get("suggested_routing") or item.get("department")}
+        else:
+            item["suggestedRouting"] = {"stakeholders": item.get("department") or "Relevant utility / infrastructure stakeholders"}
+
         # Expose camelCase properties for frontend compatibility
-        item["impactCount"] = item.get("impact_count") or "50-150 residents"
+        item["urgency"] = item.get("urgency") or "MEDIUM"
+        item["subcategory"] = item.get("subcategory") or "General Infrastructure"
+        item["issueType"] = item.get("issue_type") or item.get("title") or "Observed Problem"
+        item["impactCount"] = item.get("impact_count") or "Local vicinity"
         item["impactDescription"] = item.get("impact_description") or ""
         item["reporterType"] = item.get("reporter_type") or "Citizen"
         item["groupName"] = item.get("group_name") or ""
@@ -200,6 +233,21 @@ class ProblemService:
         safety_status = data.get("safetyStatus") or data.get("safety_status") or "SAFE"
         upvotes = data.get("upvotes", 1)
 
+        urgency = data.get("urgency") or "MEDIUM"
+        subcategory = data.get("subcategory") or "General Infrastructure"
+        issue_type = data.get("issueType") or data.get("issue_type") or title
+
+        pot_impact_raw = data.get("potentialImpact") or data.get("potential_impact") or []
+        pot_impact_json = json.dumps(pot_impact_raw) if isinstance(pot_impact_raw, list) else str(pot_impact_raw)
+
+        routing_raw = data.get("suggestedRouting") or data.get("suggested_routing") or {"stakeholders": data.get("department", "Relevant utility / infrastructure stakeholders")}
+        routing_json = json.dumps(routing_raw) if isinstance(routing_raw, dict) else str(routing_raw)
+
+        ai_obs_raw = data.get("aiObservations") or data.get("ai_observations") or {}
+        ai_obs_json = json.dumps(ai_obs_raw) if isinstance(ai_obs_raw, dict) else str(ai_obs_raw)
+
+        stakeholders_dept = routing_raw.get("stakeholders") if isinstance(routing_raw, dict) else str(routing_raw)
+
         with _get_db() as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO problems (
@@ -207,14 +255,15 @@ class ProblemService:
                     impact_count, impact_description, reporter_type, group_name, author, author_id,
                     address, village_city, subdistrict, district, state, pincode,
                     latitude, longitude, thumbnail, evidence_urls, upvotes, safety_status,
-                    raw_transcripts, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    raw_transcripts, created_at, updated_at,
+                    urgency, subcategory, issue_type, potential_impact, suggested_routing, ai_observations
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 prob_id,
                 title,
                 description,
                 category,
-                data.get("department", "DHTE Nodal Evaluation Cell"),
+                stakeholders_dept or data.get("department", "Relevant utility / infrastructure stakeholders"),
                 severity,
                 score,
                 "SUBMITTED" if not duplicates else "FLAGGED_DUPLICATE",
@@ -238,7 +287,13 @@ class ProblemService:
                 safety_status,
                 transcripts_json,
                 created_at,
-                created_at
+                created_at,
+                urgency,
+                subcategory,
+                issue_type,
+                pot_impact_json,
+                routing_json,
+                ai_obs_json
             ))
             conn.commit()
 

@@ -527,7 +527,7 @@ const SubmissionMediaCarousel = ({ mediaList, onOpenPreview, title, fallbackImag
               ) : (
                 <img
                   src={m.url}
-                  alt={title || 'Grievance Evidence'}
+                  alt={title || 'Report Evidence'}
                   draggable={false}
                   style={{
                     width: '100%',
@@ -739,7 +739,7 @@ const SubmissionCard = React.forwardRef(({ sub, isHighlighted, onOpenMediaPrevie
       ? t('unverified_media_title', 'Unverified Media Evidence Submitted')
       : sub.title === 'Visual civic problem reported by citizen.' || sub.title === 'Visual civic problem reported by citizen'
       ? t('visual_problem_reported_title', 'Visual civic problem reported by citizen.')
-      : sub.title || 'Civic Grievance Report';
+      : sub.title || 'Civic Problem Report';
 
   return (
     <article

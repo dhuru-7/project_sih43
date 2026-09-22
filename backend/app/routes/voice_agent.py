@@ -33,7 +33,7 @@ def start_voice():
 def voice_chat():
     """
     Accepts speech audio (multipart file or base64) or text.
-    Transcribes via Saaras v3 -> generates reply via Gemini 3.5 Flash Lite -> synthesizes via Bulbul v3.
+    Transcribes via Saaras v3 -> generates reply via Sarvam 105B -> synthesizes via Bulbul v3.
     """
     session_id = None
 
@@ -170,46 +170,28 @@ def transcribe_audio():
             }
         }), 200
     except Exception as e:
-        logger.warning(f"Sarvam STT failed in /transcribe ({e}), attempting Groq Whisper fallback...")
-        try:
-            from app.services.groq_service import GroqService
-            whisper_res = GroqService.transcribe_audio(
-                audio_bytes=audio_bytes,
-                filename=filename,
-                language="hi"
-            )
-            return jsonify({
-                "status": "success",
-                "data": {
-                    "transcript": whisper_res.get("transcript", "").strip(),
-                    "language": whisper_res.get("language_code", "hi")
-                }
-            }), 200
-        except Exception as groq_e:
-            logger.warning(f"Groq Whisper fallback also unavailable: {groq_e}")
-            return jsonify({
-                "status": "success",
-                "data": {
-                    "transcript": "",
-                    "language": "hi-IN",
-                    "warning": "Speech transcription is unavailable in this deployment."
-                }
-            }), 200
+        logger.warning(f"Sarvam STT failed in /transcribe ({e})")
+        return jsonify({
+            "status": "success",
+            "data": {
+                "transcript": "",
+                "language": "hi-IN",
+                "warning": "Speech transcription is currently unavailable."
+            }
+        }), 200
 
 @voice_agent_bp.route("/describe-issue", methods=["POST"])
 def describe_issue():
     """
-    Primary Civic Grievance Synthesis Engine powered by Sarvam 105B.
+    Primary Problem Report Synthesis Engine powered purely by Sarvam 105B.
     Accepts spoken audio (multipart or base64) or direct text, along with attached photos,
     video frame thumbnails, and reverse geocoded location.
     1. Transcribes audio via Sarvam Saaras v3 STT.
-    2. Gathers visual scene summary from photos/video frames via Gemini vision (if available).
-    3. Synthesizes a formal, actionable civic grievance with title, 1 of 17 official categories,
-       severity, description, and impact estimate using Sarvam 105B.
-    4. Falls back to Gemini and rule-based classifier if remote services encounter limits.
+    2. Synthesizes an evidence-grounded problem report with title, 1 of 17 official categories,
+       severity vs urgency, factual potential impact, and suggested routing using Sarvam 105B.
+    3. Falls back to local rule-based classifier if Sarvam is unreachable.
     """
     from app.services.sarvam_service import SarvamService
-    from app.services.gemini_service import GeminiService
 
     transcript = ""
     detected_lang = "hi-IN"
@@ -302,71 +284,73 @@ def describe_issue():
     if not transcript and not images:
         return jsonify({
             "status": "error",
-            "message": "No voice audio, text, or images received for grievance description."
+            "message": "No voice audio, text, or images received for problem description."
         }), 400
 
     visual_summary = ""
     if images and len(images) > 0:
-        try:
-            visual_summary = GeminiService.describe_visual_evidence(images)
-            logger.info(f"Visual evidence extracted: {visual_summary}")
-        except Exception as e:
-            logger.warning(f"Visual evidence extraction failed (non-critical): {e}")
+        visual_summary = f"{len(images)} on-site photo(s)/media item(s) attached by citizen."
 
     # If citizen attached media without typing/speaking notes, use visual summary as primary observation
     if not transcript.strip() and visual_summary.strip():
-        transcript = f"Visual on-site civic evidence observed: {visual_summary.strip()}"
+        transcript = f"Visual on-site evidence observed: {visual_summary.strip()}"
 
-    # 4. Formulate structured grievance using Sarvam 105B first for the SIH reporting prototype.
+    # 4. Formulate structured problem report using Sarvam 105B
     issue_meta = None
     try:
-        logger.info("Synthesizing civic grievance using Sarvam 105B...")
+        logger.info("Synthesizing problem report using Sarvam 105B...")
         issue_meta = SarvamService.generate_issue_description(
-            transcript=transcript or "Civic issue reported with attached media evidence.",
+            transcript=transcript or "Civic problem reported with attached media evidence.",
             visual_summary=visual_summary,
             location_info=location_info,
             reporter_type=reporter_type or "Individual Citizen",
             group_name=group_name
         )
     except Exception as sarvam_err:
-        logger.warning(f"Sarvam 105B synthesis failed ({sarvam_err}), falling back to Groq...")
-        try:
-            from app.services.groq_service import GroqService
-            issue_meta = GroqService.synthesize_grievance_report(
-                video_transcripts=video_transcript or "",
-                voice_transcript=voice_transcript or "",
-                user_text=user_notes or transcript or (f"Observed in media: {visual_summary}" if visual_summary else ""),
-                visual_summary=visual_summary or "",
-                location_info=location_info,
-                reporter_type=reporter_type or "Individual Citizen",
-                group_name=group_name
-            )
-        except Exception as groq_err:
-            logger.warning(f"Groq fallback failed ({groq_err}), trying Gemini...")
-            try:
-                issue_meta = GeminiService.generate_issue_description(
-                    transcript=transcript or "Civic issue reported with attached media evidence.",
-                    images=images,
-                    location_info=location_info,
-                    reporter_type=reporter_type,
-                    group_name=group_name,
-                    visual_summary=visual_summary
-                )
-            except Exception as gemini_err:
-                logger.exception(f"All AI fallbacks failed ({gemini_err}), falling back to NLP classifier...")
+        logger.warning(f"Sarvam 105B synthesis unavailable ({sarvam_err}), falling back to local classifier...")
+        issue_meta = None
 
     if issue_meta:
+        # Extract potential impact array
+        pot_impact = issue_meta.get("potential_impact") or [
+            "Inspection and maintenance operational concern",
+            "Potential safety concern for surrounding area",
+            "Infrastructure clutter and access constraint"
+        ]
+        if isinstance(pot_impact, str):
+            pot_impact = [s.strip(" •-") for s in pot_impact.split("\n") if s.strip()]
+
+        # Extract AI observations
+        ai_obs = issue_meta.get("ai_observations") or {
+            "observed": ["Observed physical condition documented via submitted media."],
+            "potential_inference": ["Potential operational impact subject to on-site evaluation."]
+        }
+
+        # Extract suggested routing
+        routing = issue_meta.get("suggested_routing") or {
+            "stakeholders": issue_meta.get("department") or "Relevant utility / infrastructure stakeholders",
+            "collaboration_potential": "Potential opportunity for university/engineering teams to explore structured solutions."
+        }
+
+        stakeholders_val = routing.get("stakeholders") if isinstance(routing, dict) else str(routing)
+
         return jsonify({
             "status": "success",
             "data": {
                 "transcript": transcript,
-                "title": issue_meta.get("title", "Civic Grievance Report"),
+                "title": issue_meta.get("title", "Observed Problem Report"),
                 "description": issue_meta.get("description", transcript),
                 "category": issue_meta.get("category", "Urban Development and Infrastructure"),
+                "subcategory": issue_meta.get("subcategory", "General Infrastructure"),
+                "issueType": issue_meta.get("issue_type") or issue_meta.get("title", "Observed Problem"),
                 "severity": issue_meta.get("severity", "MEDIUM"),
-                "impactCount": issue_meta.get("impact_count") or issue_meta.get("impactCount") or "100-250 local residents",
-                "impactDescription": issue_meta.get("impact_description") or issue_meta.get("impactDescription") or "Affects local residents and daily commuters.",
-                "department": issue_meta.get("department", "Municipal Corporation"),
+                "urgency": issue_meta.get("urgency", "MEDIUM"),
+                "potentialImpact": pot_impact,
+                "aiObservations": ai_obs,
+                "suggestedRouting": routing,
+                "impactCount": "Local vicinity",
+                "impactDescription": " • ".join(pot_impact[:3]),
+                "department": stakeholders_val or "Relevant utility / infrastructure stakeholders",
                 "reporterType": issue_meta.get("reporter_type") or reporter_type or "Individual Citizen",
                 "groupName": group_name,
                 "language": detected_lang,
@@ -377,19 +361,39 @@ def describe_issue():
     # Final NLP Fallback using 17 categories classifier
     from app.ai.classifier import classify_problem
     classified = classify_problem(transcript)
+    fallback_title = transcript[:45] + ("..." if len(transcript) > 45 else "") if transcript else "Observed Problem Report"
+    default_impact = [
+        "Inspection and maintenance operational concern",
+        "Potential safety concern for surrounding area",
+        "Infrastructure clutter and access constraint"
+    ]
     return jsonify({
         "status": "success",
         "data": {
             "transcript": transcript,
-            "title": transcript[:40] + ("..." if len(transcript) > 40 else "") if transcript else "Civic Grievance Report",
-            "description": transcript or "Civic issue reported with evidence.",
+            "title": fallback_title,
+            "description": transcript or "Problem report documented with attached media evidence.",
             "category": classified.get("category", "Urban Development and Infrastructure"),
+            "subcategory": "General Infrastructure",
+            "issueType": fallback_title,
             "severity": "MEDIUM",
-            "impactCount": "50-150 residents",
-            "impactDescription": "Local residents facing civic disruption.",
+            "urgency": "MEDIUM",
+            "potentialImpact": default_impact,
+            "aiObservations": {
+                "observed": ["Observed physical condition documented via submitted media."],
+                "potential_inference": ["Potential operational impact subject to on-site evaluation."]
+            },
+            "suggestedRouting": {
+                "stakeholders": "Relevant utility / infrastructure stakeholders",
+                "collaboration_potential": "Potential opportunity for university/engineering teams to explore structured solutions."
+            },
+            "impactCount": "Local vicinity",
+            "impactDescription": " • ".join(default_impact),
+            "department": "Relevant utility / infrastructure stakeholders",
             "reporterType": reporter_type or "Individual Citizen",
             "groupName": group_name,
-            "language": detected_lang
+            "language": detected_lang,
+            "visualSummary": visual_summary
         }
     }), 200
 
