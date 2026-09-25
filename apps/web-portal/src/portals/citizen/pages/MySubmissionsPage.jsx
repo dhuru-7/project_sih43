@@ -31,7 +31,7 @@ const DEFAULT_IMAGE =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCHLgpa6w9Mc0xb0uRDCltnA57316hNCEx8m2gsDYU9dYGL8jHTe1Fx_VJe0ofiXkjfDINb8H6KhvIOUGi0CE2-F2bEf-JEP-k-mjv4lJBZ_CIkhP-SZZvBh1QIMMy9thuAXqS9HmskDhdKjrzsbeBEQ7rV5-C__8tiu2AAp0E_nbY8ixzoMvebKxizup9W0CieQrAGS8iIsY73h5sgK3k5lhJlWRischfnoQRJUVOAKbagxw8ui-0oXw';
 
 const getTimeAgo = (dateStr) => {
-  if (!dateStr) return 'Recently';
+  if (!dateStr) return 'Just now';
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
@@ -42,7 +42,7 @@ const getTimeAgo = (dateStr) => {
     if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d ago`;
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
   } catch {
-    return 'Recently';
+    return 'Just now';
   }
 };
 

@@ -71,7 +71,7 @@ export const CitizenHomePage = () => {
             title: p.title,
             status: p.status || 'pending',
             statusBadge: p.status === 'RESOLVED' ? 'Resolved' : p.status === 'VERIFIED' ? 'Reviewed' : 'Pending',
-            time: 'Recently',
+            time: 'Just now',
             location: p.address || p.villageCity || p.district || 'Ranchi District',
             author: p.author || 'Citizen',
             assignee: p.department || 'Nodal Technical Evaluation Desk',

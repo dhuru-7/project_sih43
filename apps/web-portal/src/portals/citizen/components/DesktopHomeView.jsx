@@ -493,7 +493,9 @@ export const DesktopHomeView = ({
                         </span>
                         <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: '#cfc4c5', flexShrink: 0 }}></span>
                         <span style={{ color: '#7e7576' }}>
-                          {issue.time === 'Recently' ? t('recently', 'Recently') : issue.time}
+                          {(!issue.time || issue.time.toLowerCase() === 'recently' || issue.time.toLowerCase() === 'just now')
+                            ? t('just_now', 'Just now')
+                            : issue.time}
                         </span>
                       </div>
                     </div>

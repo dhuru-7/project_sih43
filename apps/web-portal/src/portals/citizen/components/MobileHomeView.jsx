@@ -219,25 +219,6 @@ export const MobileHomeView = ({
             <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#000000', letterSpacing: '-0.01em' }}>
               {t('my_submissions', 'My Submissions')}
             </h2>
-            <button
-              className="apple-tap"
-              onClick={() => navigate('/my-submissions')}
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: 'transparent',
-                color: '#5e5e5e',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-              aria-label="View all submissions"
-            >
-              <GoogleIcon name="chevron_right" size={22} />
-            </button>
           </div>
 
           {/* Issues List Items */}
@@ -300,7 +281,9 @@ export const MobileHomeView = ({
                       {displayTitle}
                     </h4>
                     <p style={{ fontSize: '0.75rem', color: '#5e5e5e', marginTop: '0.15rem' }}>
-                      {t('reported', 'Reported')} {issue.time === 'Recently' ? t('recently', 'Recently') : issue.time}
+                      {(!issue.time || issue.time.toLowerCase() === 'recently' || issue.time.toLowerCase() === 'just now')
+                        ? t('just_now', 'Just now')
+                        : `${t('reported', 'Reported')} ${issue.time}`}
                     </p>
                   </div>
 
