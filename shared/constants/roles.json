@@ -42,9 +42,10 @@
     ]
   },
   "ROLE_PORTAL_MAP": {
-    "GOVERNMENT": "/government/dashboard",
-    "UNIVERSITY": "/university/dashboard",
-    "INDUSTRY": "/industry/dashboard",
-    "ADMIN": "/government/dashboard"
+    "CITIZEN": "/grass",
+    "GOVERNMENT": "/oak/dashboard",
+    "UNIVERSITY": "/saplings/dashboard",
+    "INDUSTRY": "/grove/dashboard",
+    "ADMIN": "/oak/dashboard"
   }
 }

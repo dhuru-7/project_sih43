@@ -413,8 +413,8 @@ export const DesktopHomeView = ({
               </h2>
 
               <a
-                onClick={(e) => { e.preventDefault(); navigate('/my-submissions'); }}
-                href="/my-submissions"
+                onClick={(e) => { e.preventDefault(); navigate('/grass/submissions'); }}
+                href="/grass/submissions"
                 className="apple-tap"
                 style={{
                   display: 'inline-flex',
@@ -439,7 +439,7 @@ export const DesktopHomeView = ({
                 <div
                   key={issue.id}
                   className="apple-stitch-card apple-tap"
-                  onClick={() => navigate(`/my-submissions?highlight=${encodeURIComponent(issue.id)}`)}
+                  onClick={() => navigate(`/grass/submissions?highlight=${encodeURIComponent(issue.id)}`)}
                   style={{
                     padding: '1rem 1.25rem',
                     display: 'flex',

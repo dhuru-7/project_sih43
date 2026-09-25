@@ -16,10 +16,10 @@ export const Navbar = () => {
 
   const getRoleDashboardRoute = (role) => {
     switch (role) {
-      case 'GOVERNMENT': return '/government/dashboard';
-      case 'UNIVERSITY': return '/university/dashboard';
-      case 'INDUSTRY': return '/industry/dashboard';
-      default: return '/citizen';
+      case 'GOVERNMENT': return '/oak/dashboard';
+      case 'UNIVERSITY': return '/saplings/dashboard';
+      case 'INDUSTRY': return '/grove/dashboard';
+      default: return '/grass';
     }
   };
 
@@ -119,7 +119,7 @@ export const Navbar = () => {
           </>
         ) : (
           <Link
-            to="/citizen"
+            to="/grass"
             className="setu-btn-primary"
             style={{
               fontSize: '0.75rem',

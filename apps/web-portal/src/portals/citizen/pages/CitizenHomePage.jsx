@@ -197,7 +197,10 @@ export const CitizenHomePage = () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('setu_citizen_active_tab', newNav);
     }
-    const targetPath = newNav === 'home' ? '/citizen/home' : `/citizen/${newNav}`;
+    const isGrass = location.pathname.startsWith('/grass');
+    const targetPath = isGrass
+      ? (newNav === 'home' ? '/grass' : `/grass/${newNav}`)
+      : (newNav === 'home' ? '/citizen/home' : `/citizen/${newNav}`);
     if (location.pathname !== targetPath) {
       navigate(targetPath, { replace: true });
     }

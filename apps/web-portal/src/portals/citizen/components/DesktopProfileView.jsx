@@ -1013,7 +1013,7 @@ export const DesktopProfileView = ({
                       </h3>
                     </div>
                     <div
-                      onClick={() => navigate('/my-submissions')}
+                      onClick={() => navigate('/grass/submissions')}
                       className="apple-tap"
                       style={{
                         display: 'flex',
@@ -1037,7 +1037,7 @@ export const DesktopProfileView = ({
 
                   {submissions.length === 0 ? (
                     <div
-                      onClick={() => navigate('/my-submissions')}
+                      onClick={() => navigate('/grass/submissions')}
                       className="apple-tap"
                       style={{
                         padding: '24px',
@@ -1072,7 +1072,7 @@ export const DesktopProfileView = ({
                         return (
                           <div
                             key={sub.id}
-                            onClick={() => navigate('/my-submissions')}
+                            onClick={() => navigate('/grass/submissions')}
                             className="apple-tap"
                             style={{
                               display: 'flex',

@@ -1028,7 +1028,7 @@ export const MySubmissionsPage = () => {
     const hId = params.get('highlight');
     if (hId) {
       setHighlightedId(hId);
-      window.history.replaceState({}, '', '/my-submissions');
+      window.history.replaceState({}, '', '/grass/submissions');
     }
   }, [location.search]);
 
@@ -1155,7 +1155,7 @@ export const MySubmissionsPage = () => {
     if (window.history.state && window.history.state.idx > 0) {
       navigate(-1);
     } else {
-      navigate('/citizen/home', { replace: true });
+      navigate('/grass', { replace: true });
     }
   };
 

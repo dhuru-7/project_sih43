@@ -605,7 +605,7 @@ export const MobileProfileView = ({
               {/* My Submissions */}
               <li style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
                 <button
-                  onClick={() => navigate('/my-submissions')}
+                  onClick={() => navigate('/grass/submissions')}
                   className="apple-tap"
                   style={{
                     width: '100%',

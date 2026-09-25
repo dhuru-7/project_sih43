@@ -9,9 +9,9 @@ export const RoleGuard = ({ allowedRoles }) => {
 
   if (!user || (!allowedRoles.includes(user.role) && user.role !== 'ADMIN')) {
     // Redirect to their assigned portal or root
-    const portalUrl = user?.role === 'GOVERNMENT' ? '/government/dashboard' :
-                      user?.role === 'UNIVERSITY' ? '/university/dashboard' :
-                      user?.role === 'INDUSTRY' ? '/industry/dashboard' : '/';
+    const portalUrl = user?.role === 'GOVERNMENT' ? '/oak/dashboard' :
+                      user?.role === 'UNIVERSITY' ? '/saplings/dashboard' :
+                      user?.role === 'INDUSTRY' ? '/grove/dashboard' : '/grass';
     return <Navigate to={portalUrl} replace />;
   }
 

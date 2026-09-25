@@ -122,7 +122,7 @@ export const LoginPage = () => {
             className="btn btn-outline"
             style={{ justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
           >
-            <GoogleIcon name="verified_user" size={18} color="#3b82f6" /> 🏛️ Government Official (Ministry)
+            <GoogleIcon name="park" size={18} color="#3b82f6" /> 🌳 Oak — Government Official (/oak)
           </button>
           <button
             type="button"
@@ -130,7 +130,7 @@ export const LoginPage = () => {
             className="btn btn-outline"
             style={{ justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
           >
-            <GoogleIcon name="school" size={18} color="#10b981" /> 🎓 University Researcher (IIT Delhi)
+            <GoogleIcon name="spa" size={18} color="#10b981" /> 🌿 Saplings — University Researcher (/saplings)
           </button>
           <button
             type="button"
@@ -138,7 +138,7 @@ export const LoginPage = () => {
             className="btn btn-outline"
             style={{ justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
           >
-            <GoogleIcon name="apartment" size={18} color="#f59e0b" /> 🏢 Industry Partner (Tata CleanTech)
+            <GoogleIcon name="forest" size={18} color="#f59e0b" /> 🌲 Grove — Industry &amp; CSR Partner (/grove)
           </button>
         </div>
       </div>

@@ -326,7 +326,7 @@ export const OnboardingPage = () => {
       localStorage.setItem('setu_user', JSON.stringify(user));
       localStorage.setItem('sih_user_data', JSON.stringify(user));
     }
-    navigate('/citizen/home');
+    navigate('/grass');
   };
 
   return (

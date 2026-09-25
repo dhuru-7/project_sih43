@@ -14,7 +14,7 @@ DEMO_USERS = {
         "password": "password123",
         "role": "GOVERNMENT",
         "organization": "Ministry of Jal Shakti",
-        "portalUrl": "/government/dashboard"
+        "portalUrl": "/oak/dashboard"
     },
     "dean@iitd.ac.in": {
         "id": "uni-001",
@@ -23,7 +23,7 @@ DEMO_USERS = {
         "password": "password123",
         "role": "UNIVERSITY",
         "organization": "IIT Delhi - R&D Cell",
-        "portalUrl": "/university/dashboard"
+        "portalUrl": "/saplings/dashboard"
     },
     "csr@tatacleantech.com": {
         "id": "ind-001",
@@ -32,7 +32,7 @@ DEMO_USERS = {
         "password": "password123",
         "role": "INDUSTRY",
         "organization": "Tata CleanTech",
-        "portalUrl": "/industry/dashboard"
+        "portalUrl": "/grove/dashboard"
     },
     "citizen@gmail.com": {
         "id": "cit-001",
@@ -41,7 +41,7 @@ DEMO_USERS = {
         "password": "password123",
         "role": "CITIZEN",
         "organization": "Public Citizen",
-        "portalUrl": "/government/dashboard"
+        "portalUrl": "/grass"
     }
 }
 

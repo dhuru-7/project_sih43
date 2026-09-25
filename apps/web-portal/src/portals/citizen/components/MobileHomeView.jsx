@@ -234,7 +234,7 @@ export const MobileHomeView = ({
               return (
                 <div
                   key={issue.id}
-                  onClick={() => navigate(`/my-submissions?highlight=${encodeURIComponent(issue.id)}`)}
+                  onClick={() => navigate(`/grass/submissions?highlight=${encodeURIComponent(issue.id)}`)}
                   className="apple-tap"
                   style={{
                     display: 'flex',

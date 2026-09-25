@@ -62,8 +62,20 @@ export const AppRoutes = () => {
       <Route path="/welcome" element={<OnboardingPage />} />
       <Route path="/intro" element={<OnboardingPage />} />
 
-      {/* 📱 Reporting Portal (Stitch Design - Dual Desktop/Mobile with Aadhaar Route Guard) */}
+      {/* 📱 \grass - Grassroots Reporting Portal (Citizens, Schools, Panchayats, ULBs) */}
       <Route element={<CitizenRouteGuard />}>
+        {/* 🌱 \grass routes */}
+        <Route path="/grass" element={<CitizenHomePage />} />
+        <Route path="/grass/home" element={<CitizenHomePage />} />
+        <Route path="/grass/explore" element={<CitizenHomePage />} />
+        <Route path="/grass/messages" element={<CitizenHomePage />} />
+        <Route path="/grass/profile" element={<CitizenHomePage />} />
+        <Route path="/grass/report" element={<CitizenHomePage />} />
+        <Route path="/grass/submissions" element={<MySubmissionsPage />} />
+        <Route path="/grass/my-submissions" element={<MySubmissionsPage />} />
+        <Route path="/submissions" element={<MySubmissionsPage />} />
+
+        {/* Action & legacy aliases */}
         <Route path="/report" element={<CitizenHomePage />} />
         <Route path="/reporting" element={<CitizenHomePage />} />
         <Route path="/reporting-portal" element={<CitizenHomePage />} />
@@ -85,8 +97,17 @@ export const AppRoutes = () => {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* 🏛️ Setu Govt Portal (Persistent Zero-Jitter Sidebar Shell) */}
+      {/* 🌳 \oak - Government Command & Nodal Evaluation Shell */}
       <Route element={<GovernmentLayout />}>
+        {/* 🌳 \oak routes */}
+        <Route path="/oak" element={<GovernmentDashboard />} />
+        <Route path="/oak/dashboard" element={<GovernmentDashboard />} />
+        <Route path="/oak/inbox" element={<GovernmentIssueInbox />} />
+        <Route path="/oak/map" element={<GovernmentMapView />} />
+        <Route path="/oak/assigned" element={<GovernmentAssigned />} />
+        <Route path="/oak/reports/:id" element={<GovernmentReportDetail />} />
+
+        {/* Existing & legacy aliases */}
         <Route path="/government" element={<GovernmentDashboard />} />
         <Route path="/government/dashboard" element={<GovernmentDashboard />} />
         <Route path="/civic-dashboard" element={<GovernmentDashboard />} />
@@ -116,8 +137,17 @@ export const AppRoutes = () => {
       {/* Protected Stakeholder Portals */}
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
-          {/* 🏛️ Government Portal (Role: GOVERNMENT) */}
+          {/* 🌳 \oak Portal (Role: GOVERNMENT) */}
           <Route element={<RoleGuard allowedRoles={['GOVERNMENT']} />}>
+            <Route path="/oak/problems" element={<GovernmentProblems />} />
+            <Route path="/oak/departments" element={<GovernmentDepartments />} />
+            <Route path="/oak/universities" element={<GovernmentUniversities />} />
+            <Route path="/oak/challenges" element={<GovernmentChallenges />} />
+            <Route path="/oak/projects" element={<GovernmentProjects />} />
+            <Route path="/oak/funding" element={<GovernmentFunding />} />
+            <Route path="/oak/certificates" element={<GovernmentCertificates />} />
+            <Route path="/oak/analytics" element={<GovernmentAnalytics />} />
+
             <Route path="/government/problems" element={<GovernmentProblems />} />
             <Route path="/government/departments" element={<GovernmentDepartments />} />
             <Route path="/government/universities" element={<GovernmentUniversities />} />
@@ -128,8 +158,18 @@ export const AppRoutes = () => {
             <Route path="/government/analytics" element={<GovernmentAnalytics />} />
           </Route>
 
-          {/* 🎓 University Portal (Role: UNIVERSITY) */}
+          {/* 🌿 \saplings - University Portal (Role: UNIVERSITY) */}
           <Route element={<RoleGuard allowedRoles={['UNIVERSITY']} />}>
+            <Route path="/saplings" element={<UniversityDashboard />} />
+            <Route path="/saplings/dashboard" element={<UniversityDashboard />} />
+            <Route path="/saplings/challenges" element={<UniversityChallenges />} />
+            <Route path="/saplings/teams" element={<UniversityTeams />} />
+            <Route path="/saplings/projects" element={<UniversityProjects />} />
+            <Route path="/saplings/milestones" element={<UniversityMilestones />} />
+            <Route path="/saplings/mentors" element={<UniversityMentors />} />
+            <Route path="/saplings/funding" element={<UniversityFunding />} />
+            <Route path="/saplings/communication" element={<UniversityCommunication />} />
+
             <Route path="/university/dashboard" element={<UniversityDashboard />} />
             <Route path="/university/challenges" element={<UniversityChallenges />} />
             <Route path="/university/teams" element={<UniversityTeams />} />
@@ -140,8 +180,17 @@ export const AppRoutes = () => {
             <Route path="/university/communication" element={<UniversityCommunication />} />
           </Route>
 
-          {/* 🏢 Industry Portal (Role: INDUSTRY) */}
+          {/* 🌲 \grove - Industry Portal (Role: INDUSTRY) */}
           <Route element={<RoleGuard allowedRoles={['INDUSTRY']} />}>
+            <Route path="/grove" element={<IndustryDashboard />} />
+            <Route path="/grove/dashboard" element={<IndustryDashboard />} />
+            <Route path="/grove/challenges" element={<IndustryChallenges />} />
+            <Route path="/grove/projects" element={<IndustryProjects />} />
+            <Route path="/grove/collaborations" element={<IndustryCollaborations />} />
+            <Route path="/grove/funding" element={<IndustryFunding />} />
+            <Route path="/grove/mentorship" element={<IndustryMentorship />} />
+            <Route path="/grove/profile" element={<IndustryProfile />} />
+
             <Route path="/industry/dashboard" element={<IndustryDashboard />} />
             <Route path="/industry/challenges" element={<IndustryChallenges />} />
             <Route path="/industry/projects" element={<IndustryProjects />} />

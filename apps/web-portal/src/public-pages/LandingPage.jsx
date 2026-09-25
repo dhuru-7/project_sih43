@@ -21,20 +21,20 @@ export const LandingPage = () => {
     }, 1200);
   };
 
-  // Portal Tab Details
+  // Portal Tab Details (Botanical Ecosystem: Grass, Oak, Saplings, Grove)
   const PORTAL_DATA = {
     citizen: {
-      title: 'Citizens, Schools, NGOs & Local Bodies',
-      desc: 'Report community bottlenecks in seconds through voice or media. Receive real-time updates and communicate directly with municipal officers.',
+      title: '🌱 Grass: Citizens, Schools, Panchayats & Local Bodies',
+      desc: 'Report community bottlenecks in seconds through voice or media. Countless grassroots voices from every village, ward, and school.',
       features: [
         '3-step intake: Speak or snap photos without manual typing',
-        'Direct two-way messaging with assigned municipal engineers',
+        'Direct two-way messaging with assigned nodal officers',
         'Explore feed: Official government awareness campaigns and civic updates',
         'Call Tara anytime for voice updates or hands-free in-app assistance'
       ],
-      ctaText: 'Open Citizen Portal',
-      ctaLink: '/citizen',
-      mockupTitle: 'Citizen Active Grievance',
+      ctaText: 'Enter Grass Portal (/grass)',
+      ctaLink: '/grass',
+      mockupTitle: 'Grass Grassroots Intake',
       mockupBadge: 'Under Review',
       mockupContent: {
         title: 'Drinking Water Contamination in Ward 8',
@@ -44,17 +44,17 @@ export const LandingPage = () => {
       }
     },
     govt: {
-      title: 'Government Administration & Nodal Officers',
-      desc: 'Centralized command center that clusters identical grievances, automates citizen follow-ups through Tara, and delegates engineering challenges to universities.',
+      title: '🌳 Oak: Government Administration & Nodal Officers',
+      desc: 'Centralized command center providing rock-solid governance, clustering identical grievances, and delegating engineering challenges to universities.',
       features: [
         'AI deduplication clustering similar citizen complaints into single challenges',
         'Single-click automated Tara follow-up calls to gather status updates from citizens',
         'Intelligent routing to university departments with verified laboratory equipment',
         'Milestone validation, financial grant disbursement, and certificate issuance'
       ],
-      ctaText: 'Access Government Dashboard',
-      ctaLink: '/government/dashboard',
-      mockupTitle: 'Nodal Command Desk',
+      ctaText: 'Access Oak Dashboard (/oak)',
+      ctaLink: '/oak',
+      mockupTitle: 'Oak Command Desk',
       mockupBadge: '42 Issues Clustered',
       mockupContent: {
         title: 'Cluster #14: Subarnarekha Basin Fluoride Filtration',
@@ -64,17 +64,17 @@ export const LandingPage = () => {
       }
     },
     university: {
-      title: 'University SPOCs, Faculty & Student Innovators',
-      desc: 'Turn state-forwarded challenges into funded academic projects. Form multi-disciplinary student squads and develop working physical prototypes.',
+      title: '🌿 Saplings: University SPOCs, Faculty & Student Innovators',
+      desc: 'Nurturing student innovation squads to turn state-forwarded challenges into funded academic projects and physical prototypes.',
       features: [
         'SPOC console to review challenges forwarded by government departments',
         'Student team leads receive dedicated credentials to submit development milestones',
         'Verifiable milestone tracking unlocking tranche-based grant funding',
         'Dual institutional verification by university SPOC and state nodal officers'
       ],
-      ctaText: 'University R&D Portal',
-      ctaLink: '/university/dashboard',
-      mockupTitle: 'Innovation Squad Console',
+      ctaText: 'Enter Saplings R&D (/saplings)',
+      ctaLink: '/saplings',
+      mockupTitle: 'Saplings Squad Console',
       mockupBadge: 'Milestone 2 Verified',
       mockupContent: {
         title: 'Low-Cost Arsenic Filter Cartridge (IIT ISM Dhanbad)',
@@ -84,17 +84,17 @@ export const LandingPage = () => {
       }
     },
     industry: {
-      title: 'Industry, CSR Funds & Venture Capital',
-      desc: 'Channel CSR capital directly into high-impact, verified student prototypes. Recruit vetted engineering talent and accelerate field deployments.',
+      title: '🌲 Grove: Industry, CSR Funds & Venture Capital',
+      desc: 'Channel CSR capital directly into high-impact, verified student prototypes. Recruit vetted engineering talent and harvest scaled field deployments.',
       features: [
         'Domain-matching algorithm recommending projects tailored to corporate CSR mandates',
         'Full visibility into prototypes verified by both university SPOCs and government',
         'Direct co-funding options and joint industry-government certification',
         'High-impact showcase boosting credibility and deployment scale'
       ],
-      ctaText: 'Industry & CSR Portal',
-      ctaLink: '/industry/dashboard',
-      mockupTitle: 'CSR Allocation Desk',
+      ctaText: 'Enter Grove CSR Portal (/grove)',
+      ctaLink: '/grove',
+      mockupTitle: 'Grove CSR Desk',
       mockupBadge: 'Match 94%',
       mockupContent: {
         title: 'Solar Micro-Grid Inverter Firmware Deployment',
@@ -122,8 +122,8 @@ export const LandingPage = () => {
             </p>
 
             <div className="setu-hero-actions">
-              <Link to="/citizen" className="setu-btn setu-btn-primary">
-                <span>Report an Issue</span>
+              <Link to="/grass" className="setu-btn setu-btn-primary">
+                <span>Report an Issue (/grass)</span>
                 <GoogleIcon name="arrow_forward" size={16} color="#ffffff" />
               </Link>
               <a href="#portals" className="setu-btn setu-btn-secondary">
@@ -465,32 +465,32 @@ export const LandingPage = () => {
             onClick={() => setActivePortal('citizen')}
             className={`setu-tab-trigger ${activePortal === 'citizen' ? 'active' : ''}`}
           >
-            <GoogleIcon name="person" size={18} />
-            <span>Citizen Portal</span>
+            <GoogleIcon name="grass" size={18} />
+            <span>🌱 Grass (Intake)</span>
           </button>
           <button
             type="button"
             onClick={() => setActivePortal('govt')}
             className={`setu-tab-trigger ${activePortal === 'govt' ? 'active' : ''}`}
           >
-            <GoogleIcon name="account_balance" size={18} />
-            <span>Government Officer</span>
+            <GoogleIcon name="park" size={18} />
+            <span>🌳 Oak (Govt)</span>
           </button>
           <button
             type="button"
             onClick={() => setActivePortal('university')}
             className={`setu-tab-trigger ${activePortal === 'university' ? 'active' : ''}`}
           >
-            <GoogleIcon name="school" size={18} />
-            <span>University R&amp;D</span>
+            <GoogleIcon name="spa" size={18} />
+            <span>🌿 Saplings (R&amp;D)</span>
           </button>
           <button
             type="button"
             onClick={() => setActivePortal('industry')}
             className={`setu-tab-trigger ${activePortal === 'industry' ? 'active' : ''}`}
           >
-            <GoogleIcon name="domain" size={18} />
-            <span>Industry &amp; CSR</span>
+            <GoogleIcon name="forest" size={18} />
+            <span>🌲 Grove (CSR)</span>
           </button>
         </div>
 
