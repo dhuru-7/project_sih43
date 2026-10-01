@@ -48,13 +48,16 @@
    ========================================================================== */
 
 .setu-apple-nav {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
   height: 64px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -228,8 +231,15 @@
 .setu-hero-section {
   position: relative;
   overflow: visible;
-  padding-top: 1.5rem;
-  padding-bottom: 4.5rem;
+  padding-top: 5rem;
+  padding-bottom: 8.5rem;
+}
+
+@media (max-width: 640px) {
+  .setu-hero-section {
+    padding-top: 4.5rem;
+    padding-bottom: 6.5rem;
+  }
 }
 
 /* Dynamic Curved SVG Section Separator (CodePen Inspired Flexing Curve) */
@@ -241,10 +251,16 @@
   width: 100vw;
   min-width: 100vw;
   height: 100%;
-  min-height: 520px;
+  min-height: 780px;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .setu-hero-curve-container {
+    min-height: 740px;
+  }
 }
 
 .setu-hero-curve-svg {

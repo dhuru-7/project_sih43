@@ -214,15 +214,15 @@ export const LandingPage = () => {
       const isMobile = window.innerWidth < 640;
       const unroundThreshold = Math.min(320, windowH * 0.42);
 
-      // 0. Dynamic Curved Section Separator (Scroll-reactive flex)
+      // 0. Dynamic Curved Section Separator (Scroll-reactive flex - expanded bottom)
       if (curvePathRef.current) {
         const scrollPos = window.scrollY;
-        const defaultCurveValue = 350;
+        const defaultCurveValue = 460;
         const curveRate = 2.4;
-        const curveValue = Math.max(160, defaultCurveValue - scrollPos / curveRate);
+        const curveValue = Math.max(260, defaultCurveValue - scrollPos / curveRate);
         curvePathRef.current.setAttribute(
           'd',
-          `M 800 300 Q 400 ${curveValue.toFixed(1)} 0 300 L 0 0 L 800 0 L 800 300 Z`
+          `M 800 400 Q 400 ${curveValue.toFixed(1)} 0 400 L 0 0 L 800 0 L 800 400 Z`
         );
       }
 
@@ -362,10 +362,10 @@ export const LandingPage = () => {
       {/* 1. HERO SECTION: DUAL PHOTOREALISTIC HARDWARE SHOWCASE             */}
       {/* ================================================================= */}
       <section className="setu-section setu-hero-section">
-        {/* Dynamic Curved SVG Section Separator (CodePen Inspired Flexing Curve) */}
+        {/* Dynamic Curved SVG Section Separator (CodePen Inspired Flexing Curve - Expanded Bottom) */}
         <div className="setu-hero-curve-container">
           <svg
-            viewBox="0 0 800 400"
+            viewBox="0 0 800 480"
             preserveAspectRatio="none"
             className="setu-hero-curve-svg"
           >
@@ -382,7 +382,7 @@ export const LandingPage = () => {
               fill="url(#setuHeroCurveGrad)"
               stroke="rgba(34, 211, 238, 0.45)"
               strokeWidth="1.5"
-              d="M 800 300 Q 400 350 0 300 L 0 0 L 800 0 L 800 300 Z"
+              d="M 800 400 Q 400 460 0 400 L 0 0 L 800 0 L 800 400 Z"
             />
           </svg>
         </div>
