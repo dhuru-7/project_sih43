@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleIcon } from '../components/ui/GoogleIcon';
+import { TaraStarIcon } from '../components/ui/TaraStarIcon';
 import { triggerHaptic } from '../utils/haptics';
 import '../styles/landing.css';
 
 export const LandingPage = () => {
-  // Walkthrough Scroll Progress & Step State
+  // Walkthrough Scroll Progress & Step State (Ref-optimized for 120 FPS with zero scroll jank)
   const walkthroughRef = useRef(null);
   const [activeStep, setActiveStep] = useState(0); // 0, 1, 2, 3
-  const [stepProgress, setStepProgress] = useState(1);
-  const [phoneTransform, setPhoneTransform] = useState({
-    rotY: -4,
-    rotX: 3,
-    rotZ: -1
-  });
+  const activeStepRef = useRef(0);
+  const phoneFrameRef = useRef(null);
 
   // State for Tara Voice Assistant Interactive Preview
   const [isTaraSpeaking, setIsTaraSpeaking] = useState(false);
@@ -28,6 +25,7 @@ export const LandingPage = () => {
   const psTrackRef = useRef(null);
   const psWordRefs = useRef([]);
   const curvePathRef = useRef(null);
+  const curveStrokeRef = useRef(null);
 
   // 50 Problem Statements Authentic to SIH / Setu Civic Realities (Mapped to User's 4x4 Grid & Ranges)
   const PS_ITEMS = [
@@ -166,45 +164,7 @@ export const LandingPage = () => {
   ];
 
   // Scroll Listener for Apple 5G Inspired 3D Phone Spin & Step Progression
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!walkthroughRef.current) return;
-      const rect = walkthroughRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const totalScrollable = rect.height - windowHeight;
-
-      if (totalScrollable <= 0) return;
-
-      // Calculate progress between 0 and 1
-      const currentScroll = -rect.top;
-      const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
-
-      // Calculate Step Index (0 to 3)
-      const exactStep = progress * WALKTHROUGH_STEPS.length;
-      const stepIdx = Math.min(WALKTHROUGH_STEPS.length - 1, Math.floor(exactStep));
-      const subProgress = exactStep - stepIdx;
-
-      setActiveStep(stepIdx);
-      setStepProgress(subProgress);
-
-      // 3D Phone Frame Rotation on Scroll (Dynamic Gyroscopic Spin inspired by Apple 5G)
-      const spinAngleY = Math.sin(progress * Math.PI * 2) * 12;
-      const spinAngleX = Math.cos(progress * Math.PI * 1.5) * 4;
-      const spinAngleZ = (progress - 0.5) * 4;
-
-      setPhoneTransform({
-        rotY: parseFloat(spinAngleY.toFixed(2)),
-        rotX: parseFloat(spinAngleX.toFixed(2)),
-        rotZ: parseFloat(spinAngleZ.toFixed(2))
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Smooth Card Pull, Expanding / Un-rounding & 3D Perspective Word Throw
+  // Unified Performant Scroll & Render Loop (Hardware-Accelerated 120 FPS)
   useEffect(() => {
     let rafId = null;
     let userHasScrolled = false;
@@ -217,13 +177,19 @@ export const LandingPage = () => {
       // 0. Dynamic Curved Section Separator (Scroll-reactive flex - expanded bottom)
       if (curvePathRef.current) {
         const scrollPos = window.scrollY;
-        const defaultCurveValue = 460;
-        const curveRate = 2.4;
-        const curveValue = Math.max(260, defaultCurveValue - scrollPos / curveRate);
+        const defaultCurveValue = 510;
+        const curveRate = 3.0;
+        const curveValue = Math.max(400, defaultCurveValue - scrollPos / curveRate);
         curvePathRef.current.setAttribute(
           'd',
-          `M 800 400 Q 400 ${curveValue.toFixed(1)} 0 400 L 0 0 L 800 0 L 800 400 Z`
+          `M 800 460 Q 400 ${curveValue.toFixed(1)} 0 460 L 0 0 L 800 0 L 800 460 Z`
         );
+        if (curveStrokeRef.current) {
+          curveStrokeRef.current.setAttribute(
+            'd',
+            `M 0 460 Q 400 ${curveValue.toFixed(1)} 800 460`
+          );
+        }
       }
 
       // 1. 3D Problem Statements Perspective Throw Animation
@@ -318,6 +284,35 @@ export const LandingPage = () => {
           cardEl.style.boxShadow = '0 -16px 44px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }
       });
+
+      // 3. Apple 5G Walkthrough Step & 3D Phone Gyro Transform (Zero React Re-render Thrashing)
+      const wtEl = walkthroughRef.current;
+      if (wtEl) {
+        const wtRect = wtEl.getBoundingClientRect();
+        const totalScrollable = wtRect.height - windowH;
+        if (totalScrollable > 0) {
+          const rawProgress = -wtRect.top / totalScrollable;
+          const progress = Math.max(0, Math.min(1, rawProgress));
+
+          // Each step gets an equal slice for deliberate one-by-one progression
+          const exactStep = progress * WALKTHROUGH_STEPS.length;
+          const stepIdx = Math.min(WALKTHROUGH_STEPS.length - 1, Math.floor(exactStep));
+
+          if (stepIdx !== activeStepRef.current) {
+            activeStepRef.current = stepIdx;
+            setActiveStep(stepIdx);
+            triggerHaptic('snap');
+          }
+
+          // Direct DOM transform without triggering React re-renders!
+          if (phoneFrameRef.current) {
+            const spinAngleY = (Math.sin(progress * Math.PI * 2) * 12).toFixed(2);
+            const spinAngleX = (Math.cos(progress * Math.PI * 1.5) * 4).toFixed(2);
+            const spinAngleZ = ((progress - 0.5) * 4).toFixed(2);
+            phoneFrameRef.current.style.transform = `perspective(1200px) rotateY(${spinAngleY}deg) rotateX(${spinAngleX}deg) rotateZ(${spinAngleZ}deg)`;
+          }
+        }
+      }
     };
 
     const onScroll = () => {
@@ -365,7 +360,7 @@ export const LandingPage = () => {
         {/* Dynamic Curved SVG Section Separator (CodePen Inspired Flexing Curve - Expanded Bottom) */}
         <div className="setu-hero-curve-container">
           <svg
-            viewBox="0 0 800 480"
+            viewBox="0 0 800 520"
             preserveAspectRatio="none"
             className="setu-hero-curve-svg"
           >
@@ -376,13 +371,21 @@ export const LandingPage = () => {
                 <stop offset="100%" stopColor="#EDE7F6" />
               </linearGradient>
             </defs>
+            {/* Seamless Gradient Fill from top:0 down past curve */}
             <path
               ref={curvePathRef}
               id="curve"
               fill="url(#setuHeroCurveGrad)"
+              d="M 800 460 Q 400 510 0 460 L 0 0 L 800 0 L 800 460 Z"
+            />
+            {/* Curved bottom separator outline only (zero top/side line artifacts) */}
+            <path
+              ref={curveStrokeRef}
+              id="curve-stroke"
+              fill="none"
               stroke="rgba(34, 211, 238, 0.45)"
               strokeWidth="1.5"
-              d="M 800 400 Q 400 460 0 400 L 0 0 L 800 0 L 800 400 Z"
+              d="M 0 460 Q 400 510 800 460"
             />
           </svg>
         </div>
@@ -557,9 +560,10 @@ export const LandingPage = () => {
             {/* Right Column: 3D Spinning Phone with Apple 5G Animated UI Transition */}
             <div className="setu-walkthrough-phone-col">
               <div
+                ref={phoneFrameRef}
                 className="setu-spinning-phone-frame"
                 style={{
-                  transform: `perspective(1200px) rotateY(${phoneTransform.rotY}deg) rotateX(${phoneTransform.rotX}deg) rotateZ(${phoneTransform.rotZ}deg)`
+                  transform: 'perspective(1200px) rotateY(-4deg) rotateX(3deg) rotateZ(-1deg)'
                 }}
               >
                 <div className="setu-spinning-phone-screen">
@@ -577,99 +581,227 @@ export const LandingPage = () => {
       </section>
 
       {/* ================================================================= */}
-      {/* 4. TARA AI VOICE COPILOT & MORPHING ORGANIC BLOB                  */}
+      {/* 4. TARA AI VOICE COPILOT & MORPHING ORGANIC STAR BLOB             */}
       {/* ================================================================= */}
       <section className="setu-section">
         <div className="setu-tara-section-wrap" id="tara-ai">
           <div className="setu-tara-grid">
-            {/* Left: Morphing Organic Audio Blob */}
+            {/* Left: Morphing Organic Audio Blob with Center 4-Pointed Tara Star Icon */}
             <div className="setu-blob-stage">
-              <div className="setu-organic-blob">
-                <div className="setu-organic-blob-core">
-                  <div className="setu-wave-bars">
-                    <div className="setu-wave-bar" />
-                    <div className="setu-wave-bar" />
-                    <div className="setu-wave-bar" />
-                    <div className="setu-wave-bar" />
-                    <div className="setu-wave-bar" />
+              <div className={`setu-organic-blob ${isTaraSpeaking ? 'setu-organic-blob-active' : ''}`}>
+                <div className="setu-tara-star-core">
+                  <div className="setu-tara-star-icon-wrap">
+                    <TaraStarIcon size={38} color="#ffffff" />
                   </div>
+                  {isTaraSpeaking && (
+                    <div className="setu-wave-bars" style={{ marginTop: '6px' }}>
+                      <div className="setu-wave-bar" />
+                      <div className="setu-wave-bar" />
+                      <div className="setu-wave-bar" />
+                      <div className="setu-wave-bar" />
+                      <div className="setu-wave-bar" />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <div style={{ marginTop: '2.25rem', textAlign: 'center' }}>
                 <button
                   className="setu-btn setu-btn-primary"
                   style={{
-                    background: isTaraSpeaking ? '#059669' : 'rgba(255, 255, 255, 0.15)',
-                    borderColor: 'rgba(255, 255, 255, 0.25)',
-                    backdropFilter: 'blur(8px)'
+                    background: isTaraSpeaking ? '#059669' : 'rgba(255, 255, 255, 0.12)',
+                    borderColor: isTaraSpeaking ? '#10b981' : 'rgba(255, 255, 255, 0.22)',
+                    backdropFilter: 'blur(10px)',
+                    gap: '0.5rem',
+                    color: '#ffffff'
                   }}
                   onClick={handleSimulateTara}
                   onMouseEnter={() => triggerHaptic('hover')}
                   onMouseDown={() => triggerHaptic('click')}
                 >
-                  <span>{isTaraSpeaking ? 'Tara is Speaking' : 'Listen to Tara Sample'}</span>
+                  <TaraStarIcon size={16} color="#ffffff" />
+                  <span>{isTaraSpeaking ? 'Tara is Speaking (Hindi)...' : 'Listen to Tara Sample'}</span>
                 </button>
 
                 {isTaraSpeaking && (
-                  <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#a5f3fc', maxWidth: '36ch', lineHeight: 1.5 }}>
-                    "नमस्ते! मैंने आपकी शिकायत 'वार्ड 12 - जल प्रदूषण' के रूप में दर्ज कर ली है। जांच दल को सूचना भेज दी गई है।"
+                  <div
+                    style={{
+                      marginTop: '1.25rem',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(129, 140, 248, 0.3)',
+                      borderRadius: '16px',
+                      padding: '1rem 1.25rem',
+                      maxWidth: '42ch',
+                      textAlign: 'left',
+                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem', color: '#c7d2fe', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                      <TaraStarIcon size={12} color="#818CF8" />
+                      <span>Live Voice Synthesis</span>
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: '#ffffff', lineHeight: 1.5, fontWeight: 500 }}>
+                      "नमस्ते! मैंने आपकी शिकायत 'वार्ड 12 - जल प्रदूषण' के रूप में दर्ज कर ली है। जांच दल को सूचना भेज दी गई है।"
+                    </div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.4, borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '0.4rem' }}>
+                      Namaste! I have logged your grievance as 'Ward 12 - Water Contamination'. Notice dispatched to the field inspection squad.
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right: Tara Capabilities */}
+            {/* Right: Tara Models & Capabilities Showcase */}
             <div className="setu-tara-features">
-              <h2 className="setu-section-title" style={{ color: '#ffffff' }}>
-                The civic assistant that never puts you on hold.
-              </h2>
-
-              <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: 1.6, margin: 0 }}>
-                Tara bridges the digital literacy barrier by allowing citizens to report problems and track resolutions through natural telephone calls or in-app voice notes.
-              </p>
-
-              <div className="setu-tara-feature-card">
-                <div className="setu-tara-feat-icon">
-                  <GoogleIcon name="call" size={22} color="#38bdf8" />
+              <div>
+                <div className="setu-tara-badge">
+                  <TaraStarIcon size={13} color="#818CF8" />
+                  <span>TARA CIVIC INTELLIGENCE</span>
                 </div>
-                <div>
-                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.05rem', color: '#ffffff', fontWeight: 700 }}>
-                    Conversational Phone Intake
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                    Citizens dial a toll-free number and describe their grievance naturally without filling any forms or using a computer.
+                <h2 className="setu-section-title" style={{ color: '#ffffff', textAlign: 'left', margin: '0 0 0.85rem 0' }}>
+                  The multilingual AI intelligence behind every resolution.
+                </h2>
+                <p style={{ color: '#94a3b8', fontSize: '1.02rem', lineHeight: 1.6, margin: 0 }}>
+                  Tara translates unfiltered citizen voices from 12+ Indian dialects into verified civic engineering tickets and automated department actions.
+                </p>
+              </div>
+
+              {/* 4 Models Working Under Tara (with Colors from Color Library) */}
+              <div className="setu-tara-models-grid">
+                {/* Model 1: Nina (Cyan #22D3EE / Soft Cyan) */}
+                <div
+                  className="setu-tara-model-card"
+                  style={{
+                    borderColor: 'rgba(34, 211, 238, 0.35)',
+                    background: 'rgba(34, 211, 238, 0.04)'
+                  }}
+                >
+                  <div className="setu-tara-model-header">
+                    <span className="setu-tara-model-name" style={{ color: '#22d3ee' }}>
+                      <TaraStarIcon size={14} color="#22D3EE" />
+                      Nina
+                    </span>
+                    <span
+                      className="setu-tara-model-tag"
+                      style={{ background: 'rgba(34, 211, 238, 0.15)', color: '#67e8f9' }}
+                    >
+                      Vision &amp; Acoustics
+                    </span>
+                  </div>
+                  <p className="setu-tara-model-desc">
+                    Multimodal spatial model that inspects video frames, photos, and sound patterns to detect broken culverts, water discoloration, and pipeline decibel anomalies.
+                  </p>
+                </div>
+
+                {/* Model 2: Sarvam v4 (Amber #FB923C / Soft Orange) */}
+                <div
+                  className="setu-tara-model-card"
+                  style={{
+                    borderColor: 'rgba(251, 146, 60, 0.35)',
+                    background: 'rgba(251, 146, 60, 0.04)'
+                  }}
+                >
+                  <div className="setu-tara-model-header">
+                    <span className="setu-tara-model-name" style={{ color: '#fb923c' }}>
+                      <TaraStarIcon size={14} color="#FB923C" />
+                      Sarvam v4
+                    </span>
+                    <span
+                      className="setu-tara-model-tag"
+                      style={{ background: 'rgba(251, 146, 60, 0.15)', color: '#fdba74' }}
+                    >
+                      12+ Dialects STT
+                    </span>
+                  </div>
+                  <p className="setu-tara-model-desc">
+                    Indic foundational speech-to-text engine with deep regional idiom understanding across Hindi, Bengali, Tamil, Telugu, Marathi, Santhali, and Bhojpuri.
+                  </p>
+                </div>
+
+                {/* Model 3: Bulbul v3 (Emerald #34D399 / Soft Green) */}
+                <div
+                  className="setu-tara-model-card"
+                  style={{
+                    borderColor: 'rgba(52, 211, 153, 0.35)',
+                    background: 'rgba(52, 211, 153, 0.04)'
+                  }}
+                >
+                  <div className="setu-tara-model-header">
+                    <span className="setu-tara-model-name" style={{ color: '#34d399' }}>
+                      <TaraStarIcon size={14} color="#34D399" />
+                      Bulbul v3
+                    </span>
+                    <span
+                      className="setu-tara-model-tag"
+                      style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#86efac' }}
+                    >
+                      Regional TTS
+                    </span>
+                  </div>
+                  <p className="setu-tara-model-desc">
+                    Hyper-natural conversational voice synthesis delivering local cadence and empathetic inflection for automated toll-free telephone callbacks.
+                  </p>
+                </div>
+
+                {/* Model 4: Sarvam 105B (Indigo #818CF8 / Soft Purple) */}
+                <div
+                  className="setu-tara-model-card"
+                  style={{
+                    borderColor: 'rgba(129, 140, 248, 0.35)',
+                    background: 'rgba(129, 140, 248, 0.04)'
+                  }}
+                >
+                  <div className="setu-tara-model-header">
+                    <span className="setu-tara-model-name" style={{ color: '#818cf8' }}>
+                      <TaraStarIcon size={14} color="#818CF8" />
+                      Sarvam 105B
+                    </span>
+                    <span
+                      className="setu-tara-model-tag"
+                      style={{ background: 'rgba(129, 140, 248, 0.15)', color: '#c7d2fe' }}
+                    >
+                      Reasoning &amp; Triage
+                    </span>
+                  </div>
+                  <p className="setu-tara-model-desc">
+                    Advanced civic reasoning LLM that parses municipal codes, clusters duplicate grievances, verifies contractor completion photos, and writes capstone briefs.
                   </p>
                 </div>
               </div>
 
-              <div className="setu-tara-feature-card">
-                <div className="setu-tara-feat-icon">
-                  <GoogleIcon name="phone_callback" size={22} color="#38bdf8" />
-                </div>
-                <div>
-                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.05rem', color: '#ffffff', fontWeight: 700 }}>
-                    Proactive Verification Calls
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                    Before an issue is marked resolved by the department, Tara places an automated callback to the citizen to verify quality.
-                  </p>
-                </div>
-              </div>
-
-              <div className="setu-tara-feature-card">
-                <div className="setu-tara-feat-icon">
-                  <GoogleIcon name="translate" size={22} color="#38bdf8" />
-                </div>
-                <div>
-                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.05rem', color: '#ffffff', fontWeight: 700 }}>
-                    12+ Indian Dialects
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                    Converses fluidly in regional languages with cultural and dialect nuance, eliminating robotic menus.
-                  </p>
-                </div>
-              </div>
+              {/* Core Capabilities in Structured Bullet Points */}
+              <ul className="setu-tara-capabilities-list">
+                <li className="setu-tara-cap-item">
+                  <span className="setu-tara-cap-dot" style={{ background: '#22d3ee', boxShadow: '0 0 8px #22d3ee' }} />
+                  <span className="setu-tara-cap-text">
+                    <strong>Zero-Barrier Voice Intake</strong> — Citizens dial a toll-free helpline or tap the mic in-app to speak naturally in their dialect without filling complicated forms or typing.
+                  </span>
+                </li>
+                <li className="setu-tara-cap-item">
+                  <span className="setu-tara-cap-dot" style={{ background: '#fb923c', boxShadow: '0 0 8px #fb923c' }} />
+                  <span className="setu-tara-cap-text">
+                    <strong>Multimodal Ground-Truth Audit</strong> — Nina analyzes video frames, GPS coordinates, and acoustic decibels to eliminate spam and certify physical ground reality.
+                  </span>
+                </li>
+                <li className="setu-tara-cap-item">
+                  <span className="setu-tara-cap-dot" style={{ background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
+                  <span className="setu-tara-cap-text">
+                    <strong>Autonomous Departmental Routing</strong> — Sarvam 105B cross-references municipal charters to immediately assign tickets to the exact nodal officer or panchayat engineer.
+                  </span>
+                </li>
+                <li className="setu-tara-cap-item">
+                  <span className="setu-tara-cap-dot" style={{ background: '#818cf8', boxShadow: '0 0 8px #818cf8' }} />
+                  <span className="setu-tara-cap-text">
+                    <strong>Proactive Citizen Verification Callbacks</strong> — Bulbul v3 places automated calls to citizens to confirm work quality before tickets can be closed, eliminating paper-only ghost resolutions.
+                  </span>
+                </li>
+                <li className="setu-tara-cap-item">
+                  <span className="setu-tara-cap-dot" style={{ background: '#c084fc', boxShadow: '0 0 8px #c084fc' }} />
+                  <span className="setu-tara-cap-text">
+                    <strong>University R&amp;D Problem Synthesis</strong> — Chronic recurring structural challenges are automatically packaged into funded capstone briefs for partner engineering universities.
+                  </span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>

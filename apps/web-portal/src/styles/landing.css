@@ -74,6 +74,12 @@
   justify-content: space-between;
 }
 
+@media (max-width: 640px) {
+  .setu-apple-nav-inner {
+    padding: 0 1.25rem;
+  }
+}
+
 .setu-apple-brand {
   font-size: 1.35rem;
   font-weight: 800;
@@ -231,14 +237,17 @@
 .setu-hero-section {
   position: relative;
   overflow: visible;
-  padding-top: 5rem;
-  padding-bottom: 8.5rem;
+  padding-top: 6.5rem;
+  padding-bottom: 12.5rem;
+  min-height: 840px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
   .setu-hero-section {
-    padding-top: 4.5rem;
-    padding-bottom: 6.5rem;
+    padding-top: 5.5rem;
+    padding-bottom: 9.5rem;
+    min-height: 780px;
   }
 }
 
@@ -251,16 +260,9 @@
   width: 100vw;
   min-width: 100vw;
   height: 100%;
-  min-height: 780px;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-}
-
-@media (max-width: 640px) {
-  .setu-hero-curve-container {
-    min-height: 740px;
-  }
 }
 
 .setu-hero-curve-svg {
@@ -625,17 +627,6 @@
   text-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
-@media (max-width: 640px) {
-  .stuck-grid > .grid-item {
-    font-size: clamp(0.72rem, 3.2vmin, 1.1rem);
-    padding: 0.25rem 0.55rem;
-    max-width: 90vw;
-  }
-  .stuck-grid > .grid-item.special > b {
-    font-size: clamp(1.8rem, 8.5vmin, 3.2rem);
-  }
-}
-
 /* User's Exact CSS Animation Ranges & Grid Areas */
 .stuck-grid > .grid-item:nth-of-type(1)  { animation-range: 40% 50%; grid-area: 1 / 1; }
 .stuck-grid > .grid-item:nth-of-type(2)  { animation-range: 20% 30%; grid-area: 1 / 2; }
@@ -687,6 +678,39 @@
 .stuck-grid > .grid-item:nth-of-type(48) { animation-range: 39% 49%; grid-area: 4 / 4; }
 .stuck-grid > .grid-item:nth-of-type(49) { animation-range: 59% 69%; grid-area: 3 / 1; }
 .stuck-grid > .grid-item:nth-of-type(50) { animation-range: 6% 16%; grid-area: 3 / 2; }
+
+/* Mobile Centering Override for Problem Statements Text */
+@media (max-width: 640px) {
+  .stuck-grid {
+    grid: repeat(4, 25dvh) / 100% !important;
+    place-items: center !important;
+    overflow: clip;
+  }
+  .stuck-grid > .grid-item {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    justify-self: center !important;
+    align-self: center !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    font-size: clamp(0.85rem, 3.8vmin, 1.15rem) !important;
+    padding: 0.35rem 0.85rem !important;
+    max-width: 86vw !important;
+    white-space: normal !important;
+    word-break: break-word;
+  }
+  .stuck-grid > .grid-item.special {
+    grid-row: 2 / span 2 !important;
+    grid-column: 1 / -1 !important;
+    justify-self: center !important;
+    text-align: center !important;
+  }
+  .stuck-grid > .grid-item.special > b {
+    font-size: clamp(1.85rem, 8vmin, 2.75rem) !important;
+    text-align: center !important;
+    line-height: 1.1;
+  }
+}
 
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
@@ -989,7 +1013,7 @@
 
 .setu-walkthrough-scroll-section {
   position: relative;
-  min-height: 280vh;
+  min-height: 380vh;
 }
 
 .setu-walkthrough-sticky-viewport {
@@ -1127,7 +1151,8 @@
   flex-direction: column;
   user-select: none;
   transform-style: preserve-3d;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+  transition: none;
   box-sizing: border-box;
 }
 
@@ -1267,38 +1292,149 @@
   50% { height: 26px; }
 }
 
-.setu-tara-features {
+.setu-tara-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(129, 140, 248, 0.12);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #c7d2fe;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.setu-tara-star-core {
+  width: 120px;
+  height: 120px;
+  background: rgba(10, 12, 18, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 50%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 24px rgba(129, 140, 248, 0.3);
+  position: relative;
 }
 
-.setu-tara-feature-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--setu-radius-lg);
-  padding: 1.5rem;
-  display: flex;
-  gap: 1.25rem;
-  align-items: flex-start;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.setu-tara-feature-card:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.setu-tara-feat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
+.setu-tara-star-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.65));
+}
+
+.setu-organic-blob-active {
+  box-shadow: 
+    0 0 60px rgba(129, 140, 248, 0.65),
+    0 0 110px rgba(34, 211, 238, 0.45) !important;
+  animation: setuMorph 4s infinite alternate ease-in-out !important;
+}
+
+/* 4 Models Architecture Grid (2x2 on Desktop, 1 Col on Mobile) */
+.setu-tara-models-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.875rem;
+  margin: 1.75rem 0 2rem 0;
+}
+
+@media (max-width: 640px) {
+  .setu-tara-models-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.setu-tara-model-card {
+  border-radius: 14px;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.setu-tara-model-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.setu-tara-model-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.setu-tara-model-name {
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.setu-tara-model-tag {
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.setu-tara-model-desc {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Bullet Points Capabilities List */
+.setu-tara-capabilities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.setu-tara-cap-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.setu-tara-cap-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #818cf8;
   flex-shrink: 0;
-  color: #38bdf8;
+  margin-top: 7px;
+  box-shadow: 0 0 8px #818cf8;
+}
+
+.setu-tara-cap-text strong {
+  color: #ffffff;
+  font-weight: 650;
 }
 
 /* ==========================================================================
@@ -1394,7 +1530,7 @@
 
 @media (max-width: 640px) {
   .setu-walkthrough-scroll-section {
-    min-height: 230vh;
+    min-height: 360vh;
   }
 
   .setu-walkthrough-sticky-viewport {
