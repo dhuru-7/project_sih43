@@ -118,10 +118,11 @@ export const LandingPage = () => {
     const seed5 = Math.sin((i + 4) * 33.4567 + 91.234) * 87654.3211;
     const r5 = seed5 - Math.floor(seed5);
 
-    const size = (2 + r1 * 4).toFixed(2);
-    const distance = (6 + r2 * 4).toFixed(2);
-    const position = (-5 + r3 * 110).toFixed(2);
-    const time = (2 + r4 * 2).toFixed(2);
+    // Calibrated smaller size and gentle distance so bubbles shimmer gracefully at footer top
+    const size = (0.9 + r1 * 1.1).toFixed(2);
+    const distance = (1.2 + r2 * 1.2).toFixed(2);
+    const position = (-2 + r3 * 104).toFixed(2);
+    const time = (2.4 + r4 * 2.2).toFixed(2);
     const delay = (-1 * (2 + r5 * 2)).toFixed(2);
 
     return {
@@ -202,37 +203,11 @@ export const LandingPage = () => {
   };
 
   // Scroll Listener for Apple 5G Inspired 3D Phone Spin & Step Progression
-  // Unified Performant Scroll & Render Loop (Hardware-Accelerated 120 FPS)
+  // High-Performance 120 FPS Compositor-Friendly VSYNC Scroll Loop
   useEffect(() => {
-    let rafId = null;
-    let userHasScrolled = false;
-
-    // Helper to smoothly scroll to a specific stack card index (0 to 4)
-    const scrollToCard = (idx) => {
-      const stackEl = stackContainerRef.current;
-      if (!stackEl) return;
-      const rect = stackEl.getBoundingClientRect();
-      const windowH = window.innerHeight;
-      const containerDocTop = window.pageYOffset + rect.top;
-      const targetY = containerDocTop + idx * windowH;
-      window.scrollTo({
-        top: targetY,
-        behavior: 'smooth'
-      });
-      triggerHaptic('snap');
-    };
-
-    // Helper to smoothly scroll into the next section (#reporting-flow)
-    const scrollToNextSection = () => {
-      const nextSection = document.getElementById('reporting-flow');
-      if (nextSection) {
-        window.scrollTo({
-          top: window.pageYOffset + nextSection.getBoundingClientRect().top,
-          behavior: 'smooth'
-        });
-        triggerHaptic('snap');
-      }
-    };
+    let ticking = false;
+    let lastScrollY = typeof window !== 'undefined' ? (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
+    let scrollAccumulator = 0;
 
     const handleScrollEffects = () => {
       const windowH = window.innerHeight;
@@ -257,7 +232,7 @@ export const LandingPage = () => {
         }
       }
 
-      // 1. Fullscreen Stack Cards Pull & Dynamic Un-rounding
+      // 1. Fullscreen Stack Cards Pull & Dynamic Un-rounding (Instantaneous 1:1, zero lag)
       slideSlotRefs.current.forEach((slotEl, idx) => {
         if (!slotEl) return;
         const cardEl = slideCardRefs.current[idx];
@@ -273,19 +248,16 @@ export const LandingPage = () => {
           cardEl.style.transform = 'scale(1)';
           cardEl.style.boxShadow = 'none';
 
-          if (userHasScrolled && !snappedState.current[idx]) {
+          if (!snappedState.current[idx]) {
             snappedState.current[idx] = true;
             triggerHaptic('snap');
           }
         } else {
-          // Pulling up from below
-          if (userHasScrolled && snappedState.current[idx]) {
+          if (snappedState.current[idx]) {
             snappedState.current[idx] = false;
-            triggerHaptic('hover');
           }
 
           const fraction = Math.min(1, Math.max(0, top / unroundThreshold));
-          // Eased smoothstep curve (Apple fluid mechanics)
           const ease = fraction * fraction * (3 - 2 * fraction);
 
           const maxRadius = isMobile ? 20 : 36;
@@ -295,13 +267,11 @@ export const LandingPage = () => {
           const scale = (1 - (ease * 0.035)).toFixed(4);
 
           // Tactile haptic feedback when card first enters un-rounding pull zone
-          if (userHasScrolled) {
-            if (fraction < 0.95 && !pullingState.current[idx]) {
-              pullingState.current[idx] = true;
-              triggerHaptic('hover');
-            } else if (fraction >= 0.95) {
-              pullingState.current[idx] = false;
-            }
+          if (fraction < 0.95 && !pullingState.current[idx]) {
+            pullingState.current[idx] = true;
+            triggerHaptic('hover');
+          } else if (fraction >= 0.95) {
+            pullingState.current[idx] = false;
           }
 
           cardEl.style.borderRadius = `${radius}px`;
@@ -311,7 +281,7 @@ export const LandingPage = () => {
         }
       });
 
-      // 3. Apple 5G Walkthrough Step & 3D Phone Gyro Transform (Zero React Re-render Thrashing)
+      // 2. Apple 5G Walkthrough Step & Gentle 3D Phone Gyro Transform
       const wtEl = walkthroughRef.current;
       if (wtEl) {
         const wtRect = wtEl.getBoundingClientRect();
@@ -320,7 +290,7 @@ export const LandingPage = () => {
           const rawProgress = -wtRect.top / totalScrollable;
           const progress = Math.max(0, Math.min(1, rawProgress));
 
-          // Each step gets an equal slice for deliberate one-by-one progression
+          // Each step gets an equal slice for calm one-by-one progression
           const exactStep = progress * WALKTHROUGH_STEPS.length;
           const stepIdx = Math.min(WALKTHROUGH_STEPS.length - 1, Math.floor(exactStep));
 
@@ -330,204 +300,43 @@ export const LandingPage = () => {
             triggerHaptic('snap');
           }
 
-          // Direct DOM transform without triggering React re-renders!
+          // Gentle, natural gyro motion (subtle Apple keynote aesthetic)
           if (phoneFrameRef.current) {
-            const spinAngleY = (Math.sin(progress * Math.PI * 2) * 12).toFixed(2);
-            const spinAngleX = (Math.cos(progress * Math.PI * 1.5) * 4).toFixed(2);
-            const spinAngleZ = ((progress - 0.5) * 4).toFixed(2);
+            const spinAngleY = (Math.sin(progress * Math.PI * 2) * 4.5).toFixed(2);
+            const spinAngleX = (Math.cos(progress * Math.PI * 1.5) * 2.0).toFixed(2);
+            const spinAngleZ = ((progress - 0.5) * 1.2).toFixed(2);
             phoneFrameRef.current.style.transform = `perspective(1200px) rotateY(${spinAngleY}deg) rotateX(${spinAngleX}deg) rotateZ(${spinAngleZ}deg)`;
           }
         }
       }
     };
 
-    let lastScrollY = typeof window !== 'undefined' ? (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
-    let scrollAccumulator = 0;
-
     const onScroll = () => {
-      userHasScrolled = true;
       const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
       const delta = Math.abs(currentScrollY - lastScrollY);
       lastScrollY = currentScrollY;
 
       scrollAccumulator += delta;
-      // Responsive tactile rotary jog-dial haptic feedback on scroll
-      if (scrollAccumulator >= 75) {
+      // Rotary jog-dial haptic feedback on scroll
+      if (scrollAccumulator >= 85) {
         scrollAccumulator = 0;
         triggerHaptic('scroll');
       }
 
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(handleScrollEffects);
-    };
-
-    // Rate-Limited 1-Card-at-a-time Touch Gesture Controller (0.8s cooldown)
-    let touchStartY = 0;
-    let touchStartX = 0;
-    let isTouchActive = false;
-
-    const onTouchStart = (e) => {
-      if (e.touches.length !== 1) return;
-      touchStartY = e.touches[0].clientY;
-      touchStartX = e.touches[0].clientX;
-      isTouchActive = true;
-    };
-
-    const onTouchMove = (e) => {
-      if (!isTouchActive || e.touches.length !== 1) return;
-
-      const currentY = e.touches[0].clientY;
-      const currentX = e.touches[0].clientX;
-      const deltaY = touchStartY - currentY; // positive = swipe up = scroll down
-      const deltaX = touchStartX - currentX;
-
-      // Only handle clear vertical gestures
-      if (Math.abs(deltaY) < 28 || Math.abs(deltaY) < Math.abs(deltaX) * 1.25) {
-        return;
-      }
-
-      const now = Date.now();
-
-      // Check Stack Cards Section
-      const stackEl = stackContainerRef.current;
-      if (stackEl) {
-        const stackRect = stackEl.getBoundingClientRect();
-        const windowH = window.innerHeight;
-        // Inside stack cards view: top has arrived and bottom has not scrolled away
-        const isInsideStack = stackRect.top <= 60 && stackRect.bottom >= windowH - 60;
-
-        if (isInsideStack) {
-          // If within the 0.8s gap: lock scroll so mobile inertia doesn't skip cards
-          if (now - lastSlideTransitionTime.current < 800) {
-            if (e.cancelable) e.preventDefault();
-            return;
-          }
-
-          const scrolledInside = -stackRect.top;
-          const currentIdx = Math.max(
-            0,
-            Math.min(STACK_CARDS.length - 1, Math.round(scrolledInside / windowH))
-          );
-
-          if (deltaY > 28) {
-            // User swipes up -> wants to slide to next card
-            if (currentIdx < STACK_CARDS.length - 1) {
-              if (e.cancelable) e.preventDefault();
-              lastSlideTransitionTime.current = now;
-              isTouchActive = false;
-              scrollToCard(currentIdx + 1);
-              return;
-            } else {
-              // At card 4 (Research becomes prototypes): slide cleanly into #reporting-flow
-              if (e.cancelable) e.preventDefault();
-              lastSlideTransitionTime.current = now;
-              isTouchActive = false;
-              scrollToNextSection();
-              return;
-            }
-          } else if (deltaY < -28) {
-            // User swipes down -> wants to slide to previous card
-            if (currentIdx > 0) {
-              if (e.cancelable) e.preventDefault();
-              lastSlideTransitionTime.current = now;
-              isTouchActive = false;
-              scrollToCard(currentIdx - 1);
-              return;
-            }
-          }
-        }
-      }
-
-      // Check Walkthrough Section
-      const wtEl = walkthroughRef.current;
-      if (wtEl) {
-        const wtRect = wtEl.getBoundingClientRect();
-        const windowH = window.innerHeight;
-        const isInsideWt = wtRect.top <= 75 && wtRect.bottom >= windowH + 100;
-
-        if (isInsideWt) {
-          if (now - lastSlideTransitionTime.current < 800) {
-            if (e.cancelable) e.preventDefault();
-            return;
-          }
-
-          const curStep = activeStepRef.current;
-          if (deltaY > 28 && curStep < WALKTHROUGH_STEPS.length - 1) {
-            if (e.cancelable) e.preventDefault();
-            lastSlideTransitionTime.current = now;
-            isTouchActive = false;
-            scrollToStep(curStep + 1);
-            return;
-          } else if (deltaY < -28 && curStep > 0) {
-            if (e.cancelable) e.preventDefault();
-            lastSlideTransitionTime.current = now;
-            isTouchActive = false;
-            scrollToStep(curStep - 1);
-            return;
-          }
-        }
-      }
-    };
-
-    const onTouchEnd = () => {
-      isTouchActive = false;
-    };
-
-    // Desktop/Trackpad Wheel 1-Card Rate Limiter (0.8s gap)
-    const onWheel = (e) => {
-      const stackEl = stackContainerRef.current;
-      if (!stackEl) return;
-      const stackRect = stackEl.getBoundingClientRect();
-      const windowH = window.innerHeight;
-      const isInsideStack = stackRect.top <= 60 && stackRect.bottom >= windowH - 60;
-
-      if (isInsideStack) {
-        const now = Date.now();
-        if (now - lastSlideTransitionTime.current < 800) {
-          if (e.cancelable) e.preventDefault();
-          return;
-        }
-
-        if (Math.abs(e.deltaY) > 20) {
-          const scrolledInside = -stackRect.top;
-          const currentIdx = Math.max(
-            0,
-            Math.min(STACK_CARDS.length - 1, Math.round(scrolledInside / windowH))
-          );
-
-          if (e.deltaY > 0) {
-            if (currentIdx < STACK_CARDS.length - 1) {
-              if (e.cancelable) e.preventDefault();
-              lastSlideTransitionTime.current = now;
-              scrollToCard(currentIdx + 1);
-            } else {
-              if (e.cancelable) e.preventDefault();
-              lastSlideTransitionTime.current = now;
-              scrollToNextSection();
-            }
-          } else if (e.deltaY < 0 && currentIdx > 0) {
-            if (e.cancelable) e.preventDefault();
-            lastSlideTransitionTime.current = now;
-            scrollToCard(currentIdx - 1);
-          }
-        }
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScrollEffects();
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('wheel', onWheel, { passive: false });
     handleScrollEffects();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('wheel', onWheel);
-      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -757,12 +566,22 @@ export const LandingPage = () => {
                 }}
               >
                 <div className="setu-spinning-phone-screen">
-                  <img
-                    key={WALKTHROUGH_STEPS[activeStep].screenshot}
-                    src={WALKTHROUGH_STEPS[activeStep].screenshot}
-                    alt={WALKTHROUGH_STEPS[activeStep].heading}
-                    className="setu-phone-ss-img"
-                  />
+                  {WALKTHROUGH_STEPS.map((step, idx) => (
+                    <img
+                      key={step.id}
+                      src={step.screenshot}
+                      alt={step.heading}
+                      className={`setu-phone-ss-img ${activeStep === idx ? 'active' : ''}`}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        opacity: activeStep === idx ? 1 : 0,
+                        transform: activeStep === idx ? 'scale(1)' : 'scale(1.03)',
+                        transition: 'opacity 0.4s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
@@ -810,11 +629,9 @@ export const LandingPage = () => {
                   >
                     <GoogleIcon name={portal.icon} size={18} color={portal.accentColor} />
                   </div>
-                  <div className="setu-footer-portal-name">
-                    <span>{portal.name}</span>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>
-                      — {portal.title}
-                    </span>
+                  <div className="setu-footer-portal-text-wrap">
+                    <span className="setu-footer-portal-name">{portal.name}</span>
+                    <span className="setu-footer-portal-role">— {portal.title}</span>
                   </div>
                 </div>
 

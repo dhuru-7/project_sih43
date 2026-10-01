@@ -618,6 +618,7 @@
   position: relative;
   width: 100%;
   background-color: var(--setu-canvas);
+  scroll-snap-type: y proximity;
 }
 
 /* Each slide slot takes 100% of viewport height & width and is sticky at top: 0 */
@@ -633,6 +634,8 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
 }
 
 /* The card inside that expands / un-rounds smoothly when covering the screen */
@@ -646,10 +649,7 @@
   transform-origin: center center;
   box-sizing: border-box;
   will-change: border-radius, width, transform, box-shadow;
-  transition: border-radius 60ms linear,
-              width 60ms linear,
-              transform 60ms linear,
-              box-shadow 150ms ease;
+  transition: box-shadow 150ms ease;
 }
 
 .setu-fullscreen-img {
@@ -903,9 +903,11 @@
 
 .setu-walkthrough-scroll-section {
   position: relative;
-  min-height: 380vh;
+  min-height: 500vh;
   z-index: 20;
   background-color: var(--setu-canvas);
+  padding-bottom: 9rem;
+  box-sizing: border-box;
 }
 
 .setu-walkthrough-sticky-viewport {
@@ -1057,26 +1059,14 @@
   position: relative;
 }
 
-/* Apple 5G CodePen Screen Transition: Scale & Slide In */
+/* Phone Screenshot Image (Cross-fading handled smoothly) */
 .setu-phone-ss-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: top center;
   display: block;
-  border-radius: 38px;
-  animation: apple5gSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes apple5gSlideIn {
-  0% {
-    opacity: 0.3;
-    transform: scale(1.08) translateY(24px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  border-radius: 34px;
 }
 
 /* ==========================================================================
@@ -1380,7 +1370,9 @@
 
 @media (max-width: 640px) {
   .setu-walkthrough-scroll-section {
-    min-height: 360vh;
+    min-height: 450vh;
+    padding-bottom: 7rem;
+    box-sizing: border-box;
   }
 
   .setu-walkthrough-sticky-viewport {
@@ -1457,7 +1449,7 @@
   --footer-background: #000000; /* Pitch Black */
   background: var(--footer-background);
   min-height: 16rem;
-  margin-top: 5rem;
+  margin-top: 8.5rem;
   overflow: visible;
 }
 
@@ -1485,30 +1477,10 @@
   will-change: width, height, bottom;
 }
 
-@keyframes setuBubbleSize {
-  0%, 75% {
-    width: var(--size, 3rem);
-    height: var(--size, 3rem);
-  }
-  100% {
-    width: 0rem;
-    height: 0rem;
-  }
-}
-
-@keyframes setuBubbleMove {
-  0% {
-    bottom: -3rem;
-  }
-  100% {
-    bottom: var(--distance, 8rem);
-  }
-}
-
 @keyframes bubble-size {
   0%, 75% {
-    width: var(--size, 4rem);
-    height: var(--size, 4rem);
+    width: var(--size, 1.8rem);
+    height: var(--size, 1.8rem);
   }
   100% {
     width: 0rem;
@@ -1518,10 +1490,10 @@
 
 @keyframes bubble-move {
   0% {
-    bottom: -4rem;
+    bottom: -1.8rem;
   }
   100% {
-    bottom: var(--distance, 10rem);
+    bottom: var(--distance, 2.4rem);
   }
 }
 
@@ -1568,29 +1540,6 @@
   max-width: 40ch;
 }
 
-.setu-footer-ps-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.75rem;
-  font-weight: 650;
-  font-family: var(--setu-mono);
-  color: #c7d2fe;
-  background: rgba(129, 140, 248, 0.12);
-  border: 1px solid rgba(129, 140, 248, 0.25);
-  padding: 0.35rem 0.85rem;
-  border-radius: 9999px;
-  width: fit-content;
-  margin-top: 0.4rem;
-}
-
-.setu-footer-copy {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-top: 1.5rem;
-  margin-bottom: 0;
-}
-
 .setu-footer-portals-col {
   display: flex;
   flex-direction: column;
@@ -1610,13 +1559,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.07);
   text-decoration: none;
   transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  min-width: 0;
 }
 
 .setu-footer-portal-item:hover {
@@ -1628,8 +1578,9 @@
 .setu-footer-portal-left {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   min-width: 0;
+  flex: 1;
 }
 
 .setu-footer-portal-icon {
@@ -1642,10 +1593,12 @@
   flex-shrink: 0;
 }
 
-.setu-footer-portal-meta {
+.setu-footer-portal-text-wrap {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .setu-footer-portal-name {
@@ -1653,36 +1606,68 @@
   font-weight: 750;
   font-family: var(--setu-mono);
   color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
+  white-space: nowrap;
 }
 
-.setu-footer-portal-desc {
+.setu-footer-portal-role {
   font-size: 0.8rem;
   color: #94a3b8;
-  line-height: 1.4;
-  margin: 0;
+  font-weight: 500;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (max-width: 640px) {
-  .setu-footer-portal-item {
-    padding: 0.65rem 0.85rem;
-  }
-  .setu-footer-portal-name {
-    font-size: 0.82rem;
-  }
 }
 
 .setu-footer-status-pill {
   font-size: 0.7rem;
   font-weight: 650;
-  padding: 0.2rem 0.6rem;
+  padding: 0.22rem 0.65rem;
   border-radius: 9999px;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .setu-bubbles-footer {
+    margin-top: 6.5rem;
+  }
+
+  .setu-footer-content {
+    padding: 3rem 1.15rem 2.5rem 1.15rem;
+    gap: 2rem;
+  }
+
+  .setu-footer-portal-item {
+    padding: 0.65rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .setu-footer-portal-left {
+    gap: 0.65rem;
+  }
+
+  .setu-footer-portal-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .setu-footer-portal-text-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .setu-footer-portal-name {
+    font-size: 0.82rem;
+    line-height: 1.15;
+  }
+
+  .setu-footer-portal-role {
+    font-size: 0.74rem;
+    line-height: 1.15;
+  }
+
+  .setu-footer-status-pill {
+    font-size: 0.65rem;
+    padding: 0.18rem 0.5rem;
+  }
 }
 
