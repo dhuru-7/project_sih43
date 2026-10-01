@@ -24,9 +24,10 @@ export const LandingPage = () => {
   const snappedState = useRef({});
   const pullingState = useRef({});
 
-  // Refs for 3D Perspective Problem Statements Throw Animation
+  // Refs for 3D Perspective Problem Statements Throw Animation & Curved SVG Separator
   const psTrackRef = useRef(null);
   const psWordRefs = useRef([]);
+  const curvePathRef = useRef(null);
 
   // 50 Problem Statements Authentic to SIH / Setu Civic Realities (Mapped to User's 4x4 Grid & Ranges)
   const PS_ITEMS = [
@@ -213,6 +214,18 @@ export const LandingPage = () => {
       const isMobile = window.innerWidth < 640;
       const unroundThreshold = Math.min(320, windowH * 0.42);
 
+      // 0. Dynamic Curved Section Separator (Scroll-reactive flex)
+      if (curvePathRef.current) {
+        const scrollPos = window.scrollY;
+        const defaultCurveValue = 350;
+        const curveRate = 2.4;
+        const curveValue = Math.max(160, defaultCurveValue - scrollPos / curveRate);
+        curvePathRef.current.setAttribute(
+          'd',
+          `M 800 300 Q 400 ${curveValue.toFixed(1)} 0 300 L 0 0 L 800 0 L 800 300 Z`
+        );
+      }
+
       // 1. 3D Problem Statements Perspective Throw Animation
       const trackEl = psTrackRef.current;
       if (trackEl) {
@@ -348,21 +361,41 @@ export const LandingPage = () => {
       {/* ================================================================= */}
       {/* 1. HERO SECTION: DUAL PHOTOREALISTIC HARDWARE SHOWCASE             */}
       {/* ================================================================= */}
-      <section className="setu-section">
-        <div className="setu-hero-layout">
-          {/* Left Column: Heading about Setu, live intake pulse, metrics & portal shortcuts */}
-          <div className="setu-hero-text-col">
-            <div className="setu-hero-badge">
-              <span className="setu-badge-pulse" />
-              <span>Active Civic Intake across 420+ Municipal Wards &amp; Panchayats</span>
-            </div>
+      <section className="setu-section setu-hero-section">
+        {/* Dynamic Curved SVG Section Separator (CodePen Inspired Flexing Curve) */}
+        <div className="setu-hero-curve-container">
+          <svg
+            viewBox="0 0 800 400"
+            preserveAspectRatio="none"
+            className="setu-hero-curve-svg"
+          >
+            <defs>
+              <linearGradient id="setuHeroCurveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#E0F7FA" />
+                <stop offset="45%" stopColor="#E3F2FD" />
+                <stop offset="100%" stopColor="#EDE7F6" />
+              </linearGradient>
+            </defs>
+            <path
+              ref={curvePathRef}
+              id="curve"
+              fill="url(#setuHeroCurveGrad)"
+              stroke="rgba(34, 211, 238, 0.45)"
+              strokeWidth="1.5"
+              d="M 800 300 Q 400 350 0 300 L 0 0 L 800 0 L 800 300 Z"
+            />
+          </svg>
+        </div>
 
+        <div className="setu-hero-layout">
+          {/* Left Column: Punchy, Concise & Accurate Headline with Single Get Started CTA */}
+          <div className="setu-hero-text-col">
             <h1 className="setu-hero-title">
-              Real problems. Real people. Working solutions.
+              Real Problems.<br className="setu-hero-title-break" />Engineered Solutions.
             </h1>
 
             <p className="setu-hero-desc">
-              Setu connects the challenges communities face with the people and institutions capable of solving them.
+              Setu turns community challenges into university R&amp;D, government action, and working prototypes.
             </p>
 
             <div className="setu-hero-cta-group">
@@ -372,44 +405,8 @@ export const LandingPage = () => {
                 onMouseEnter={() => triggerHaptic('hover')}
                 onMouseDown={() => triggerHaptic('click')}
               >
-                <GoogleIcon name="record_voice_over" size={18} color="#ffffff" style={{ marginRight: '0.45rem' }} />
-                <span>Report an Issue</span>
+                <span>Get Started</span>
               </Link>
-              <a
-                href="#portals"
-                className="setu-btn setu-btn-secondary"
-                onMouseEnter={() => triggerHaptic('hover')}
-                onMouseDown={() => triggerHaptic('click')}
-              >
-                <span>Explore Portals</span>
-              </a>
-            </div>
-
-            {/* 3-Unit Live Metric Triad - Fills dead white space */}
-            <div className="setu-hero-stats">
-              <div className="setu-stat-unit">
-                <span className="setu-stat-num">12+</span>
-                <span className="setu-stat-txt">Indian Dialects</span>
-              </div>
-              <div className="setu-stat-unit">
-                <span className="setu-stat-num">15s</span>
-                <span className="setu-stat-txt">Voice &amp; Photo Intake</span>
-              </div>
-              <div className="setu-stat-unit">
-                <span className="setu-stat-num">TRL 1–7</span>
-                <span className="setu-stat-txt">Academic R&amp;D Squads</span>
-              </div>
-            </div>
-
-            {/* Connected Stakeholders Gateways */}
-            <div className="setu-hero-roles">
-              <span className="setu-roles-label">Ecosystem:</span>
-              <div className="setu-roles-pills">
-                <Link to="/grass" className="setu-role-chip citizen">Citizen Voice</Link>
-                <Link to="/oak" className="setu-role-chip govt">Nodal Desks</Link>
-                <Link to="/saplings" className="setu-role-chip uni">R&amp;D Labs</Link>
-                <Link to="/grove" className="setu-role-chip ind">CSR Capital</Link>
-              </div>
             </div>
           </div>
 
@@ -454,16 +451,6 @@ export const LandingPage = () => {
       {/* ================================================================= */}
       {/* 2. 3D PROBLEM STATEMENTS ZOOM & SCROLL-STACKING PHOTO SHOWCASE    */}
       {/* ================================================================= */}
-      <section className="setu-realities-intro-bar" id="realities">
-        <div className="setu-realities-intro-content">
-          <h2 className="setu-realities-heading">
-            From grassroots reality to working solutions.
-          </h2>
-          <p className="setu-realities-sub">
-            Scroll down to see real problem statements emerge from citizen voices, leading directly into field-validated engineering challenges.
-          </p>
-        </div>
-      </section>
 
       {/* 3D Perspective Word Throw Track - Throws 50 PS keywords as user scrolls till card 1 covers 50% */}
       <section className="setu-ps-words-track" ref={psTrackRef}>

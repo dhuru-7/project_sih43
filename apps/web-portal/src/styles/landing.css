@@ -222,22 +222,53 @@
 }
 
 /* ==========================================================================
-   1. HERO SECTION: DUAL PHOTOREALISTIC HARDWARE FRAMES (PIXEL PERFECT)
+   1. HERO SECTION: DUAL PHOTOREALISTIC HARDWARE FRAMES & CURVED SEPARATOR
    ========================================================================== */
 
+.setu-hero-section {
+  position: relative;
+  overflow: visible;
+  padding-top: 1.5rem;
+  padding-bottom: 4.5rem;
+}
+
+/* Dynamic Curved SVG Section Separator (CodePen Inspired Flexing Curve) */
+.setu-hero-curve-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  min-width: 100vw;
+  height: 100%;
+  min-height: 520px;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.setu-hero-curve-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .setu-hero-layout {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 3.5rem;
   align-items: center;
-  padding: 1.5rem 0 2.5rem 0;
+  padding: 1.5rem 0;
 }
 
 @media (max-width: 1024px) {
   .setu-hero-layout {
     grid-template-columns: 1fr;
     gap: 2.5rem;
-    padding: 0.5rem 0 1.5rem 0;
+    text-align: center;
+    padding: 1rem 0;
   }
 }
 
@@ -246,49 +277,15 @@
   flex-direction: column;
 }
 
-.setu-hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.35rem 0.95rem;
-  border-radius: 9999px;
-  background: rgba(5, 150, 105, 0.08);
-  border: 1px solid rgba(5, 150, 105, 0.22);
-  color: #065f46;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  margin-bottom: 1.25rem;
-  width: fit-content;
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.08);
-}
-
-.setu-badge-pulse {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #059669;
-  box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7);
-  animation: setuPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-}
-
-@keyframes setuPulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(5, 150, 105, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0);
+@media (max-width: 1024px) {
+  .setu-hero-text-col {
+    align-items: center;
+    text-align: center;
   }
 }
 
 .setu-hero-title {
-  font-size: clamp(2.3rem, 3.8vw, 3.5rem);
+  font-size: clamp(2.4rem, 4.2vw, 3.8rem);
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.04em;
@@ -304,110 +301,23 @@
   max-width: 48ch;
 }
 
+@media (max-width: 1024px) {
+  .setu-hero-desc {
+    margin: 0 auto 2rem auto;
+  }
+}
+
 .setu-hero-cta-group {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
 }
 
-.setu-hero-stats {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  padding: 1.5rem 0;
-  border-top: 1px solid var(--setu-border);
-  border-bottom: 1px solid var(--setu-border);
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 640px) {
-  .setu-hero-stats {
-    gap: 1.25rem;
+@media (max-width: 1024px) {
+  .setu-hero-cta-group {
+    justify-content: center;
   }
-}
-
-.setu-stat-unit {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.setu-stat-num {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--setu-text-primary);
-  line-height: 1;
-}
-
-.setu-stat-txt {
-  font-size: 0.8125rem;
-  color: var(--setu-text-secondary);
-  font-weight: 500;
-}
-
-.setu-hero-roles {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.setu-roles-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--setu-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-family: var(--setu-mono);
-}
-
-.setu-roles-pills {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.setu-role-chip {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.65rem;
-  border-radius: 9999px;
-  text-decoration: none;
-  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-  user-select: none;
-}
-
-.setu-role-chip:hover {
-  transform: scale(1.03);
-}
-
-.setu-role-chip.citizen {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
-
-.setu-role-chip.govt {
-  background: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-}
-
-.setu-role-chip.uni {
-  background: #faf5ff;
-  color: #6b21a8;
-  border: 1px solid #e9d5ff;
-}
-
-.setu-role-chip.ind {
-  background: #fff7ed;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
 }
 
 /* ==========================================================================
