@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleIcon } from '../ui/GoogleIcon';
+import { triggerHaptic } from '../../utils/haptics';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
@@ -32,9 +33,30 @@ export const Navbar = () => {
     }
   };
 
+  // Clean Apple Header for Landing Page
+  if (isLandingPage) {
+    return (
+      <header className="setu-apple-nav">
+        <div className="setu-apple-nav-inner">
+          <Link to="/" className="setu-apple-brand">
+            Setu.
+          </Link>
+          <Link
+            to="/grass"
+            className="setu-apple-cta"
+            onMouseEnter={() => triggerHaptic('hover')}
+            onMouseDown={() => triggerHaptic('click')}
+          >
+            Get Started
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="glass-nav" style={{
-      height: '76px',
+      height: '64px',
       backgroundColor: 'rgba(255, 255, 255, 0.85)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
@@ -45,15 +67,14 @@ export const Navbar = () => {
       padding: '0 2rem',
       position: 'sticky',
       top: 0,
-      zIndex: 60,
-      transition: 'all 0.3s ease'
+      zIndex: 60
     }}>
       {/* Brand Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', height: '44px', padding: '0 10px' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <span style={{
-              fontSize: '1.5rem',
+              fontSize: '1.4rem',
               fontWeight: '800',
               letterSpacing: '-0.03em',
               color: '#000000',
@@ -67,31 +88,6 @@ export const Navbar = () => {
         </div>
         {user && getRoleBadge(user.role)}
       </div>
-
-      {/* Center Landing Navigation Links */}
-      {isLandingPage && (
-        <nav style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '2rem',
-          fontSize: '0.875rem',
-          fontWeight: '500',
-          color: '#525252'
-        }} className="d-none d-lg-flex">
-          <a href="#how-it-works" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
-            How It Works
-          </a>
-          <a href="#tara-ai" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
-            Tara AI
-          </a>
-          <a href="#portals" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
-            Portals
-          </a>
-          <a href="#explore" style={{ color: '#525252', textDecoration: 'none', transition: 'color 0.15s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#0A0A0A'} onMouseLeave={e => e.currentTarget.style.color = '#525252'}>
-            Explore Feed
-          </a>
-        </nav>
-      )}
 
       {/* Right Action CTA */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -125,13 +121,12 @@ export const Navbar = () => {
               fontSize: '0.75rem',
               fontWeight: '600',
               padding: '0.625rem 1.25rem',
-              borderRadius: '0.75rem',
+              borderRadius: '9999px',
               background: '#0A0A0A',
               color: '#FFFFFF'
             }}
           >
             <span>Get Started</span>
-            <GoogleIcon name="arrow_forward" size={14} color="#FFFFFF" />
           </Link>
         )}
       </div>

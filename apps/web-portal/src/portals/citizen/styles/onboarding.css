@@ -814,7 +814,7 @@ html, body {
 }
 
 .apple-language-circle-btn:hover {
-  transform: translateY(-2px);
+  opacity: 0.9;
 }
 
 .apple-language-circle-btn:active {

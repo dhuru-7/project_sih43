@@ -1,0 +1,39 @@
+/**
+ * Setu Color Tokens Library
+ * Custom properties for borders, pastel backgrounds, and high-contrast text
+ */
+
+:root {
+  /* Primary Colors (Borders & Accents) */
+  --color-primary-indigo: #818CF8;
+  --color-primary-cyan: #22D3EE;
+  --color-primary-cyan-alt: #00BCD4;
+  --color-primary-emerald: #34D399;
+  --color-primary-amber: #FB923C;
+  --color-primary-pink: #F472B6;
+  --color-primary-purple: #C084FC;
+  --color-primary-blue: #60A5FA;
+  --color-primary-yellow: #FACC15;
+  --color-primary-lavender: #A78BFA;
+
+  /* Light Mode Pastel Backgrounds */
+  --color-bg-soft-purple: #F3E8FF;
+  --color-bg-soft-cyan: #E0F7FA;
+  --color-bg-soft-orange: #FFF3E0;
+  --color-bg-soft-green: #E8F5E9;
+  --color-bg-soft-blue: #E3F2FD;
+  --color-bg-soft-yellow: #FFFDE7;
+  --color-bg-soft-pink: #FCE4EC;
+  --color-bg-soft-lavender: #EDE7F6;
+
+  /* High-Contrast Text Colors */
+  --color-text-dark-charcoal: #0F172A;
+  --color-text-deep-purple: #581C87;
+  --color-text-deep-cyan: #006064;
+  --color-text-deep-orange: #7C2D12;
+  --color-text-deep-green: #064E3B;
+  --color-text-deep-blue: #1E3A8A;
+  --color-text-deep-amber: #713F12;
+  --color-text-deep-pink: #831843;
+  --color-text-deep-violet: #4C1D95;
+}

@@ -1,744 +1,864 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleIcon } from '../components/ui/GoogleIcon';
+import { triggerHaptic } from '../utils/haptics';
 import '../styles/landing.css';
 
 export const LandingPage = () => {
-  // Hero Interactive Simulation State
-  const [heroMode, setHeroMode] = useState('voice'); // 'voice' | 'video'
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationComplete, setSimulationComplete] = useState(true);
+  // Walkthrough Scroll Progress & Step State
+  const walkthroughRef = useRef(null);
+  const [activeStep, setActiveStep] = useState(0); // 0, 1, 2, 3
+  const [stepProgress, setStepProgress] = useState(1);
+  const [phoneTransform, setPhoneTransform] = useState({
+    rotY: -4,
+    rotX: 3,
+    rotZ: -1
+  });
 
-  // 4 Stakeholders Tab State
-  const [activePortal, setActivePortal] = useState('citizen'); // 'citizen' | 'govt' | 'university' | 'industry'
+  // State for Tara Voice Assistant Interactive Preview
+  const [isTaraSpeaking, setIsTaraSpeaking] = useState(false);
 
-  const handleTriggerSimulation = () => {
-    setIsSimulating(true);
-    setSimulationComplete(false);
+  // Refs for Smooth Card Pull, Expanding/Un-rounding & Haptic Snap
+  const slideSlotRefs = useRef([]);
+  const slideCardRefs = useRef([]);
+  const snappedState = useRef({});
+  const pullingState = useRef({});
+
+  // Refs for 3D Perspective Problem Statements Throw Animation
+  const psTrackRef = useRef(null);
+  const psWordRefs = useRef([]);
+
+  // 50 Problem Statements Authentic to SIH / Setu Civic Realities (Mapped to User's 4x4 Grid & Ranges)
+  const PS_ITEMS = [
+    { id: 1, text: 'Contaminated Groundwater', range: [40, 50], area: '1 / 1' },
+    { id: 2, text: 'Broken Village Culverts', range: [20, 30], area: '1 / 2' },
+    { id: 3, text: 'Crop Pest Blight', range: [52, 62], area: '1 / 3' },
+    { id: 4, text: 'Pothole Cluster Grid', range: [50, 60], area: '1 / 4' },
+    { id: 5, text: 'Transformer Overload', range: [45, 55], area: '2 / 1' },
+    { id: 6, text: 'Flash Flood Runoff', range: [10, 20], area: '2 / 2' },
+    { id: 7, text: 'Industrial Effluents', range: [90, 100], area: '2 / 3' },
+    { id: 8, text: 'Low Crop Yields', range: [30, 40], area: '2 / 4' },
+    { id: 9, text: 'School Sanitation Gap', range: [80, 90], area: '3 / 1' },
+    { id: 10, text: 'Arsenic Contamination', range: [70, 80], area: '3 / 2' },
+    { id: 11, text: 'PROBLEM STATEMENTS', isSpecial: true, range: [-10, 50], area: 'special' },
+    { id: 12, text: 'Primary Health Deficit', range: [52, 62], area: '3 / 4' },
+    { id: 13, text: 'Severe Malnutrition', range: [15, 25], area: '4 / 1' },
+    { id: 14, text: 'Submerged Rural Roads', range: [7, 17], area: '4 / 2' },
+    { id: 15, text: 'Pesticide Residue Drift', range: [75, 85], area: '4 / 3' },
+    { id: 16, text: 'Municipal Waste Overflow', range: [3, 13], area: '4 / 4' },
+    { id: 17, text: 'Unlined Drainage Canal', range: [87, 97], area: '2 / 1' },
+    { id: 18, text: 'Post-Harvest Crop Spoilage', range: [42, 52], area: '2 / 2' },
+    { id: 19, text: 'Dry Borewell Depletion', range: [57, 67], area: '2 / 3' },
+    { id: 20, text: 'Cold Storage Deficit', range: [37, 47], area: '2 / 4' },
+    { id: 21, text: 'Stray Cattle Hazard', range: [12, 22], area: '3 / 1' },
+    { id: 22, text: 'High Nitrate Seepage', range: [8, 18], area: '3 / 2' },
+    { id: 23, text: 'E-Waste Dumping Yard', range: [84, 94], area: '3 / 3' },
+    { id: 24, text: 'Human-Wildlife Conflict', range: [33, 43], area: '3 / 4' },
+    { id: 25, text: 'Quarry Dust Dispersion', range: [48, 58], area: '1 / 1' },
+    { id: 26, text: 'Saline Soil Ingress', range: [13, 23], area: '1 / 2' },
+    { id: 27, text: 'Bridge Structural Flaws', range: [78, 88], area: '1 / 3' },
+    { id: 28, text: 'Bio-Medical Waste Risk', range: [62, 72], area: '1 / 4' },
+    { id: 29, text: 'Micro-Plastic Ingestion', range: [31, 41], area: '4 / 1' },
+    { id: 30, text: 'Uncertified Seed Fraud', range: [8, 18], area: '4 / 2' },
+    { id: 31, text: 'Urban Heat Island Effect', range: [4, 14], area: '4 / 3' },
+    { id: 32, text: 'Stubble Smoke Inhalation', range: [74, 84], area: '4 / 4' },
+    { id: 33, text: 'Pump Voltage Surges', range: [61, 71], area: '2 / 1' },
+    { id: 34, text: 'River Sand Siltation', range: [26, 36], area: '2 / 2' },
+    { id: 35, text: 'Defunct Solar Grids', range: [63, 73], area: '2 / 3' },
+    { id: 36, text: 'Monsoon Waterlogging', range: [11, 21], area: '2 / 4' },
+    { id: 37, text: 'Heavy Metal Soil Toxicity', range: [89, 99], area: '3 / 1' },
+    { id: 38, text: 'Livestock Epidemic Spread', range: [33, 43], area: '3 / 2' },
+    { id: 39, text: 'Illegal Water Siphoning', range: [88, 98], area: '3 / 3' },
+    { id: 40, text: 'Defunct Handpumps', range: [22, 32], area: '3 / 4' },
+    { id: 41, text: 'Sub-Standard Bitumen', range: [16, 26], area: '1 / 1' },
+    { id: 42, text: 'High Fluoride Toxicity', range: [26, 36], area: '1 / 2' },
+    { id: 43, text: 'Inadequate Grain Silos', range: [66, 76], area: '1 / 3' },
+    { id: 44, text: 'Streetlight Blackouts', range: [3, 13], area: '1 / 4' },
+    { id: 45, text: 'Untreated Sewage Nullahs', range: [44, 54], area: '4 / 1' },
+    { id: 46, text: 'Maternal Telehealth Gap', range: [11, 21], area: '4 / 2' },
+    { id: 47, text: 'Canal Breach Hazard', range: [23, 33], area: '4 / 3' },
+    { id: 48, text: 'Fertilizer Eutrophication', range: [39, 49], area: '4 / 4' },
+    { id: 49, text: 'Landslide Slope Risk', range: [59, 69], area: '3 / 1' },
+    { id: 50, text: 'Coastal Mangrove Loss', range: [6, 16], area: '3 / 2' }
+  ];
+
+  // The 5 Ground-Truth Stacking Cards (Clean Fullscreen Showcase)
+  const STACK_CARDS = [
+    {
+      id: 'rural',
+      caption: 'Rural infrastructure & development',
+      description: 'Damaged culverts, unpaved village roads, and severed supply chains that isolate communities during monsoons.',
+      image: '/issues/rural-infrastructure.png'
+    },
+    {
+      id: 'water',
+      caption: 'Water pollution & sanitation',
+      description: 'Contaminated community water sources, broken handpumps, and industrial runoff documented by local residents.',
+      image: '/issues/water-pollution.png'
+    },
+    {
+      id: 'crop',
+      caption: 'Crop health & livelihoods',
+      description: 'Severe agricultural pest blights and unseasonal crop damage clustered into unified regional priority matrices.',
+      image: '/issues/crop-health.png'
+    },
+    {
+      id: 'research',
+      caption: 'Ideas become research',
+      description: 'Engineering colleges and university labs adopting vetted citizen problems as funded capstone R&D challenges.',
+      image: '/issues/ideas-research.png'
+    },
+    {
+      id: 'prototypes',
+      caption: 'Research becomes prototypes',
+      description: 'Field-tested physical prototypes validated by municipal departments and scaled with corporate CSR funding.',
+      image: '/issues/research-prototypes.png'
+    }
+  ];
+
+  // The 4 Reporting Flow Pages mapped to User's authentic Screenshots
+  const WALKTHROUGH_STEPS = [
+    {
+      id: 'lang',
+      chip: 'Language',
+      heading: 'Speak in the language you live in.',
+      screenshot: '/screenshots/mobile-language.png',
+      bullets: [
+        "Multilingual by design — choose the language you're most comfortable with.",
+        'Speak naturally — no need to translate or write formal complaints.',
+        'Built for local voices — designed for Indian languages and dialects.'
+      ]
+    },
+    {
+      id: 'report',
+      chip: 'Report / Capture',
+      heading: 'See a problem. Report it in seconds.',
+      screenshot: '/screenshots/mobile-home.png',
+      bullets: [
+        'Capture what you see — record a video, take a photo or upload evidence.',
+        'Tell us what happened — speak or write in your own words.',
+        'No complicated forms — Setu handles the structure for you.'
+      ]
+    },
+    {
+      id: 'review',
+      chip: 'Review / Triage',
+      heading: 'Tara turns your words into a complete report.',
+      screenshot: '/screenshots/mobile-review.png',
+      bullets: [
+        'Understands the submission — text, voice, images and video.',
+        'Structures the challenge — title, category, severity, urgency and description.',
+        'You stay in control — review the generated report before submitting.'
+      ]
+    },
+    {
+      id: 'explore',
+      chip: 'Explore',
+      heading: 'Discover local initiatives and solutions.',
+      screenshot: '/screenshots/mobile-explore.png',
+      bullets: [
+        'Discover local initiatives — projects, innovations and community work.',
+        'Learn & stay informed — awareness campaigns, useful information and civic updates.',
+        'Share solutions, not just problems — government and universities can showcase ideas and progress.'
+      ]
+    }
+  ];
+
+  // Scroll Listener for Apple 5G Inspired 3D Phone Spin & Step Progression
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!walkthroughRef.current) return;
+      const rect = walkthroughRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const totalScrollable = rect.height - windowHeight;
+
+      if (totalScrollable <= 0) return;
+
+      // Calculate progress between 0 and 1
+      const currentScroll = -rect.top;
+      const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
+
+      // Calculate Step Index (0 to 3)
+      const exactStep = progress * WALKTHROUGH_STEPS.length;
+      const stepIdx = Math.min(WALKTHROUGH_STEPS.length - 1, Math.floor(exactStep));
+      const subProgress = exactStep - stepIdx;
+
+      setActiveStep(stepIdx);
+      setStepProgress(subProgress);
+
+      // 3D Phone Frame Rotation on Scroll (Dynamic Gyroscopic Spin inspired by Apple 5G)
+      const spinAngleY = Math.sin(progress * Math.PI * 2) * 12;
+      const spinAngleX = Math.cos(progress * Math.PI * 1.5) * 4;
+      const spinAngleZ = (progress - 0.5) * 4;
+
+      setPhoneTransform({
+        rotY: parseFloat(spinAngleY.toFixed(2)),
+        rotX: parseFloat(spinAngleX.toFixed(2)),
+        rotZ: parseFloat(spinAngleZ.toFixed(2))
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Smooth Card Pull, Expanding / Un-rounding & 3D Perspective Word Throw
+  useEffect(() => {
+    let rafId = null;
+    let userHasScrolled = false;
+
+    const handleScrollEffects = () => {
+      const windowH = window.innerHeight;
+      const isMobile = window.innerWidth < 640;
+      const unroundThreshold = Math.min(320, windowH * 0.42);
+
+      // 1. 3D Problem Statements Perspective Throw Animation
+      const trackEl = psTrackRef.current;
+      if (trackEl) {
+        const trackRect = trackEl.getBoundingClientRect();
+        const totalDist = trackRect.height - windowH;
+        if (totalDist > 0) {
+          const rawProgress = -trackRect.top / totalDist;
+          const progress = Math.max(0, Math.min(1, rawProgress));
+
+          PS_ITEMS.forEach((item, i) => {
+            const el = psWordRefs.current[i];
+            if (!el) return;
+
+            const [startPct, endPct] = item.range;
+            const start = startPct / 100;
+            const end = endPct / 100;
+
+            if (progress < start) {
+              el.style.transform = 'translateZ(-1000px)';
+              el.style.opacity = '0';
+              el.style.filter = 'blur(6px)';
+            } else if (progress > end) {
+              el.style.transform = 'translateZ(1000px)';
+              el.style.opacity = '0';
+              el.style.filter = 'blur(6px)';
+            } else {
+              const local = (progress - start) / (end - start);
+              const tz = -1000 + local * 2000;
+              const op = local < 0.5 ? local * 2 : (1 - local) * 2;
+              const blur = local < 0.5 ? (1 - local * 2) * 5 : ((local - 0.5) * 2) * 5;
+
+              el.style.transform = `translateZ(${tz.toFixed(1)}px)`;
+              el.style.opacity = Math.max(0, Math.min(1, op)).toFixed(3);
+              el.style.filter = `blur(${Math.max(0, blur).toFixed(1)}px)`;
+            }
+          });
+        }
+      }
+
+      // 2. Fullscreen Stack Cards Pull & Dynamic Un-rounding
+      slideSlotRefs.current.forEach((slotEl, idx) => {
+        if (!slotEl) return;
+        const cardEl = slideCardRefs.current[idx];
+        if (!cardEl) return;
+
+        const rect = slotEl.getBoundingClientRect();
+        const top = rect.top;
+
+        if (top <= 2) {
+          // Fully covering the screen -> un-rounded (0px), 100% width, scale 1.0
+          cardEl.style.borderRadius = '0px';
+          cardEl.style.width = '100%';
+          cardEl.style.transform = 'scale(1)';
+          cardEl.style.boxShadow = 'none';
+
+          if (userHasScrolled && !snappedState.current[idx]) {
+            snappedState.current[idx] = true;
+            triggerHaptic('snap');
+          }
+        } else {
+          // Pulling up from below
+          if (userHasScrolled && snappedState.current[idx]) {
+            snappedState.current[idx] = false;
+            triggerHaptic('hover');
+          }
+
+          const fraction = Math.min(1, Math.max(0, top / unroundThreshold));
+          // Eased smoothstep curve (Apple fluid mechanics)
+          const ease = fraction * fraction * (3 - 2 * fraction);
+
+          const maxRadius = isMobile ? 20 : 36;
+          const radius = Math.round(ease * maxRadius);
+          const maxInsetRem = isMobile ? 0.75 : 1.75;
+          const inset = (ease * maxInsetRem).toFixed(2);
+          const scale = (1 - (ease * 0.035)).toFixed(4);
+
+          // Tactile haptic feedback when card first enters un-rounding pull zone
+          if (userHasScrolled) {
+            if (fraction < 0.95 && !pullingState.current[idx]) {
+              pullingState.current[idx] = true;
+              triggerHaptic('hover');
+            } else if (fraction >= 0.95) {
+              pullingState.current[idx] = false;
+            }
+          }
+
+          cardEl.style.borderRadius = `${radius}px`;
+          cardEl.style.width = inset > 0.02 ? `calc(100% - ${inset * 2}rem)` : '100%';
+          cardEl.style.transform = `scale(${scale})`;
+          cardEl.style.boxShadow = '0 -16px 44px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }
+      });
+    };
+
+    const onScroll = () => {
+      userHasScrolled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(handleScrollEffects);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    handleScrollEffects();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const handleSimulateTara = () => {
+    setIsTaraSpeaking(true);
+    triggerHaptic('click');
     setTimeout(() => {
-      setIsSimulating(false);
-      setSimulationComplete(true);
-    }, 1200);
+      setIsTaraSpeaking(false);
+    }, 4500);
   };
 
-  // Portal Tab Details (Botanical Ecosystem: Grass, Oak, Saplings, Grove)
-  const PORTAL_DATA = {
-    citizen: {
-      title: '🌱 Grass: Citizens, Schools, Panchayats & Local Bodies',
-      desc: 'Report community bottlenecks in seconds through voice or media. Countless grassroots voices from every village, ward, and school.',
-      features: [
-        '3-step intake: Speak or snap photos without manual typing',
-        'Direct two-way messaging with assigned nodal officers',
-        'Explore feed: Official government awareness campaigns and civic updates',
-        'Call Tara anytime for voice updates or hands-free in-app assistance'
-      ],
-      ctaText: 'Enter Grass Portal (/grass)',
-      ctaLink: '/grass',
-      mockupTitle: 'Grass Grassroots Intake',
-      mockupBadge: 'Under Review',
-      mockupContent: {
-        title: 'Drinking Water Contamination in Ward 8',
-        meta1: 'Reported via Voice · 14 mins ago',
-        meta2: 'Assigned to: Ranchi Municipal Corp · Public Health Desk',
-        extra: 'Tara placed verification call to reporter · Confirmed turbidity'
-      }
-    },
-    govt: {
-      title: '🌳 Oak: Government Administration & Nodal Officers',
-      desc: 'Centralized command center providing rock-solid governance, clustering identical grievances, and delegating engineering challenges to universities.',
-      features: [
-        'AI deduplication clustering similar citizen complaints into single challenges',
-        'Single-click automated Tara follow-up calls to gather status updates from citizens',
-        'Intelligent routing to university departments with verified laboratory equipment',
-        'Milestone validation, financial grant disbursement, and certificate issuance'
-      ],
-      ctaText: 'Access Oak Dashboard (/oak)',
-      ctaLink: '/oak',
-      mockupTitle: 'Oak Command Desk',
-      mockupBadge: '42 Issues Clustered',
-      mockupContent: {
-        title: 'Cluster #14: Subarnarekha Basin Fluoride Filtration',
-        meta1: '18 citizen reports merged into 1 State Challenge',
-        meta2: 'Recommended: BIT Mesra Environmental Lab',
-        extra: 'Seed grant allocation: ₹4.5 Lakhs approved for prototype phase'
-      }
-    },
-    university: {
-      title: '🌿 Saplings: University SPOCs, Faculty & Student Innovators',
-      desc: 'Nurturing student innovation squads to turn state-forwarded challenges into funded academic projects and physical prototypes.',
-      features: [
-        'SPOC console to review challenges forwarded by government departments',
-        'Student team leads receive dedicated credentials to submit development milestones',
-        'Verifiable milestone tracking unlocking tranche-based grant funding',
-        'Dual institutional verification by university SPOC and state nodal officers'
-      ],
-      ctaText: 'Enter Saplings R&D (/saplings)',
-      ctaLink: '/saplings',
-      mockupTitle: 'Saplings Squad Console',
-      mockupBadge: 'Milestone 2 Verified',
-      mockupContent: {
-        title: 'Low-Cost Arsenic Filter Cartridge (IIT ISM Dhanbad)',
-        meta1: 'Mentor: Dr. S. K. Roy · 4 Student Engineers',
-        meta2: 'Field Testing: Govindpur Ward · Lab Telemetry Verified',
-        extra: 'Eligible for Phase 3 State Grant Disbursement'
-      }
-    },
-    industry: {
-      title: '🌲 Grove: Industry, CSR Funds & Venture Capital',
-      desc: 'Channel CSR capital directly into high-impact, verified student prototypes. Recruit vetted engineering talent and harvest scaled field deployments.',
-      features: [
-        'Domain-matching algorithm recommending projects tailored to corporate CSR mandates',
-        'Full visibility into prototypes verified by both university SPOCs and government',
-        'Direct co-funding options and joint industry-government certification',
-        'High-impact showcase boosting credibility and deployment scale'
-      ],
-      ctaText: 'Enter Grove CSR Portal (/grove)',
-      ctaLink: '/grove',
-      mockupTitle: 'Grove CSR Desk',
-      mockupBadge: 'Match 94%',
-      mockupContent: {
-        title: 'Solar Micro-Grid Inverter Firmware Deployment',
-        meta1: 'Domain: Renewable Energy & Rural Electrification',
-        meta2: 'Co-funding Partner: Tata Steel CSR Initiative',
-        extra: 'Impact: 3 Villages Powered · Joint Certification Issued'
-      }
-    }
+  const scrollToStep = (idx) => {
+    setActiveStep(idx);
+    triggerHaptic('click');
+    if (!walkthroughRef.current) return;
+    const rect = walkthroughRef.current.getBoundingClientRect();
+    const totalScrollable = rect.height - window.innerHeight;
+    const targetOffset = (totalScrollable * (idx + 0.1)) / WALKTHROUGH_STEPS.length;
+    window.scrollTo({
+      top: window.pageYOffset + rect.top + targetOffset,
+      behavior: 'smooth'
+    });
   };
 
   return (
     <div className="setu-canvas setu-grid-texture">
       {/* ================================================================= */}
-      {/* 1. HERO SECTION                                                   */}
+      {/* 1. HERO SECTION: DUAL PHOTOREALISTIC HARDWARE SHOWCASE             */}
       {/* ================================================================= */}
       <section className="setu-section">
-        <div className="setu-hero-grid">
-          {/* Left Hero Column */}
-          <div>
-            <h1 className="setu-hero-h1">
-              Speak or record. Civic problems turned into working solutions.
+        <div className="setu-hero-layout">
+          {/* Left Column: Heading about Setu, live intake pulse, metrics & portal shortcuts */}
+          <div className="setu-hero-text-col">
+            <div className="setu-hero-badge">
+              <span className="setu-badge-pulse" />
+              <span>Active Civic Intake across 420+ Municipal Wards &amp; Panchayats</span>
+            </div>
+
+            <h1 className="setu-hero-title">
+              Real problems. Real people. Working solutions.
             </h1>
-            <p className="setu-hero-sub">
-              Citizens report in seconds. Municipalities coordinate. University labs engineer the prototypes. Industry funds deployment.
+
+            <p className="setu-hero-desc">
+              Setu connects the challenges communities face with the people and institutions capable of solving them.
             </p>
 
-            <div className="setu-hero-actions">
-              <Link to="/grass" className="setu-btn setu-btn-primary">
-                <span>Report an Issue (/grass)</span>
-                <GoogleIcon name="arrow_forward" size={16} color="#ffffff" />
+            <div className="setu-hero-cta-group">
+              <Link
+                to="/grass"
+                className="setu-btn setu-btn-primary"
+                onMouseEnter={() => triggerHaptic('hover')}
+                onMouseDown={() => triggerHaptic('click')}
+              >
+                <GoogleIcon name="record_voice_over" size={18} color="#ffffff" style={{ marginRight: '0.45rem' }} />
+                <span>Report an Issue</span>
               </Link>
-              <a href="#portals" className="setu-btn setu-btn-secondary">
+              <a
+                href="#portals"
+                className="setu-btn setu-btn-secondary"
+                onMouseEnter={() => triggerHaptic('hover')}
+                onMouseDown={() => triggerHaptic('click')}
+              >
                 <span>Explore Portals</span>
               </a>
             </div>
 
-            <div className="setu-hero-meta-row">
-              <div className="setu-hero-meta-item">
-                <span className="setu-hero-meta-value">15s</span>
-                <span className="setu-hero-meta-label">Average Voice Intake</span>
+            {/* 3-Unit Live Metric Triad - Fills dead white space */}
+            <div className="setu-hero-stats">
+              <div className="setu-stat-unit">
+                <span className="setu-stat-num">12+</span>
+                <span className="setu-stat-txt">Indian Dialects</span>
               </div>
-              <div className="setu-hero-meta-item">
-                <span className="setu-hero-meta-value">Sarvam 105B</span>
-                <span className="setu-hero-meta-label">Cognitive Triage Brain</span>
+              <div className="setu-stat-unit">
+                <span className="setu-stat-num">15s</span>
+                <span className="setu-stat-txt">Voice &amp; Photo Intake</span>
               </div>
-              <div className="setu-hero-meta-item">
-                <span className="setu-hero-meta-value">100% Web</span>
-                <span className="setu-hero-meta-label">Mobile &amp; Desktop Ready</span>
+              <div className="setu-stat-unit">
+                <span className="setu-stat-num">TRL 1–7</span>
+                <span className="setu-stat-txt">Academic R&amp;D Squads</span>
+              </div>
+            </div>
+
+            {/* Connected Stakeholders Gateways */}
+            <div className="setu-hero-roles">
+              <span className="setu-roles-label">Ecosystem:</span>
+              <div className="setu-roles-pills">
+                <Link to="/grass" className="setu-role-chip citizen">Citizen Voice</Link>
+                <Link to="/oak" className="setu-role-chip govt">Nodal Desks</Link>
+                <Link to="/saplings" className="setu-role-chip uni">R&amp;D Labs</Link>
+                <Link to="/grove" className="setu-role-chip ind">CSR Capital</Link>
               </div>
             </div>
           </div>
 
-          {/* Right Hero Column: Interactive Tara Live Simulation */}
-          <div>
-            <div className="setu-tara-widget">
-              <div className="setu-tara-titlebar">
-                <div className="setu-mac-dots">
-                  <span className="setu-mac-dot red" />
-                  <span className="setu-mac-dot yellow" />
-                  <span className="setu-mac-dot green" />
+          {/* Right Column: Dual Hardware Frame Showcase with Pixel-Perfect Aspect Ratios */}
+          <div className="setu-hero-devices-col">
+            <div className="setu-device-stage">
+              {/* Photorealistic MacBook Pro Frame (Exact 1918x1078 Screen Ratio) */}
+              <div className="setu-macbook-pro">
+                <div className="setu-macbook-bezel-top">
+                  <div className="setu-macbook-cam" />
                 </div>
-                <div className="setu-widget-status">
-                  <span className="setu-status-pulse" />
-                  <span>Tara Live Engine</span>
+                <div className="setu-macbook-display">
+                  <img
+                    src="/screenshots/desktop-onboarding.png"
+                    alt="Setu Web Portal Desktop"
+                    className="setu-macbook-img"
+                  />
+                </div>
+                <div className="setu-macbook-hinge" />
+                <div className="setu-macbook-base">
+                  <div className="setu-macbook-notch-scoop" />
                 </div>
               </div>
 
-              <div className="setu-tara-widget-body">
-                {/* Mode Selector */}
-                <div className="setu-widget-controls">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHeroMode('voice');
-                      handleTriggerSimulation();
-                    }}
-                    className={`setu-widget-control-btn ${heroMode === 'voice' ? 'active' : ''}`}
-                  >
-                    <GoogleIcon name="mic" size={16} />
-                    <span>Voice Note (Saaras v3)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHeroMode('video');
-                      handleTriggerSimulation();
-                    }}
-                    className={`setu-widget-control-btn ${heroMode === 'video' ? 'active' : ''}`}
-                  >
-                    <GoogleIcon name="videocam" size={16} />
-                    <span>Video Evidence (Vision)</span>
-                  </button>
+              {/* Overlapping Smartphone Hardware Frame (Exact 385x825 Mobile Screen Ratio) */}
+              <div className="setu-iphone-hero-overlap">
+                <div className="setu-iphone-body">
+                  <div className="setu-iphone-display">
+                    <img
+                      src="/screenshots/mobile-home.png"
+                      alt="Setu Mobile App View"
+                      className="setu-iphone-img"
+                    />
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                {/* Input Simulation Display */}
-                {heroMode === 'voice' ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
-                      <span>Input: Audio (Ranchi Vernacular Hindi)</span>
-                      <span>0:08s</span>
-                    </div>
-                    <div className="setu-audio-waveform">
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.1s' }} />
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.3s' }} />
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.15s' }} />
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.4s' }} />
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.2s' }} />
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.5s' }} />
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.25s' }} />
-                      <div className="setu-wave-bar" style={{ animationDelay: '0.35s' }} />
-                      <span style={{ fontSize: '0.75rem', color: '#4b5563', marginLeft: '0.5rem', fontStyle: 'italic' }}>
-                        "Ward 4 mein main road par pipe phat gaya hai, do din se paani beh raha hai..."
+      {/* ================================================================= */}
+      {/* 2. 3D PROBLEM STATEMENTS ZOOM & SCROLL-STACKING PHOTO SHOWCASE    */}
+      {/* ================================================================= */}
+      <section className="setu-realities-intro-bar" id="realities">
+        <div className="setu-realities-intro-content">
+          <h2 className="setu-realities-heading">
+            From grassroots reality to working solutions.
+          </h2>
+          <p className="setu-realities-sub">
+            Scroll down to see real problem statements emerge from citizen voices, leading directly into field-validated engineering challenges.
+          </p>
+        </div>
+      </section>
+
+      {/* 3D Perspective Word Throw Track - Throws 50 PS keywords as user scrolls till card 1 covers 50% */}
+      <section className="setu-ps-words-track" ref={psTrackRef}>
+        <div className="stuck-grid">
+          {PS_ITEMS.map((item, idx) => (
+            <div
+              key={item.id}
+              ref={(el) => (psWordRefs.current[idx] = el)}
+              className={`grid-item ${item.isSpecial ? 'special' : ''}`}
+              style={
+                item.isSpecial
+                  ? { gridRow: '2 / span 2', gridColumn: '2 / span 2' }
+                  : { gridArea: item.area }
+              }
+            >
+              {item.isSpecial ? <b>{item.text}</b> : item.text}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="setu-fullscreen-stack-container">
+        {STACK_CARDS.map((card, idx) => (
+          <div
+            key={card.id}
+            id={`stack-slide-${idx}`}
+            ref={(el) => (slideSlotRefs.current[idx] = el)}
+            className="setu-fullscreen-slide-slot"
+            style={{
+              zIndex: 10 + idx
+            }}
+          >
+            <div
+              ref={(el) => (slideCardRefs.current[idx] = el)}
+              className="setu-fullscreen-slide-card"
+            >
+              <img
+                src={card.image}
+                alt={card.caption}
+                className="setu-fullscreen-img"
+                loading={idx === 0 ? "eager" : "lazy"}
+              />
+
+              <div className="setu-fullscreen-scrim-top" />
+              <div className="setu-fullscreen-scrim-bottom" />
+
+              <div className="setu-fullscreen-overlay">
+                <div className="setu-fullscreen-text-block">
+                  <h3 className="setu-fullscreen-title">
+                    {card.caption}
+                  </h3>
+                  <p className="setu-fullscreen-desc">
+                    {card.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        {/* Extra scroll track so slide 5 stays pinned at full view before next section */}
+        <div className="setu-fullscreen-stack-spacer" />
+      </div>
+
+      {/* ================================================================= */}
+      {/* 3. APPLE 5G INSPIRATION: 3D SPINNING PHONE & SLIDING UI           */}
+      {/* ================================================================= */}
+      <section
+        className="setu-section setu-walkthrough-scroll-section"
+        id="reporting-flow"
+        ref={walkthroughRef}
+      >
+        <div className="setu-walkthrough-sticky-viewport">
+          <div className="setu-walkthrough-stage-layout">
+            {/* Left Column: Narrative & Bullet Points changing with scroll */}
+            {/* Left Column: Narrative & Staggered Animated Bullet Points */}
+            <div className="setu-walkthrough-left-col">
+              <h3 className="setu-walkthrough-heading" key={`h-${activeStep}`}>
+                {WALKTHROUGH_STEPS[activeStep].heading}
+              </h3>
+
+              <ul className="setu-walkthrough-bullets" key={`b-${activeStep}`}>
+                {WALKTHROUGH_STEPS[activeStep].bullets.map((b, i) => {
+                  const parts = b.split(' — ');
+                  return (
+                    <li key={i} className="setu-walkthrough-bullet-item">
+                      <span className="setu-walkthrough-bullet-dot" />
+                      <span>
+                        {parts.length > 1 ? (
+                          <>
+                            <strong style={{ color: '#09090b', fontWeight: 650 }}>{parts[0]}</strong>
+                            {' — '}
+                            <span style={{ color: '#4b5563' }}>{parts[1]}</span>
+                          </>
+                        ) : (
+                          b
+                        )}
                       </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
-                      <span>Input: Camera Video Frame Analysis</span>
-                      <span>1080p @ 30fps</span>
-                    </div>
-                    <div style={{
-                      height: '42px',
-                      background: '#f4f4f5',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(0,0,0,0.08)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '0 1rem',
-                      gap: '8px',
-                      fontSize: '0.75rem',
-                      color: '#059669',
-                      fontWeight: '600'
-                    }}>
-                      <GoogleIcon name="visibility" size={16} color="#059669" />
-                      <span>Vision Model: 42cm pavement fracture &amp; high-pressure potable water leak detected</span>
-                    </div>
-                  </div>
-                )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
 
-                {/* Synthesis Output */}
-                <div className="setu-synthesis-card">
-                  <div className="setu-synthesis-header">
-                    <div>
-                      <span style={{ fontSize: '0.6875rem', color: '#059669', fontWeight: '700', textTransform: 'uppercase' }}>
-                        {isSimulating ? 'Sarvam 105B Reasoning...' : 'Synthesized by Sarvam 105B'}
-                      </span>
-                      <h4 className="setu-synthesis-title">
-                        {heroMode === 'voice'
-                          ? 'Main Road Potable Water Pipeline Rupture & Localized Flooding'
-                          : 'Severe Pavement Fracture and Potable Main Line Burst'}
-                      </h4>
-                    </div>
-                    <span style={{
-                      fontSize: '0.6875rem',
-                      fontWeight: '700',
-                      background: '#fee2e2',
-                      color: '#b91c1c',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      High Urgency
-                    </span>
-                  </div>
-
-                  <div className="setu-synthesis-meta-grid">
-                    <div className="setu-meta-row">
-                      <span className="setu-meta-k">Category</span>
-                      <span className="setu-meta-v">Water Resources &amp; Infrastructure</span>
-                    </div>
-                    <div className="setu-meta-row">
-                      <span className="setu-meta-k">Location</span>
-                      <span className="setu-meta-v">Ward 4, Ranchi District</span>
-                    </div>
-                    <div className="setu-meta-row">
-                      <span className="setu-meta-k">Action Desk</span>
-                      <span className="setu-meta-v">Ranchi Municipal Corp</span>
-                    </div>
-                    <div className="setu-meta-row">
-                      <span className="setu-meta-k">Academic Match</span>
-                      <span className="setu-meta-v">BIT Mesra Civil &amp; Hydro Lab</span>
-                    </div>
-                  </div>
+            {/* Right Column: 3D Spinning Phone with Apple 5G Animated UI Transition */}
+            <div className="setu-walkthrough-phone-col">
+              <div
+                className="setu-spinning-phone-frame"
+                style={{
+                  transform: `perspective(1200px) rotateY(${phoneTransform.rotY}deg) rotateX(${phoneTransform.rotX}deg) rotateZ(${phoneTransform.rotZ}deg)`
+                }}
+              >
+                <div className="setu-spinning-phone-screen">
+                  <img
+                    key={WALKTHROUGH_STEPS[activeStep].screenshot}
+                    src={WALKTHROUGH_STEPS[activeStep].screenshot}
+                    alt={WALKTHROUGH_STEPS[activeStep].heading}
+                    className="setu-phone-ss-img"
+                  />
                 </div>
-
-                {/* Action Trigger in Widget */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.25rem' }}>
-                  <button
-                    type="button"
-                    onClick={handleTriggerSimulation}
-                    disabled={isSimulating}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      color: '#2563eb',
-                      fontSize: '0.8125rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <GoogleIcon name="refresh" size={14} color="#2563eb" />
-                    <span>{isSimulating ? 'Processing...' : 'Re-run Model Extraction'}</span>
-                  </button>
-                </div>
-
-                {/* Subtle chromatic perimeter aura */}
-                <div className="setu-tara-mini-aura" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <hr className="setu-divider" />
-
       {/* ================================================================= */}
-      {/* 2. THE 3-STEP CITIZEN FLOW                                        */}
-      {/* ================================================================= */}
-      <section id="how-it-works" className="setu-section">
-        <div className="setu-headline-block">
-          <h2 className="setu-h2">Three steps from problem to verified dispatch.</h2>
-          <p className="setu-sub">
-            Designed for zero barrier to entry. No government forms, no complicated drop-down menus, no required typing.
-          </p>
-        </div>
-
-        <div className="setu-steps-grid">
-          {/* Step 1 */}
-          <div className="setu-step-card">
-            <div>
-              <span className="setu-step-num">01 / INTAKE</span>
-              <h3 className="setu-step-title">Record or Attach</h3>
-              <p className="setu-step-desc">
-                Tap the record button to speak naturally in your local dialect, or attach camera photos and videos directly from your mobile or desktop gallery.
-              </p>
-            </div>
-            <div className="setu-step-footer">
-              <GoogleIcon name="mic" size={16} color="#059669" />
-              <span>Speech &amp; Gallery Evidence</span>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="setu-step-card">
-            <div>
-              <span className="setu-step-num">02 / ANALYSIS</span>
-              <h3 className="setu-step-title">Autonomous Extraction</h3>
-              <p className="setu-step-desc">
-                Saaras v3 transcribes Indian accents. Sarvam 105B structures the title, category, severity, and urgency. Computer Vision inspects video frames for structural defects.
-              </p>
-            </div>
-            <div className="setu-step-footer">
-              <GoogleIcon name="neurology" size={16} color="#2563eb" />
-              <span>Saaras v3 + Sarvam 105B</span>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="setu-step-card">
-            <div>
-              <span className="setu-step-num">03 / DISPATCH</span>
-              <h3 className="setu-step-title">Instant Civic Routing</h3>
-              <p className="setu-step-desc">
-                The structured issue is published to the public grid, clustered with similar municipal reports, and forwarded to authorized government officers and university labs.
-              </p>
-            </div>
-            <div className="setu-step-footer">
-              <GoogleIcon name="check_circle" size={16} color="#059669" />
-              <span>Verified &amp; Geotagged</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <hr className="setu-divider" />
-
-      {/* ================================================================= */}
-      {/* 3. MEET TARA - THE AGENT CONSTELLATION                            */}
-      {/* ================================================================= */}
-      <section id="tara-ai" className="setu-section">
-        <div className="setu-headline-block">
-          <h2 className="setu-h2">Meet Tara: The Agent Constellation.</h2>
-          <p className="setu-sub">
-            One unified conversational interface backed by specialized state-of-the-art models working in unison.
-          </p>
-        </div>
-
-        <div className="setu-tara-bento">
-          {/* Card 1: Saaras v3 Speech */}
-          <div className="setu-bento-card">
-            <div>
-              <div className="setu-bento-icon">
-                <GoogleIcon name="record_voice_over" size={24} />
-              </div>
-              <h3 className="setu-bento-title">Saaras v3 Speech Engine</h3>
-              <p className="setu-bento-desc">
-                Engineered specifically for Indian regional dialects, colloquial expressions, and state accents. Accurately understands spoken Hindi, Khortha, Santali, and Nagpuri even in noisy ambient environments.
-              </p>
-            </div>
-            <span className="setu-bento-spec">STT Model: saaras:v3</span>
-          </div>
-
-          {/* Card 2: Sarvam 105B Reasoning */}
-          <div className="setu-bento-card setu-bento-card-dark">
-            <div>
-              <div className="setu-bento-icon">
-                <GoogleIcon name="psychology" size={24} />
-              </div>
-              <h3 className="setu-bento-title">Sarvam 105B Cognitive Brain</h3>
-              <p className="setu-bento-desc">
-                India's high-capacity foundation model for deep reasoning. Performs instantaneous duplicate clustering, urgency ranking, departmental triage, and academic laboratory matchmaking.
-              </p>
-            </div>
-            <span className="setu-bento-spec">Reasoning Core: Sarvam 105B</span>
-          </div>
-
-          {/* Card 3: Computer Vision */}
-          <div className="setu-bento-card">
-            <div>
-              <div className="setu-bento-icon">
-                <GoogleIcon name="camera" size={24} />
-              </div>
-              <h3 className="setu-bento-title">Multimodal Computer Vision</h3>
-              <p className="setu-bento-desc">
-                Inspects uploaded videos and photos frame by frame. Captures physical nuances the citizen may not have verbalized, such as road crack depths, structural erosion, or electrical wire hazards.
-              </p>
-            </div>
-            <span className="setu-bento-spec">Vision: Keyframe Semantic Classifier</span>
-          </div>
-
-          {/* Card 4: Voice Calling & App Takeover */}
-          <div className="setu-bento-card">
-            <div>
-              <div className="setu-bento-icon">
-                <GoogleIcon name="phone_in_talk" size={24} />
-              </div>
-              <h3 className="setu-bento-title">Autonomous Calling &amp; App Control</h3>
-              <p className="setu-bento-desc">
-                Citizens can voice-call Tara anytime for progress updates or hands-free app navigation (adjusting font size, reading messages). Government officers can command Tara to call all reporters of an issue to verify resolution status.
-              </p>
-            </div>
-            <span className="setu-bento-spec">Voice Agent: Two-Way Telephony &amp; DOM Control</span>
-          </div>
-        </div>
-      </section>
-
-      <hr className="setu-divider" />
-
-      {/* ================================================================= */}
-      {/* 4. FOUR STAKEHOLDER PORTALS (TABBED SWITCHER)                     */}
-      {/* ================================================================= */}
-      <section id="portals" className="setu-section">
-        <div className="setu-headline-block">
-          <h2 className="setu-h2">A unified ecosystem for four stakeholders.</h2>
-          <p className="setu-sub">
-            Tailored consoles connecting grassroots citizens, public administrators, university researchers, and industry leaders.
-          </p>
-        </div>
-
-        {/* Tab Switcher */}
-        <div className="setu-tabs-container">
-          <button
-            type="button"
-            onClick={() => setActivePortal('citizen')}
-            className={`setu-tab-trigger ${activePortal === 'citizen' ? 'active' : ''}`}
-          >
-            <GoogleIcon name="grass" size={18} />
-            <span>🌱 Grass (Intake)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActivePortal('govt')}
-            className={`setu-tab-trigger ${activePortal === 'govt' ? 'active' : ''}`}
-          >
-            <GoogleIcon name="park" size={18} />
-            <span>🌳 Oak (Govt)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActivePortal('university')}
-            className={`setu-tab-trigger ${activePortal === 'university' ? 'active' : ''}`}
-          >
-            <GoogleIcon name="spa" size={18} />
-            <span>🌿 Saplings (R&amp;D)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActivePortal('industry')}
-            className={`setu-tab-trigger ${activePortal === 'industry' ? 'active' : ''}`}
-          >
-            <GoogleIcon name="forest" size={18} />
-            <span>🌲 Grove (CSR)</span>
-          </button>
-        </div>
-
-        {/* Tab Details Box */}
-        <div className="setu-portal-display-box">
-          <div>
-            <h3 className="setu-portal-title">{PORTAL_DATA[activePortal].title}</h3>
-            <p className="setu-portal-desc">{PORTAL_DATA[activePortal].desc}</p>
-
-            <ul className="setu-feature-list">
-              {PORTAL_DATA[activePortal].features.map((feat, idx) => (
-                <li key={idx} className="setu-feature-item">
-                  <span className="setu-feature-check">✓</span>
-                  <span>{feat}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Link to={PORTAL_DATA[activePortal].ctaLink} className="setu-btn setu-btn-primary">
-              <span>{PORTAL_DATA[activePortal].ctaText}</span>
-              <GoogleIcon name="arrow_forward" size={16} color="#ffffff" />
-            </Link>
-          </div>
-
-          {/* Right Mockup Preview Card */}
-          <div>
-            <div className="setu-mockup-card">
-              <div className="setu-mockup-header">
-                <span className="setu-mockup-title">{PORTAL_DATA[activePortal].mockupTitle}</span>
-                <span className="setu-mockup-badge">{PORTAL_DATA[activePortal].mockupBadge}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <h4 style={{ fontSize: '1rem', fontWeight: '700', color: '#111827', margin: 0 }}>
-                  {PORTAL_DATA[activePortal].mockupContent.title}
-                </h4>
-                <p style={{ fontSize: '0.8125rem', color: '#6b7280', margin: 0 }}>
-                  {PORTAL_DATA[activePortal].mockupContent.meta1}
-                </p>
-                <div style={{
-                  padding: '0.75rem',
-                  background: '#ffffff',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  fontSize: '0.8125rem',
-                  color: '#374151'
-                }}>
-                  <strong style={{ color: '#111827' }}>Status: </strong>
-                  {PORTAL_DATA[activePortal].mockupContent.meta2}
-                </div>
-                <p style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', margin: '0.25rem 0 0 0' }}>
-                  ⚡ {PORTAL_DATA[activePortal].mockupContent.extra}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <hr className="setu-divider" />
-
-      {/* ================================================================= */}
-      {/* 5. EXPLORE FEED & COMMUNITY AWARENESS SHOWCASE                     */}
-      {/* ================================================================= */}
-      <section id="explore" className="setu-section">
-        <div className="setu-headline-block">
-          <h2 className="setu-h2">Explore Feed: Civic education &amp; progress spotlight.</h2>
-          <p className="setu-sub">
-            Government departments run official awareness campaigns, share educational advisories, and celebrate verified student solutions deployed across the state.
-          </p>
-        </div>
-
-        <div className="setu-explore-grid">
-          {/* Post 1 */}
-          <div className="setu-explore-card">
-            <div className="setu-explore-img-wrap">
-              <img
-                src="https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?w=800&q=80"
-                alt="Civic clean water initiative"
-                className="setu-explore-img"
-              />
-            </div>
-            <div className="setu-explore-content">
-              <div>
-                <span className="setu-explore-author">Drinking Water &amp; Sanitation Dept · Ranchi</span>
-                <h4 className="setu-explore-card-title">Clean Groundwater Filtration Pilot Launched in Bero Block</h4>
-                <p className="setu-explore-card-desc">
-                  Following 42 clustered citizen reports on tubewell fluoride levels, BIT Mesra water researchers have deployed an autonomous testing unit.
-                </p>
-              </div>
-              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
-                <span>Official Campaign</span>
-                <span style={{ color: '#059669', fontWeight: '600' }}>Active Field Trial</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Post 2 */}
-          <div className="setu-explore-card">
-            <div className="setu-explore-img-wrap">
-              <img
-                src="https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&q=80"
-                alt="Solar energy and infrastructure"
-                className="setu-explore-img"
-              />
-            </div>
-            <div className="setu-explore-content">
-              <div>
-                <span className="setu-explore-author">Energy &amp; Renewable Resources · Dhanbad</span>
-                <h4 className="setu-explore-card-title">Solar Micro-Grid Telemetry Handover to Govindpur Panchayat</h4>
-                <p className="setu-explore-card-desc">
-                  IIT ISM Dhanbad student innovators designed a modular inverter firmware repair, eliminating recurring blackout cycles for 120 households.
-                </p>
-              </div>
-              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
-                <span>University Prototype</span>
-                <span style={{ color: '#2563eb', fontWeight: '600' }}>Govt Certified</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Post 3 */}
-          <div className="setu-explore-card">
-            <div className="setu-explore-img-wrap">
-              <img
-                src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80"
-                alt="Public health awareness"
-                className="setu-explore-img"
-              />
-            </div>
-            <div className="setu-explore-content">
-              <div>
-                <span className="setu-explore-author">Health &amp; Family Welfare · Jamshedpur</span>
-                <h4 className="setu-explore-card-title">Vector-Borne Disease Containment Advisory</h4>
-                <p className="setu-explore-card-desc">
-                  Monsoon hygiene guidelines and ward-level drainage sanitization schedules issued for urban local bodies and rural health centres.
-                </p>
-              </div>
-              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
-                <span>Public Health Advisory</span>
-                <span style={{ color: '#059669', fontWeight: '600' }}>3.2k Engaged</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <hr className="setu-divider" />
-
-      {/* ================================================================= */}
-      {/* 6. END-TO-END WORKFLOW PIPELINE                                   */}
+      {/* 4. TARA AI VOICE COPILOT & MORPHING ORGANIC BLOB                  */}
       {/* ================================================================= */}
       <section className="setu-section">
-        <div className="setu-headline-block">
-          <h2 className="setu-h2">The resolution lifecycle.</h2>
-          <p className="setu-sub">
-            How a 15-second voice note becomes an engineered public product with state-backed accountability.
-          </p>
-        </div>
+        <div className="setu-tara-section-wrap" id="tara-ai">
+          <div className="setu-tara-grid">
+            {/* Left: Morphing Organic Audio Blob */}
+            <div className="setu-blob-stage">
+              <div className="setu-organic-blob">
+                <div className="setu-organic-blob-core">
+                  <div className="setu-wave-bars">
+                    <div className="setu-wave-bar" />
+                    <div className="setu-wave-bar" />
+                    <div className="setu-wave-bar" />
+                    <div className="setu-wave-bar" />
+                    <div className="setu-wave-bar" />
+                  </div>
+                </div>
+              </div>
 
-        <div className="setu-pipeline-row">
-          <div className="setu-pipeline-node">
-            <span className="setu-pipeline-index">STAGE 01</span>
-            <h4 className="setu-pipeline-node-title">Citizen Intake</h4>
-            <p className="setu-pipeline-node-desc">
-              Voice note or gallery video uploaded. Saaras v3 transcribes dialect; Sarvam 105B structures urgency and location.
-            </p>
-          </div>
+              <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                <button
+                  className="setu-btn setu-btn-primary"
+                  style={{
+                    background: isTaraSpeaking ? '#059669' : 'rgba(255, 255, 255, 0.15)',
+                    borderColor: 'rgba(255, 255, 255, 0.25)',
+                    backdropFilter: 'blur(8px)'
+                  }}
+                  onClick={handleSimulateTara}
+                  onMouseEnter={() => triggerHaptic('hover')}
+                  onMouseDown={() => triggerHaptic('click')}
+                >
+                  <span>{isTaraSpeaking ? 'Tara is Speaking' : 'Listen to Tara Sample'}</span>
+                </button>
 
-          <div className="setu-pipeline-node">
-            <span className="setu-pipeline-index">STAGE 02</span>
-            <h4 className="setu-pipeline-node-title">Triage &amp; Cluster</h4>
-            <p className="setu-pipeline-node-desc">
-              Identical issues merged into unified problem statements. Nodal desk reviews severity and allocates seed grant budget.
-            </p>
-          </div>
+                {isTaraSpeaking && (
+                  <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#a5f3fc', maxWidth: '36ch', lineHeight: 1.5 }}>
+                    "नमस्ते! मैंने आपकी शिकायत 'वार्ड 12 - जल प्रदूषण' के रूप में दर्ज कर ली है। जांच दल को सूचना भेज दी गई है।"
+                  </div>
+                )}
+              </div>
+            </div>
 
-          <div className="setu-pipeline-node">
-            <span className="setu-pipeline-index">STAGE 03</span>
-            <h4 className="setu-pipeline-node-title">University R&amp;D</h4>
-            <p className="setu-pipeline-node-desc">
-              Assigned to university department based on lab capability. Student &amp; mentor squad builds and submits milestone telemetry.
-            </p>
-          </div>
+            {/* Right: Tara Capabilities */}
+            <div className="setu-tara-features">
+              <h2 className="setu-section-title" style={{ color: '#ffffff' }}>
+                The civic assistant that never puts you on hold.
+              </h2>
 
-          <div className="setu-pipeline-node">
-            <span className="setu-pipeline-index">STAGE 04</span>
-            <h4 className="setu-pipeline-node-title">Field Deployment</h4>
-            <p className="setu-pipeline-node-desc">
-              Prototype installed in the community. Verified by university SPOC and government. Co-funded by industry CSR.
-            </p>
+              <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: 1.6, margin: 0 }}>
+                Tara bridges the digital literacy barrier by allowing citizens to report problems and track resolutions through natural telephone calls or in-app voice notes.
+              </p>
+
+              <div className="setu-tara-feature-card">
+                <div className="setu-tara-feat-icon">
+                  <GoogleIcon name="call" size={22} color="#38bdf8" />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.05rem', color: '#ffffff', fontWeight: 700 }}>
+                    Conversational Phone Intake
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                    Citizens dial a toll-free number and describe their grievance naturally without filling any forms or using a computer.
+                  </p>
+                </div>
+              </div>
+
+              <div className="setu-tara-feature-card">
+                <div className="setu-tara-feat-icon">
+                  <GoogleIcon name="phone_callback" size={22} color="#38bdf8" />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.05rem', color: '#ffffff', fontWeight: 700 }}>
+                    Proactive Verification Calls
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                    Before an issue is marked resolved by the department, Tara places an automated callback to the citizen to verify quality.
+                  </p>
+                </div>
+              </div>
+
+              <div className="setu-tara-feature-card">
+                <div className="setu-tara-feat-icon">
+                  <GoogleIcon name="translate" size={22} color="#38bdf8" />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.05rem', color: '#ffffff', fontWeight: 700 }}>
+                    12+ Indian Dialects
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                    Converses fluidly in regional languages with cultural and dialect nuance, eliminating robotic menus.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+      <hr className="setu-divider" />
+
       {/* ================================================================= */}
-      {/* 7. BOTTOM GATEWAY & LAUNCHPAD                                     */}
+      {/* 5. 4-STAKEHOLDER ECOSYSTEM BENTO GRID                             */}
       {/* ================================================================= */}
-      <section className="setu-section setu-section-compact">
-        <div className="setu-gateway-box">
-          <h2 className="setu-gateway-title">
-            Ready to solve civic challenges together?
+      <section className="setu-section" id="portals">
+        <div className="setu-section-header">
+          <h2 className="setu-section-title">
+            How Setu bridges problems to physical solutions.
           </h2>
-          <p className="setu-gateway-sub">
-            Access your dedicated portal to report issues, review state challenges, or build university prototypes.
+          <p className="setu-section-subtitle">
+            Most grievance portals only log complaints into endless queues. Setu connects grassroots problems directly to university research and industry capital.
           </p>
+        </div>
 
-          <div className="setu-gateway-actions">
-            <Link to="/citizen" className="setu-btn setu-btn-emerald">
-              <span>Citizen Portal</span>
-            </Link>
-            <Link to="/government/dashboard" className="setu-btn setu-btn-secondary">
-              <span>Government Nodal</span>
-            </Link>
-            <Link to="/university/dashboard" className="setu-btn setu-btn-secondary">
-              <span>University Labs</span>
-            </Link>
-            <Link to="/industry/dashboard" className="setu-btn setu-btn-secondary">
-              <span>Industry &amp; CSR</span>
-            </Link>
+        <div className="setu-bento-grid">
+          {/* Card 1: Citizen */}
+          <div className="setu-ecosystem-card">
+            <div>
+              <div className="setu-card-header">
+                <span className="setu-role-pill setu-role-citizen">
+                  <GoogleIcon name="person" size={14} color="#047857" />
+                  <span>Grassroots Citizen</span>
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>INTAKE</span>
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
+                Voice &amp; Photo Intake in 15 Seconds
+              </h3>
+              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
+                Report water contamination, broken infrastructure, or power failures without filling forms. Receive transparent status updates directly on WhatsApp and SMS.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.75rem' }}>
+              <Link
+                to="/grass"
+                className="setu-btn setu-btn-secondary"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                onMouseEnter={() => triggerHaptic('hover')}
+                onMouseDown={() => triggerHaptic('click')}
+              >
+                <span>Access Citizen Portal</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 2: Government */}
+          <div className="setu-ecosystem-card">
+            <div>
+              <div className="setu-card-header">
+                <span className="setu-role-pill setu-role-govt">
+                  <GoogleIcon name="account_balance" size={14} color="#1d4ed8" />
+                  <span>Government Administration</span>
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>TRIAGE &amp; CLUSTER</span>
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
+                AI Deduplication &amp; Nodal Coordination
+              </h3>
+              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
+                Clusters duplicate citizen complaints into unified challenges. Nodal desks delegate stubborn engineering bottlenecks to vetted university laboratories.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.75rem' }}>
+              <Link
+                to="/oak"
+                className="setu-btn setu-btn-secondary"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                onMouseEnter={() => triggerHaptic('hover')}
+                onMouseDown={() => triggerHaptic('click')}
+              >
+                <span>Access Government Console</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 3: University */}
+          <div className="setu-ecosystem-card">
+            <div>
+              <div className="setu-card-header">
+                <span className="setu-role-pill setu-role-uni">
+                  <GoogleIcon name="school" size={14} color="#7e22ce" />
+                  <span>University &amp; Research</span>
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>R&amp;D LABS</span>
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
+                Engineering Squads Building Prototypes
+              </h3>
+              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
+                Faculty mentors and student engineering squads adopt real municipal challenges as funded capstone projects, earning academic credits and grants.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.75rem' }}>
+              <Link
+                to="/saplings"
+                className="setu-btn setu-btn-secondary"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                onMouseEnter={() => triggerHaptic('hover')}
+                onMouseDown={() => triggerHaptic('click')}
+              >
+                <span>Access University Portal</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 4: Industry */}
+          <div className="setu-ecosystem-card">
+            <div>
+              <div className="setu-card-header">
+                <span className="setu-role-pill setu-role-ind">
+                  <GoogleIcon name="corporate_fare" size={14} color="#c2410c" />
+                  <span>Industry &amp; CSR</span>
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>DEPLOYMENT</span>
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
+                CSR Capital Funding Verified Deployments
+              </h3>
+              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
+                Corporate CSR funds channel capital directly into verified, faculty-audited student prototypes to scale low-cost solutions across villages and towns.
+              </p>
+            </div>
+            <div style={{ marginTop: '1.75rem' }}>
+              <Link
+                to="/grove"
+                className="setu-btn setu-btn-secondary"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+                onMouseEnter={() => triggerHaptic('hover')}
+                onMouseDown={() => triggerHaptic('click')}
+              >
+                <span>Access Industry Portal</span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ================================================================= */}
-      {/* 8. MINIMALIST FOOTER                                              */}
+      {/* 6. HIGH-IMPACT FINAL CALL TO ACTION                               */}
       {/* ================================================================= */}
-      <footer className="setu-footer">
-        <div className="setu-footer-inner">
-          <div className="setu-footer-brand">
-            <span style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.03em', color: '#111827' }}>
-              Setu.
-            </span>
-            <span style={{ color: '#d1d5db' }}>|</span>
-            <span>Government of Jharkhand · Academic &amp; Civic Innovation Platform</span>
-          </div>
-
-          <div className="setu-footer-links">
-            <Link to="/citizen" className="setu-footer-link">Citizen Intake</Link>
-            <Link to="/government/dashboard" className="setu-footer-link">Government Desk</Link>
-            <Link to="/university/dashboard" className="setu-footer-link">University R&amp;D</Link>
-            <Link to="/industry/dashboard" className="setu-footer-link">Industry CSR</Link>
-          </div>
-
-          <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
-            Built for Smart India Hackathon · Powered by Sarvam AI &amp; Saaras v3
+      <section className="setu-section">
+        <div className="setu-cta-box">
+          <h2 className="setu-cta-title">
+            Have an issue in your locality?
+          </h2>
+          <p className="setu-cta-sub">
+            Report it now with voice or camera. Let Setu connect your community's challenge to real engineers and working solutions.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link
+              to="/grass"
+              className="setu-btn setu-btn-primary"
+              style={{ background: '#ffffff', color: '#000000', borderColor: '#ffffff' }}
+              onMouseEnter={() => triggerHaptic('hover')}
+              onMouseDown={() => triggerHaptic('click')}
+            >
+              <span>Get Started</span>
+            </Link>
+            <Link
+              to="/login"
+              className="setu-btn setu-btn-secondary"
+              style={{ background: 'transparent', color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}
+              onMouseEnter={() => triggerHaptic('hover')}
+              onMouseDown={() => triggerHaptic('click')}
+            >
+              <span>Stakeholder Login</span>
+            </Link>
           </div>
         </div>
-      </footer>
+      </section>
     </div>
   );
 };

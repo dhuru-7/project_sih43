@@ -1,3 +1,5 @@
+@import './styles/colors.css';
+
 /* Valley Sans Font Family */
 @font-face {
   font-family: 'Valley Sans';
@@ -272,7 +274,6 @@ button {
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
   box-shadow: 0 6px 16px var(--primary-glow);
 }
 
@@ -790,7 +791,7 @@ button {
 }
 
 .apple-send-btn:hover {
-  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 .apple-send-btn:active {
