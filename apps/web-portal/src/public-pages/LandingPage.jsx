@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleIcon } from '../components/ui/GoogleIcon';
-import { TaraStarIcon } from '../components/ui/TaraStarIcon';
 import { triggerHaptic } from '../utils/haptics';
 import '../styles/landing.css';
 
@@ -12,74 +11,17 @@ export const LandingPage = () => {
   const activeStepRef = useRef(0);
   const phoneFrameRef = useRef(null);
 
-  // State for Tara Voice Assistant Interactive Preview
-  const [isTaraSpeaking, setIsTaraSpeaking] = useState(false);
-
   // Refs for Smooth Card Pull, Expanding/Un-rounding & Haptic Snap
   const slideSlotRefs = useRef([]);
   const slideCardRefs = useRef([]);
   const snappedState = useRef({});
   const pullingState = useRef({});
+  const stackContainerRef = useRef(null);
+  const lastSlideTransitionTime = useRef(0);
 
-  // Refs for 3D Perspective Problem Statements Throw Animation & Curved SVG Separator
-  const psTrackRef = useRef(null);
-  const psWordRefs = useRef([]);
+  // Refs for Curved SVG Separator
   const curvePathRef = useRef(null);
   const curveStrokeRef = useRef(null);
-
-  // 50 Problem Statements Authentic to SIH / Setu Civic Realities (Mapped to User's 4x4 Grid & Ranges)
-  const PS_ITEMS = [
-    { id: 1, text: 'Contaminated Groundwater', range: [40, 50], area: '1 / 1' },
-    { id: 2, text: 'Broken Village Culverts', range: [20, 30], area: '1 / 2' },
-    { id: 3, text: 'Crop Pest Blight', range: [52, 62], area: '1 / 3' },
-    { id: 4, text: 'Pothole Cluster Grid', range: [50, 60], area: '1 / 4' },
-    { id: 5, text: 'Transformer Overload', range: [45, 55], area: '2 / 1' },
-    { id: 6, text: 'Flash Flood Runoff', range: [10, 20], area: '2 / 2' },
-    { id: 7, text: 'Industrial Effluents', range: [90, 100], area: '2 / 3' },
-    { id: 8, text: 'Low Crop Yields', range: [30, 40], area: '2 / 4' },
-    { id: 9, text: 'School Sanitation Gap', range: [80, 90], area: '3 / 1' },
-    { id: 10, text: 'Arsenic Contamination', range: [70, 80], area: '3 / 2' },
-    { id: 11, text: 'PROBLEM STATEMENTS', isSpecial: true, range: [-10, 50], area: 'special' },
-    { id: 12, text: 'Primary Health Deficit', range: [52, 62], area: '3 / 4' },
-    { id: 13, text: 'Severe Malnutrition', range: [15, 25], area: '4 / 1' },
-    { id: 14, text: 'Submerged Rural Roads', range: [7, 17], area: '4 / 2' },
-    { id: 15, text: 'Pesticide Residue Drift', range: [75, 85], area: '4 / 3' },
-    { id: 16, text: 'Municipal Waste Overflow', range: [3, 13], area: '4 / 4' },
-    { id: 17, text: 'Unlined Drainage Canal', range: [87, 97], area: '2 / 1' },
-    { id: 18, text: 'Post-Harvest Crop Spoilage', range: [42, 52], area: '2 / 2' },
-    { id: 19, text: 'Dry Borewell Depletion', range: [57, 67], area: '2 / 3' },
-    { id: 20, text: 'Cold Storage Deficit', range: [37, 47], area: '2 / 4' },
-    { id: 21, text: 'Stray Cattle Hazard', range: [12, 22], area: '3 / 1' },
-    { id: 22, text: 'High Nitrate Seepage', range: [8, 18], area: '3 / 2' },
-    { id: 23, text: 'E-Waste Dumping Yard', range: [84, 94], area: '3 / 3' },
-    { id: 24, text: 'Human-Wildlife Conflict', range: [33, 43], area: '3 / 4' },
-    { id: 25, text: 'Quarry Dust Dispersion', range: [48, 58], area: '1 / 1' },
-    { id: 26, text: 'Saline Soil Ingress', range: [13, 23], area: '1 / 2' },
-    { id: 27, text: 'Bridge Structural Flaws', range: [78, 88], area: '1 / 3' },
-    { id: 28, text: 'Bio-Medical Waste Risk', range: [62, 72], area: '1 / 4' },
-    { id: 29, text: 'Micro-Plastic Ingestion', range: [31, 41], area: '4 / 1' },
-    { id: 30, text: 'Uncertified Seed Fraud', range: [8, 18], area: '4 / 2' },
-    { id: 31, text: 'Urban Heat Island Effect', range: [4, 14], area: '4 / 3' },
-    { id: 32, text: 'Stubble Smoke Inhalation', range: [74, 84], area: '4 / 4' },
-    { id: 33, text: 'Pump Voltage Surges', range: [61, 71], area: '2 / 1' },
-    { id: 34, text: 'River Sand Siltation', range: [26, 36], area: '2 / 2' },
-    { id: 35, text: 'Defunct Solar Grids', range: [63, 73], area: '2 / 3' },
-    { id: 36, text: 'Monsoon Waterlogging', range: [11, 21], area: '2 / 4' },
-    { id: 37, text: 'Heavy Metal Soil Toxicity', range: [89, 99], area: '3 / 1' },
-    { id: 38, text: 'Livestock Epidemic Spread', range: [33, 43], area: '3 / 2' },
-    { id: 39, text: 'Illegal Water Siphoning', range: [88, 98], area: '3 / 3' },
-    { id: 40, text: 'Defunct Handpumps', range: [22, 32], area: '3 / 4' },
-    { id: 41, text: 'Sub-Standard Bitumen', range: [16, 26], area: '1 / 1' },
-    { id: 42, text: 'High Fluoride Toxicity', range: [26, 36], area: '1 / 2' },
-    { id: 43, text: 'Inadequate Grain Silos', range: [66, 76], area: '1 / 3' },
-    { id: 44, text: 'Streetlight Blackouts', range: [3, 13], area: '1 / 4' },
-    { id: 45, text: 'Untreated Sewage Nullahs', range: [44, 54], area: '4 / 1' },
-    { id: 46, text: 'Maternal Telehealth Gap', range: [11, 21], area: '4 / 2' },
-    { id: 47, text: 'Canal Breach Hazard', range: [23, 33], area: '4 / 3' },
-    { id: 48, text: 'Fertilizer Eutrophication', range: [39, 49], area: '4 / 4' },
-    { id: 49, text: 'Landslide Slope Risk', range: [59, 69], area: '3 / 1' },
-    { id: 50, text: 'Coastal Mangrove Loss', range: [6, 16], area: '3 / 2' }
-  ];
 
   // The 5 Ground-Truth Stacking Cards (Clean Fullscreen Showcase)
   const STACK_CARDS = [
@@ -163,11 +105,134 @@ export const LandingPage = () => {
     }
   ];
 
+  // Deterministic 64-bubble generation for CodePen Gooey Rising Bubbles Footer
+  const FOOTER_BUBBLES = Array.from({ length: 64 }, (_, i) => {
+    const seed1 = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
+    const r1 = seed1 - Math.floor(seed1);
+    const seed2 = Math.sin((i + 1) * 93.9898 + 67.345) * 24634.6345;
+    const r2 = seed2 - Math.floor(seed2);
+    const seed3 = Math.sin((i + 2) * 54.3421 + 12.876) * 65342.1245;
+    const r3 = seed3 - Math.floor(seed3);
+    const seed4 = Math.sin((i + 3) * 76.1234 + 43.123) * 31245.9876;
+    const r4 = seed4 - Math.floor(seed4);
+    const seed5 = Math.sin((i + 4) * 33.4567 + 91.234) * 87654.3211;
+    const r5 = seed5 - Math.floor(seed5);
+
+    const size = (2 + r1 * 4).toFixed(2);
+    const distance = (6 + r2 * 4).toFixed(2);
+    const position = (-5 + r3 * 110).toFixed(2);
+    const time = (2 + r4 * 2).toFixed(2);
+    const delay = (-1 * (2 + r5 * 2)).toFixed(2);
+
+    return {
+      key: i,
+      style: {
+        '--size': `${size}rem`,
+        '--distance': `${distance}rem`,
+        '--position': `${position}%`,
+        '--time': `${time}s`,
+        '--delay': `${delay}s`
+      }
+    };
+  });
+
+  // Setu Ecosystem Portals (Colors from COLORS_LIBRARY.md)
+  const SETU_PORTALS = [
+    {
+      name: '\\grass',
+      title: 'Reporting Portal',
+      icon: 'record_voice_over',
+      status: 'Live',
+      path: '/grass',
+      isLive: true,
+      accentColor: '#34D399',      // Emerald / Green
+      bgColor: 'rgba(52, 211, 153, 0.12)',
+      badgeBg: '#064E3B',         // Deep Green
+      badgeColor: '#34D399'
+    },
+    {
+      name: '\\oak',
+      title: 'Government Portal',
+      icon: 'account_balance',
+      status: 'Under Development',
+      path: '#',
+      isLive: false,
+      accentColor: '#60A5FA',      // Blue
+      bgColor: 'rgba(96, 165, 250, 0.12)',
+      badgeBg: 'rgba(96, 165, 250, 0.16)',
+      badgeColor: '#93C5FD'
+    },
+    {
+      name: '\\saplings',
+      title: 'University Portal',
+      icon: 'school',
+      status: 'Under Development',
+      path: '#',
+      isLive: false,
+      accentColor: '#C084FC',      // Purple
+      bgColor: 'rgba(192, 132, 252, 0.12)',
+      badgeBg: 'rgba(192, 132, 252, 0.16)',
+      badgeColor: '#E9D5FF'
+    },
+    {
+      name: '\\grove',
+      title: 'Industry Portal',
+      icon: 'corporate_fare',
+      status: 'Under Development',
+      path: '#',
+      isLive: false,
+      accentColor: '#FB923C',      // Amber / Orange
+      bgColor: 'rgba(251, 146, 60, 0.12)',
+      badgeBg: 'rgba(251, 146, 60, 0.16)',
+      badgeColor: '#FED7AA'
+    }
+  ];
+
+  const scrollToStep = (idx) => {
+    setActiveStep(idx);
+    triggerHaptic('click');
+    if (!walkthroughRef.current) return;
+    const rect = walkthroughRef.current.getBoundingClientRect();
+    const totalScrollable = rect.height - window.innerHeight;
+    const targetOffset = (totalScrollable * (idx + 0.1)) / WALKTHROUGH_STEPS.length;
+    window.scrollTo({
+      top: window.pageYOffset + rect.top + targetOffset,
+      behavior: 'smooth'
+    });
+  };
+
   // Scroll Listener for Apple 5G Inspired 3D Phone Spin & Step Progression
   // Unified Performant Scroll & Render Loop (Hardware-Accelerated 120 FPS)
   useEffect(() => {
     let rafId = null;
     let userHasScrolled = false;
+
+    // Helper to smoothly scroll to a specific stack card index (0 to 4)
+    const scrollToCard = (idx) => {
+      const stackEl = stackContainerRef.current;
+      if (!stackEl) return;
+      const rect = stackEl.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      const containerDocTop = window.pageYOffset + rect.top;
+      const targetY = containerDocTop + idx * windowH;
+      window.scrollTo({
+        top: targetY,
+        behavior: 'smooth'
+      });
+      triggerHaptic('snap');
+    };
+
+    // Helper to smoothly scroll into the next section (#reporting-flow)
+    const scrollToNextSection = () => {
+      const nextSection = document.getElementById('reporting-flow');
+      if (nextSection) {
+        window.scrollTo({
+          top: window.pageYOffset + nextSection.getBoundingClientRect().top,
+          behavior: 'smooth'
+        });
+        triggerHaptic('snap');
+      }
+    };
 
     const handleScrollEffects = () => {
       const windowH = window.innerHeight;
@@ -192,46 +257,7 @@ export const LandingPage = () => {
         }
       }
 
-      // 1. 3D Problem Statements Perspective Throw Animation
-      const trackEl = psTrackRef.current;
-      if (trackEl) {
-        const trackRect = trackEl.getBoundingClientRect();
-        const totalDist = trackRect.height - windowH;
-        if (totalDist > 0) {
-          const rawProgress = -trackRect.top / totalDist;
-          const progress = Math.max(0, Math.min(1, rawProgress));
-
-          PS_ITEMS.forEach((item, i) => {
-            const el = psWordRefs.current[i];
-            if (!el) return;
-
-            const [startPct, endPct] = item.range;
-            const start = startPct / 100;
-            const end = endPct / 100;
-
-            if (progress < start) {
-              el.style.transform = 'translateZ(-1000px)';
-              el.style.opacity = '0';
-              el.style.filter = 'blur(6px)';
-            } else if (progress > end) {
-              el.style.transform = 'translateZ(1000px)';
-              el.style.opacity = '0';
-              el.style.filter = 'blur(6px)';
-            } else {
-              const local = (progress - start) / (end - start);
-              const tz = -1000 + local * 2000;
-              const op = local < 0.5 ? local * 2 : (1 - local) * 2;
-              const blur = local < 0.5 ? (1 - local * 2) * 5 : ((local - 0.5) * 2) * 5;
-
-              el.style.transform = `translateZ(${tz.toFixed(1)}px)`;
-              el.style.opacity = Math.max(0, Math.min(1, op)).toFixed(3);
-              el.style.filter = `blur(${Math.max(0, blur).toFixed(1)}px)`;
-            }
-          });
-        }
-      }
-
-      // 2. Fullscreen Stack Cards Pull & Dynamic Un-rounding
+      // 1. Fullscreen Stack Cards Pull & Dynamic Un-rounding
       slideSlotRefs.current.forEach((slotEl, idx) => {
         if (!slotEl) return;
         const cardEl = slideCardRefs.current[idx];
@@ -315,41 +341,195 @@ export const LandingPage = () => {
       }
     };
 
+    let lastScrollY = typeof window !== 'undefined' ? (window.pageYOffset || document.documentElement.scrollTop || 0) : 0;
+    let scrollAccumulator = 0;
+
     const onScroll = () => {
       userHasScrolled = true;
+      const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+      const delta = Math.abs(currentScrollY - lastScrollY);
+      lastScrollY = currentScrollY;
+
+      scrollAccumulator += delta;
+      // Responsive tactile rotary jog-dial haptic feedback on scroll
+      if (scrollAccumulator >= 75) {
+        scrollAccumulator = 0;
+        triggerHaptic('scroll');
+      }
+
       if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(handleScrollEffects);
     };
 
+    // Rate-Limited 1-Card-at-a-time Touch Gesture Controller (0.8s cooldown)
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isTouchActive = false;
+
+    const onTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      isTouchActive = true;
+    };
+
+    const onTouchMove = (e) => {
+      if (!isTouchActive || e.touches.length !== 1) return;
+
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const deltaY = touchStartY - currentY; // positive = swipe up = scroll down
+      const deltaX = touchStartX - currentX;
+
+      // Only handle clear vertical gestures
+      if (Math.abs(deltaY) < 28 || Math.abs(deltaY) < Math.abs(deltaX) * 1.25) {
+        return;
+      }
+
+      const now = Date.now();
+
+      // Check Stack Cards Section
+      const stackEl = stackContainerRef.current;
+      if (stackEl) {
+        const stackRect = stackEl.getBoundingClientRect();
+        const windowH = window.innerHeight;
+        // Inside stack cards view: top has arrived and bottom has not scrolled away
+        const isInsideStack = stackRect.top <= 60 && stackRect.bottom >= windowH - 60;
+
+        if (isInsideStack) {
+          // If within the 0.8s gap: lock scroll so mobile inertia doesn't skip cards
+          if (now - lastSlideTransitionTime.current < 800) {
+            if (e.cancelable) e.preventDefault();
+            return;
+          }
+
+          const scrolledInside = -stackRect.top;
+          const currentIdx = Math.max(
+            0,
+            Math.min(STACK_CARDS.length - 1, Math.round(scrolledInside / windowH))
+          );
+
+          if (deltaY > 28) {
+            // User swipes up -> wants to slide to next card
+            if (currentIdx < STACK_CARDS.length - 1) {
+              if (e.cancelable) e.preventDefault();
+              lastSlideTransitionTime.current = now;
+              isTouchActive = false;
+              scrollToCard(currentIdx + 1);
+              return;
+            } else {
+              // At card 4 (Research becomes prototypes): slide cleanly into #reporting-flow
+              if (e.cancelable) e.preventDefault();
+              lastSlideTransitionTime.current = now;
+              isTouchActive = false;
+              scrollToNextSection();
+              return;
+            }
+          } else if (deltaY < -28) {
+            // User swipes down -> wants to slide to previous card
+            if (currentIdx > 0) {
+              if (e.cancelable) e.preventDefault();
+              lastSlideTransitionTime.current = now;
+              isTouchActive = false;
+              scrollToCard(currentIdx - 1);
+              return;
+            }
+          }
+        }
+      }
+
+      // Check Walkthrough Section
+      const wtEl = walkthroughRef.current;
+      if (wtEl) {
+        const wtRect = wtEl.getBoundingClientRect();
+        const windowH = window.innerHeight;
+        const isInsideWt = wtRect.top <= 75 && wtRect.bottom >= windowH + 100;
+
+        if (isInsideWt) {
+          if (now - lastSlideTransitionTime.current < 800) {
+            if (e.cancelable) e.preventDefault();
+            return;
+          }
+
+          const curStep = activeStepRef.current;
+          if (deltaY > 28 && curStep < WALKTHROUGH_STEPS.length - 1) {
+            if (e.cancelable) e.preventDefault();
+            lastSlideTransitionTime.current = now;
+            isTouchActive = false;
+            scrollToStep(curStep + 1);
+            return;
+          } else if (deltaY < -28 && curStep > 0) {
+            if (e.cancelable) e.preventDefault();
+            lastSlideTransitionTime.current = now;
+            isTouchActive = false;
+            scrollToStep(curStep - 1);
+            return;
+          }
+        }
+      }
+    };
+
+    const onTouchEnd = () => {
+      isTouchActive = false;
+    };
+
+    // Desktop/Trackpad Wheel 1-Card Rate Limiter (0.8s gap)
+    const onWheel = (e) => {
+      const stackEl = stackContainerRef.current;
+      if (!stackEl) return;
+      const stackRect = stackEl.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      const isInsideStack = stackRect.top <= 60 && stackRect.bottom >= windowH - 60;
+
+      if (isInsideStack) {
+        const now = Date.now();
+        if (now - lastSlideTransitionTime.current < 800) {
+          if (e.cancelable) e.preventDefault();
+          return;
+        }
+
+        if (Math.abs(e.deltaY) > 20) {
+          const scrolledInside = -stackRect.top;
+          const currentIdx = Math.max(
+            0,
+            Math.min(STACK_CARDS.length - 1, Math.round(scrolledInside / windowH))
+          );
+
+          if (e.deltaY > 0) {
+            if (currentIdx < STACK_CARDS.length - 1) {
+              if (e.cancelable) e.preventDefault();
+              lastSlideTransitionTime.current = now;
+              scrollToCard(currentIdx + 1);
+            } else {
+              if (e.cancelable) e.preventDefault();
+              lastSlideTransitionTime.current = now;
+              scrollToNextSection();
+            }
+          } else if (e.deltaY < 0 && currentIdx > 0) {
+            if (e.cancelable) e.preventDefault();
+            lastSlideTransitionTime.current = now;
+            scrollToCard(currentIdx - 1);
+          }
+        }
+      }
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('wheel', onWheel, { passive: false });
     handleScrollEffects();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('wheel', onWheel);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
-
-  const handleSimulateTara = () => {
-    setIsTaraSpeaking(true);
-    triggerHaptic('click');
-    setTimeout(() => {
-      setIsTaraSpeaking(false);
-    }, 4500);
-  };
-
-  const scrollToStep = (idx) => {
-    setActiveStep(idx);
-    triggerHaptic('click');
-    if (!walkthroughRef.current) return;
-    const rect = walkthroughRef.current.getBoundingClientRect();
-    const totalScrollable = rect.height - window.innerHeight;
-    const targetOffset = (totalScrollable * (idx + 0.1)) / WALKTHROUGH_STEPS.length;
-    window.scrollTo({
-      top: window.pageYOffset + rect.top + targetOffset,
-      behavior: 'smooth'
-    });
-  };
 
   return (
     <div className="setu-canvas setu-grid-texture">
@@ -449,33 +629,45 @@ export const LandingPage = () => {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* ================================================================= */}
-      {/* 2. 3D PROBLEM STATEMENTS ZOOM & SCROLL-STACKING PHOTO SHOWCASE    */}
-      {/* ================================================================= */}
-
-      {/* 3D Perspective Word Throw Track - Throws 50 PS keywords as user scrolls till card 1 covers 50% */}
-      <section className="setu-ps-words-track" ref={psTrackRef}>
-        <div className="stuck-grid">
-          {PS_ITEMS.map((item, idx) => (
-            <div
-              key={item.id}
-              ref={(el) => (psWordRefs.current[idx] = el)}
-              className={`grid-item ${item.isSpecial ? 'special' : ''}`}
-              style={
-                item.isSpecial
-                  ? { gridRow: '2 / span 2', gridColumn: '2 / span 2' }
-                  : { gridArea: item.area }
-              }
+        {/* Downsided >> Double Chevron Scroll Down Indicator */}
+        <a
+          href="#stack-showcase"
+          className="setu-scroll-down-indicator"
+          onClick={(e) => {
+            e.preventDefault();
+            triggerHaptic('click');
+            const target = document.getElementById('stack-showcase');
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          aria-label="Scroll down to explore"
+        >
+          <span className="setu-scroll-down-label">Scroll to explore</span>
+          <div className="setu-scroll-down-chevron-wrap">
+            <svg
+              className="setu-scroll-down-chevron-svg"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              {item.isSpecial ? <b>{item.text}</b> : item.text}
-            </div>
-          ))}
-        </div>
+              <polyline points="7 6 12 11 17 6" />
+              <polyline points="7 13 12 18 17 13" />
+            </svg>
+          </div>
+        </a>
       </section>
 
-      <div className="setu-fullscreen-stack-container">
+      {/* ================================================================= */}
+      {/* 2. SCROLL-STACKING PHOTO SHOWCASE                                  */}
+      {/* ================================================================= */}
+      <div className="setu-fullscreen-stack-container" id="stack-showcase" ref={stackContainerRef}>
         {STACK_CARDS.map((card, idx) => (
           <div
             key={card.id}
@@ -513,8 +705,6 @@ export const LandingPage = () => {
             </div>
           </div>
         ))}
-        {/* Extra scroll track so slide 5 stays pinned at full view before next section */}
-        <div className="setu-fullscreen-stack-spacer" />
       </div>
 
       {/* ================================================================= */}
@@ -581,403 +771,83 @@ export const LandingPage = () => {
       </section>
 
       {/* ================================================================= */}
-      {/* 4. TARA AI VOICE COPILOT & MORPHING ORGANIC STAR BLOB             */}
+      {/* 4. CODEPEN GOOEY RISING BUBBLES FOOTER (PITCH BLACK)              */}
       {/* ================================================================= */}
-      <section className="setu-section">
-        <div className="setu-tara-section-wrap" id="tara-ai">
-          <div className="setu-tara-grid">
-            {/* Left: Morphing Organic Audio Blob with Center 4-Pointed Tara Star Icon */}
-            <div className="setu-blob-stage">
-              <div className={`setu-organic-blob ${isTaraSpeaking ? 'setu-organic-blob-active' : ''}`}>
-                <div className="setu-tara-star-core">
-                  <div className="setu-tara-star-icon-wrap">
-                    <TaraStarIcon size={38} color="#ffffff" />
-                  </div>
-                  {isTaraSpeaking && (
-                    <div className="setu-wave-bars" style={{ marginTop: '6px' }}>
-                      <div className="setu-wave-bar" />
-                      <div className="setu-wave-bar" />
-                      <div className="setu-wave-bar" />
-                      <div className="setu-wave-bar" />
-                      <div className="setu-wave-bar" />
-                    </div>
-                  )}
-                </div>
-              </div>
+      <footer className="setu-bubbles-footer">
+        <div className="setu-footer-bubbles bubbles">
+          {FOOTER_BUBBLES.map((b) => (
+            <div key={b.key} className="setu-footer-bubble bubble" style={b.style} />
+          ))}
+        </div>
 
-              <div style={{ marginTop: '2.25rem', textAlign: 'center' }}>
-                <button
-                  className="setu-btn setu-btn-primary"
-                  style={{
-                    background: isTaraSpeaking ? '#059669' : 'rgba(255, 255, 255, 0.12)',
-                    borderColor: isTaraSpeaking ? '#10b981' : 'rgba(255, 255, 255, 0.22)',
-                    backdropFilter: 'blur(10px)',
-                    gap: '0.5rem',
-                    color: '#ffffff'
-                  }}
-                  onClick={handleSimulateTara}
-                  onMouseEnter={() => triggerHaptic('hover')}
-                  onMouseDown={() => triggerHaptic('click')}
-                >
-                  <TaraStarIcon size={16} color="#ffffff" />
-                  <span>{isTaraSpeaking ? 'Tara is Speaking (Hindi)...' : 'Listen to Tara Sample'}</span>
-                </button>
+        <div className="setu-footer-content">
+          {/* Brand Info Column: strictly App Name & Subheading (no SIH badge, nothing else) */}
+          <div className="setu-footer-brand-col">
+            <h3 className="setu-footer-title">Setu.</h3>
+            <p className="setu-footer-sub">
+              Bridging citizen realities to engineering solutions and government action.
+            </p>
+          </div>
 
-                {isTaraSpeaking && (
+          {/* Portals Column: no subheadings, \grass is Reporting Portal, other portals under development */}
+          <div className="setu-footer-portals-col">
+            <span className="setu-footer-portals-heading">Ecosystem Portals</span>
+            {SETU_PORTALS.map((portal) => (
+              <Link
+                key={portal.name}
+                to={portal.path}
+                className="setu-footer-portal-item"
+                onMouseEnter={() => triggerHaptic('hover')}
+                onMouseDown={() => triggerHaptic('click')}
+              >
+                <div className="setu-footer-portal-left">
                   <div
+                    className="setu-footer-portal-icon"
                     style={{
-                      marginTop: '1.25rem',
-                      background: 'rgba(255, 255, 255, 0.06)',
-                      border: '1px solid rgba(129, 140, 248, 0.3)',
-                      borderRadius: '16px',
-                      padding: '1rem 1.25rem',
-                      maxWidth: '42ch',
-                      textAlign: 'left',
-                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35)'
+                      backgroundColor: portal.bgColor,
+                      border: `1px solid ${portal.accentColor}33`
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem', color: '#c7d2fe', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                      <TaraStarIcon size={12} color="#818CF8" />
-                      <span>Live Voice Synthesis</span>
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: '#ffffff', lineHeight: 1.5, fontWeight: 500 }}>
-                      "नमस्ते! मैंने आपकी शिकायत 'वार्ड 12 - जल प्रदूषण' के रूप में दर्ज कर ली है। जांच दल को सूचना भेज दी गई है।"
-                    </div>
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.4, borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '0.4rem' }}>
-                      Namaste! I have logged your grievance as 'Ward 12 - Water Contamination'. Notice dispatched to the field inspection squad.
-                    </div>
+                    <GoogleIcon name={portal.icon} size={18} color={portal.accentColor} />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Tara Models & Capabilities Showcase */}
-            <div className="setu-tara-features">
-              <div>
-                <div className="setu-tara-badge">
-                  <TaraStarIcon size={13} color="#818CF8" />
-                  <span>TARA CIVIC INTELLIGENCE</span>
+                  <div className="setu-footer-portal-name">
+                    <span>{portal.name}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>
+                      — {portal.title}
+                    </span>
+                  </div>
                 </div>
-                <h2 className="setu-section-title" style={{ color: '#ffffff', textAlign: 'left', margin: '0 0 0.85rem 0' }}>
-                  The multilingual AI intelligence behind every resolution.
-                </h2>
-                <p style={{ color: '#94a3b8', fontSize: '1.02rem', lineHeight: 1.6, margin: 0 }}>
-                  Tara translates unfiltered citizen voices from 12+ Indian dialects into verified civic engineering tickets and automated department actions.
-                </p>
-              </div>
 
-              {/* 4 Models Working Under Tara (with Colors from Color Library) */}
-              <div className="setu-tara-models-grid">
-                {/* Model 1: Nina (Cyan #22D3EE / Soft Cyan) */}
-                <div
-                  className="setu-tara-model-card"
+                <span
+                  className="setu-footer-status-pill"
                   style={{
-                    borderColor: 'rgba(34, 211, 238, 0.35)',
-                    background: 'rgba(34, 211, 238, 0.04)'
+                    backgroundColor: portal.badgeBg,
+                    color: portal.badgeColor,
+                    border: `1px solid ${portal.badgeColor}40`
                   }}
                 >
-                  <div className="setu-tara-model-header">
-                    <span className="setu-tara-model-name" style={{ color: '#22d3ee' }}>
-                      <TaraStarIcon size={14} color="#22D3EE" />
-                      Nina
-                    </span>
-                    <span
-                      className="setu-tara-model-tag"
-                      style={{ background: 'rgba(34, 211, 238, 0.15)', color: '#67e8f9' }}
-                    >
-                      Vision &amp; Acoustics
-                    </span>
-                  </div>
-                  <p className="setu-tara-model-desc">
-                    Multimodal spatial model that inspects video frames, photos, and sound patterns to detect broken culverts, water discoloration, and pipeline decibel anomalies.
-                  </p>
-                </div>
-
-                {/* Model 2: Sarvam v4 (Amber #FB923C / Soft Orange) */}
-                <div
-                  className="setu-tara-model-card"
-                  style={{
-                    borderColor: 'rgba(251, 146, 60, 0.35)',
-                    background: 'rgba(251, 146, 60, 0.04)'
-                  }}
-                >
-                  <div className="setu-tara-model-header">
-                    <span className="setu-tara-model-name" style={{ color: '#fb923c' }}>
-                      <TaraStarIcon size={14} color="#FB923C" />
-                      Sarvam v4
-                    </span>
-                    <span
-                      className="setu-tara-model-tag"
-                      style={{ background: 'rgba(251, 146, 60, 0.15)', color: '#fdba74' }}
-                    >
-                      12+ Dialects STT
-                    </span>
-                  </div>
-                  <p className="setu-tara-model-desc">
-                    Indic foundational speech-to-text engine with deep regional idiom understanding across Hindi, Bengali, Tamil, Telugu, Marathi, Santhali, and Bhojpuri.
-                  </p>
-                </div>
-
-                {/* Model 3: Bulbul v3 (Emerald #34D399 / Soft Green) */}
-                <div
-                  className="setu-tara-model-card"
-                  style={{
-                    borderColor: 'rgba(52, 211, 153, 0.35)',
-                    background: 'rgba(52, 211, 153, 0.04)'
-                  }}
-                >
-                  <div className="setu-tara-model-header">
-                    <span className="setu-tara-model-name" style={{ color: '#34d399' }}>
-                      <TaraStarIcon size={14} color="#34D399" />
-                      Bulbul v3
-                    </span>
-                    <span
-                      className="setu-tara-model-tag"
-                      style={{ background: 'rgba(52, 211, 153, 0.15)', color: '#86efac' }}
-                    >
-                      Regional TTS
-                    </span>
-                  </div>
-                  <p className="setu-tara-model-desc">
-                    Hyper-natural conversational voice synthesis delivering local cadence and empathetic inflection for automated toll-free telephone callbacks.
-                  </p>
-                </div>
-
-                {/* Model 4: Sarvam 105B (Indigo #818CF8 / Soft Purple) */}
-                <div
-                  className="setu-tara-model-card"
-                  style={{
-                    borderColor: 'rgba(129, 140, 248, 0.35)',
-                    background: 'rgba(129, 140, 248, 0.04)'
-                  }}
-                >
-                  <div className="setu-tara-model-header">
-                    <span className="setu-tara-model-name" style={{ color: '#818cf8' }}>
-                      <TaraStarIcon size={14} color="#818CF8" />
-                      Sarvam 105B
-                    </span>
-                    <span
-                      className="setu-tara-model-tag"
-                      style={{ background: 'rgba(129, 140, 248, 0.15)', color: '#c7d2fe' }}
-                    >
-                      Reasoning &amp; Triage
-                    </span>
-                  </div>
-                  <p className="setu-tara-model-desc">
-                    Advanced civic reasoning LLM that parses municipal codes, clusters duplicate grievances, verifies contractor completion photos, and writes capstone briefs.
-                  </p>
-                </div>
-              </div>
-
-              {/* Core Capabilities in Structured Bullet Points */}
-              <ul className="setu-tara-capabilities-list">
-                <li className="setu-tara-cap-item">
-                  <span className="setu-tara-cap-dot" style={{ background: '#22d3ee', boxShadow: '0 0 8px #22d3ee' }} />
-                  <span className="setu-tara-cap-text">
-                    <strong>Zero-Barrier Voice Intake</strong> — Citizens dial a toll-free helpline or tap the mic in-app to speak naturally in their dialect without filling complicated forms or typing.
-                  </span>
-                </li>
-                <li className="setu-tara-cap-item">
-                  <span className="setu-tara-cap-dot" style={{ background: '#fb923c', boxShadow: '0 0 8px #fb923c' }} />
-                  <span className="setu-tara-cap-text">
-                    <strong>Multimodal Ground-Truth Audit</strong> — Nina analyzes video frames, GPS coordinates, and acoustic decibels to eliminate spam and certify physical ground reality.
-                  </span>
-                </li>
-                <li className="setu-tara-cap-item">
-                  <span className="setu-tara-cap-dot" style={{ background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
-                  <span className="setu-tara-cap-text">
-                    <strong>Autonomous Departmental Routing</strong> — Sarvam 105B cross-references municipal charters to immediately assign tickets to the exact nodal officer or panchayat engineer.
-                  </span>
-                </li>
-                <li className="setu-tara-cap-item">
-                  <span className="setu-tara-cap-dot" style={{ background: '#818cf8', boxShadow: '0 0 8px #818cf8' }} />
-                  <span className="setu-tara-cap-text">
-                    <strong>Proactive Citizen Verification Callbacks</strong> — Bulbul v3 places automated calls to citizens to confirm work quality before tickets can be closed, eliminating paper-only ghost resolutions.
-                  </span>
-                </li>
-                <li className="setu-tara-cap-item">
-                  <span className="setu-tara-cap-dot" style={{ background: '#c084fc', boxShadow: '0 0 8px #c084fc' }} />
-                  <span className="setu-tara-cap-text">
-                    <strong>University R&amp;D Problem Synthesis</strong> — Chronic recurring structural challenges are automatically packaged into funded capstone briefs for partner engineering universities.
-                  </span>
-                </li>
-              </ul>
-            </div>
+                  {portal.status}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
-      </section>
+      </footer>
 
-      <hr className="setu-divider" />
-
-      {/* ================================================================= */}
-      {/* 5. 4-STAKEHOLDER ECOSYSTEM BENTO GRID                             */}
-      {/* ================================================================= */}
-      <section className="setu-section" id="portals">
-        <div className="setu-section-header">
-          <h2 className="setu-section-title">
-            How Setu bridges problems to physical solutions.
-          </h2>
-          <p className="setu-section-subtitle">
-            Most grievance portals only log complaints into endless queues. Setu connects grassroots problems directly to university research and industry capital.
-          </p>
-        </div>
-
-        <div className="setu-bento-grid">
-          {/* Card 1: Citizen */}
-          <div className="setu-ecosystem-card">
-            <div>
-              <div className="setu-card-header">
-                <span className="setu-role-pill setu-role-citizen">
-                  <GoogleIcon name="person" size={14} color="#047857" />
-                  <span>Grassroots Citizen</span>
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>INTAKE</span>
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
-                Voice &amp; Photo Intake in 15 Seconds
-              </h3>
-              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
-                Report water contamination, broken infrastructure, or power failures without filling forms. Receive transparent status updates directly on WhatsApp and SMS.
-              </p>
-            </div>
-            <div style={{ marginTop: '1.75rem' }}>
-              <Link
-                to="/grass"
-                className="setu-btn setu-btn-secondary"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                onMouseEnter={() => triggerHaptic('hover')}
-                onMouseDown={() => triggerHaptic('click')}
-              >
-                <span>Access Citizen Portal</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 2: Government */}
-          <div className="setu-ecosystem-card">
-            <div>
-              <div className="setu-card-header">
-                <span className="setu-role-pill setu-role-govt">
-                  <GoogleIcon name="account_balance" size={14} color="#1d4ed8" />
-                  <span>Government Administration</span>
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>TRIAGE &amp; CLUSTER</span>
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
-                AI Deduplication &amp; Nodal Coordination
-              </h3>
-              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
-                Clusters duplicate citizen complaints into unified challenges. Nodal desks delegate stubborn engineering bottlenecks to vetted university laboratories.
-              </p>
-            </div>
-            <div style={{ marginTop: '1.75rem' }}>
-              <Link
-                to="/oak"
-                className="setu-btn setu-btn-secondary"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                onMouseEnter={() => triggerHaptic('hover')}
-                onMouseDown={() => triggerHaptic('click')}
-              >
-                <span>Access Government Console</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 3: University */}
-          <div className="setu-ecosystem-card">
-            <div>
-              <div className="setu-card-header">
-                <span className="setu-role-pill setu-role-uni">
-                  <GoogleIcon name="school" size={14} color="#7e22ce" />
-                  <span>University &amp; Research</span>
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>R&amp;D LABS</span>
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
-                Engineering Squads Building Prototypes
-              </h3>
-              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
-                Faculty mentors and student engineering squads adopt real municipal challenges as funded capstone projects, earning academic credits and grants.
-              </p>
-            </div>
-            <div style={{ marginTop: '1.75rem' }}>
-              <Link
-                to="/saplings"
-                className="setu-btn setu-btn-secondary"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                onMouseEnter={() => triggerHaptic('hover')}
-                onMouseDown={() => triggerHaptic('click')}
-              >
-                <span>Access University Portal</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 4: Industry */}
-          <div className="setu-ecosystem-card">
-            <div>
-              <div className="setu-card-header">
-                <span className="setu-role-pill setu-role-ind">
-                  <GoogleIcon name="corporate_fare" size={14} color="#c2410c" />
-                  <span>Industry &amp; CSR</span>
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'var(--setu-mono)' }}>DEPLOYMENT</span>
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.75rem 0', color: '#111827' }}>
-                CSR Capital Funding Verified Deployments
-              </h3>
-              <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
-                Corporate CSR funds channel capital directly into verified, faculty-audited student prototypes to scale low-cost solutions across villages and towns.
-              </p>
-            </div>
-            <div style={{ marginTop: '1.75rem' }}>
-              <Link
-                to="/grove"
-                className="setu-btn setu-btn-secondary"
-                style={{ width: '100%', boxSizing: 'border-box' }}
-                onMouseEnter={() => triggerHaptic('hover')}
-                onMouseDown={() => triggerHaptic('click')}
-              >
-                <span>Access Industry Portal</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================================================================= */}
-      {/* 6. HIGH-IMPACT FINAL CALL TO ACTION                               */}
-      {/* ================================================================= */}
-      <section className="setu-section">
-        <div className="setu-cta-box">
-          <h2 className="setu-cta-title">
-            Have an issue in your locality?
-          </h2>
-          <p className="setu-cta-sub">
-            Report it now with voice or camera. Let Setu connect your community's challenge to real engineers and working solutions.
-          </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link
-              to="/grass"
-              className="setu-btn setu-btn-primary"
-              style={{ background: '#ffffff', color: '#000000', borderColor: '#ffffff' }}
-              onMouseEnter={() => triggerHaptic('hover')}
-              onMouseDown={() => triggerHaptic('click')}
-            >
-              <span>Get Started</span>
-            </Link>
-            <Link
-              to="/login"
-              className="setu-btn setu-btn-secondary"
-              style={{ background: 'transparent', color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}
-              onMouseEnter={() => triggerHaptic('hover')}
-              onMouseDown={() => triggerHaptic('click')}
-            >
-              <span>Stakeholder Login</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* SVG Filter for Gooey Liquid Bubbles Melting Effect */}
+      <svg style={{ position: 'fixed', top: '100vh', width: 0, height: 0, pointerEvents: 'none' }}>
+        <defs>
+          <filter id="blob">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"
+              result="blob"
+            />
+          </filter>
+        </defs>
+      </svg>
     </div>
   );
 };
