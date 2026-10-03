@@ -10,6 +10,8 @@ export const LandingPage = () => {
   const [activeStep, setActiveStep] = useState(0); // 0, 1, 2, 3
   const activeStepRef = useRef(0);
   const phoneFrameRef = useRef(null);
+  const [isInWalkthrough, setIsInWalkthrough] = useState(false);
+  const [liquidRipple, setLiquidRipple] = useState(false);
 
   // Refs for Smooth Card Pull, Expanding/Un-rounding & Haptic Snap
   const slideSlotRefs = useRef([]);
@@ -218,15 +220,57 @@ export const LandingPage = () => {
 
   const scrollToStep = (idx) => {
     setActiveStep(idx);
+    activeStepRef.current = idx;
     triggerHaptic('click');
     if (!walkthroughRef.current) return;
     const rect = walkthroughRef.current.getBoundingClientRect();
-    const totalScrollable = rect.height - window.innerHeight;
-    const targetOffset = (totalScrollable * (idx + 0.1)) / WALKTHROUGH_STEPS.length;
+    const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const sectionTop = currentScrollY + rect.top;
+    const totalScrollable = walkthroughRef.current.offsetHeight - window.innerHeight;
+    const targetOffset = (totalScrollable * (idx + 0.12)) / WALKTHROUGH_STEPS.length;
     window.scrollTo({
-      top: window.pageYOffset + rect.top + targetOffset,
+      top: sectionTop + targetOffset,
       behavior: 'smooth'
     });
+  };
+
+  const handleContinue = (e) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    triggerHaptic('snap');
+    setLiquidRipple(true);
+    setTimeout(() => setLiquidRipple(false), 450);
+
+    const nextStep = activeStep < WALKTHROUGH_STEPS.length - 1 ? activeStep + 1 : 0;
+    setActiveStep(nextStep);
+    activeStepRef.current = nextStep;
+
+    if (walkthroughRef.current) {
+      const rect = walkthroughRef.current.getBoundingClientRect();
+      const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+      const sectionTop = currentScrollY + rect.top;
+      const totalScrollable = walkthroughRef.current.offsetHeight - window.innerHeight;
+
+      if (activeStep < WALKTHROUGH_STEPS.length - 1) {
+        const targetOffset = (totalScrollable * (nextStep + 0.12)) / WALKTHROUGH_STEPS.length;
+        window.scrollTo({
+          top: sectionTop + targetOffset,
+          behavior: 'smooth'
+        });
+      } else {
+        // Smoothly continue past walkthrough to next section
+        window.scrollTo({
+          top: sectionTop + totalScrollable + 160,
+          behavior: 'smooth'
+        });
+      }
+    }
+  };
+
+  const handleWalkthroughContextMenu = (e) => {
+    e.preventDefault();
+    handleContinue(e);
   };
 
   // Scroll Listener for Apple 5G Inspired 3D Phone Spin & Step Progression
@@ -313,6 +357,11 @@ export const LandingPage = () => {
       if (wtEl) {
         const wtRect = wtEl.getBoundingClientRect();
         const totalScrollable = wtRect.height - windowH;
+
+        // Button pops up ONLY when user is inside the mobile frame walkthrough section
+        const inWalkthrough = wtRect.top <= windowH * 0.55 && wtRect.bottom >= windowH * 0.25;
+        setIsInWalkthrough(inWalkthrough);
+
         if (totalScrollable > 0) {
           const rawProgress = -wtRect.top / totalScrollable;
           const progress = Math.max(0, Math.min(1, rawProgress));
@@ -359,11 +408,26 @@ export const LandingPage = () => {
       }
     };
 
+    let observer;
+    if (typeof IntersectionObserver !== 'undefined' && walkthroughRef.current) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          setIsInWalkthrough(entry.isIntersecting);
+        },
+        {
+          threshold: [0.08, 0.3, 0.7],
+          rootMargin: '-5% 0px -5% 0px'
+        }
+      );
+      observer.observe(walkthroughRef.current);
+    }
+
     window.addEventListener('scroll', onScroll, { passive: true });
     handleScrollEffects();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
+      if (observer) observer.disconnect();
     };
   }, []);
 
@@ -551,7 +615,10 @@ export const LandingPage = () => {
         id="reporting-flow"
         ref={walkthroughRef}
       >
-        <div className="setu-walkthrough-sticky-viewport">
+        <div
+          className="setu-walkthrough-sticky-viewport"
+          onContextMenu={handleWalkthroughContextMenu}
+        >
           <div className="setu-walkthrough-stage-layout">
             {/* Left Column: Narrative & Bullet Points changing with scroll */}
             {/* Left Column: Narrative & Staggered Animated Bullet Points */}
@@ -583,13 +650,17 @@ export const LandingPage = () => {
               </ul>
             </div>
 
-            {/* Right Column: 3D Spinning Phone with Apple 5G Animated UI Transition */}
+            {/* Right Column: 3D Spinning Phone with Apple 5G Animated UI Transition & Liquid Action Pill */}
             <div className="setu-walkthrough-phone-col">
               <div
                 ref={phoneFrameRef}
                 className="setu-spinning-phone-frame"
+                onClick={handleContinue}
+                onContextMenu={handleWalkthroughContextMenu}
+                title="Click or right-click to continue"
                 style={{
-                  transform: 'perspective(1200px) rotateY(-4deg) rotateX(3deg) rotateZ(-1deg)'
+                  transform: 'perspective(1200px) rotateY(-4deg) rotateX(3deg) rotateZ(-1deg)',
+                  cursor: 'pointer'
                 }}
               >
                 <div className="setu-spinning-phone-screen">
@@ -609,6 +680,49 @@ export const LandingPage = () => {
                       }}
                     />
                   ))}
+                </div>
+              </div>
+
+              {/* Apple Liquid Continue Button (Mobile) & Right-Click To Continue Popup (Desktop) */}
+              <div
+                className={`setu-liquid-action-pill ${isInWalkthrough ? 'active' : ''} ${liquidRipple ? 'ripple' : ''}`}
+                onClick={handleContinue}
+                onContextMenu={handleWalkthroughContextMenu}
+                role="button"
+                tabIndex={0}
+                aria-label="Continue walkthrough"
+                title="Click or right-click to continue"
+              >
+                {/* Specular Liquid Light Reflection Sheen */}
+                <div className="setu-liquid-specular-shine" />
+
+                {/* Desktop View: Right Click to Continue */}
+                <div className="setu-liquid-desktop-view">
+                  <div className="setu-liquid-mouse-icon">
+                    <svg width="15" height="20" viewBox="0 0 24 32" fill="none">
+                      <rect x="2" y="2" width="20" height="28" rx="10" stroke="currentColor" strokeWidth="2.2" />
+                      <line x1="12" y1="2" x2="12" y2="13" stroke="currentColor" strokeWidth="2.2" />
+                      <path d="M12 2 H17 A5 5 0 0 1 22 7 V13 H12 Z" fill="#34D399" />
+                    </svg>
+                  </div>
+                  <div className="setu-liquid-text-group">
+                    <span className="setu-liquid-primary-text">Right click to continue</span>
+                    <span className="setu-liquid-secondary-text">or click · Step {activeStep + 1} of {WALKTHROUGH_STEPS.length}</span>
+                  </div>
+                  <div className="setu-liquid-step-dots">
+                    {WALKTHROUGH_STEPS.map((_, i) => (
+                      <span key={i} className={`setu-liquid-dot ${activeStep === i ? 'active' : ''}`} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile View: Apple Liquid Continue Button */}
+                <div className="setu-liquid-mobile-view">
+                  <span className="setu-liquid-mobile-text">Continue</span>
+                  <span className="setu-liquid-step-pill">{activeStep + 1}/{WALKTHROUGH_STEPS.length}</span>
+                  <svg className="setu-liquid-arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                  </svg>
                 </div>
               </div>
             </div>
