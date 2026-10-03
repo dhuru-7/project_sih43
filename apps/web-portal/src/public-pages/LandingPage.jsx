@@ -683,61 +683,66 @@ export const LandingPage = () => {
                 </div>
               </div>
 
-              {/* Apple Physical Liquid Glass Action Container (Pops up ONLY in mobile frame section) */}
+              {/* Apple Physical Liquid Glass Keep Scrolling Popup (Pops up ONLY in mobile frame walkthrough) */}
               <div
                 className={`setu-liquid-action-wrapper fx-layer ${isInWalkthrough ? 'active' : ''} ${liquidRipple ? 'ripple' : ''}`}
               >
-                {/* Desktop View: Liquid Glass "Right click to continue" */}
+                {/* Desktop View: Liquid Glass "Keep scrolling to explore" */}
                 <div
                   className="box start-btn setu-liquid-glass-box desktop-view"
-                  style={{ '--w': '300px', '--h': '68px', '--tr': '15%' }}
+                  style={{ '--w': '250px', '--h': '58px', '--tr': '15%' }}
                   onClick={handleContinue}
-                  onContextMenu={handleWalkthroughContextMenu}
                   role="button"
                   tabIndex={0}
-                  aria-label="Right click to continue"
-                  title="Click or right-click to continue"
+                  aria-label="Keep scrolling to explore"
+                  title="Scroll or click to advance"
                 >
                   <div className="setu-liquid-desktop-label-group">
-                    <span className="text">Right click to continue</span>
-                    <span className="setu-liquid-subtext">or click · Step {activeStep + 1} of {WALKTHROUGH_STEPS.length}</span>
-                  </div>
-                  <div className="btn-icon">
-                    <svg
-                      className="svg"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M779.180132 473.232045 322.354755 16.406668c-21.413706-21.413706-56.121182-21.413706-77.534887 0-21.413706 21.413706-21.413706 56.122205 0 77.534887l418.057421 418.057421L244.819868 930.057421c-21.413706 21.413706-21.413706 56.122205 0 77.534887 10.706853 10.706853 24.759917 16.059767 38.767955 16.059767s28.061103-5.353938 38.767955-16.059767L779.180132 550.767955C800.593837 529.35425 800.593837 494.64575 779.180132 473.232045z"
-                      ></path>
-                    </svg>
+                    <div className="setu-scroll-hint-row">
+                      <span className="text">Keep scrolling</span>
+                      <svg
+                        className="setu-scroll-arrow-down"
+                        viewBox="0 0 24 24"
+                        width="15"
+                        height="15"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </div>
+                    <span className="setu-liquid-subtext">Step {activeStep + 1} of {WALKTHROUGH_STEPS.length} · or click to advance</span>
                   </div>
                   <div className="circle-overlay"></div>
                 </div>
 
-                {/* Mobile View: Liquid Glass "Continue" */}
+                {/* Mobile View: Liquid Glass "Keep scrolling ↓" */}
                 <div
                   className="box start-btn setu-liquid-glass-box mobile-view"
-                  style={{ '--w': '220px', '--h': '60px', '--tr': '15%' }}
+                  style={{ '--w': '154px', '--h': '42px', '--tr': '15%' }}
                   onClick={handleContinue}
                   role="button"
                   tabIndex={0}
-                  aria-label="Continue"
-                  title="Continue"
+                  aria-label="Keep scrolling"
+                  title="Keep scrolling to explore"
                 >
-                  <span className="text">Continue</span>
-                  <div className="btn-icon">
+                  <div className="setu-scroll-hint-row">
+                    <span className="text">Keep scrolling</span>
                     <svg
-                      className="svg"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
+                      className="setu-scroll-arrow-down"
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
-                      <path
-                        d="M779.180132 473.232045 322.354755 16.406668c-21.413706-21.413706-56.121182-21.413706-77.534887 0-21.413706 21.413706-21.413706 56.122205 0 77.534887l418.057421 418.057421L244.819868 930.057421c-21.413706 21.413706-21.413706 56.122205 0 77.534887 10.706853 10.706853 24.759917 16.059767 38.767955 16.059767s28.061103-5.353938 38.767955-16.059767L779.180132 550.767955C800.593837 529.35425 800.593837 494.64575 779.180132 473.232045z"
-                      ></path>
+                      <polyline points="6 9 12 15 18 9" />
                     </svg>
                   </div>
                   <div className="circle-overlay"></div>

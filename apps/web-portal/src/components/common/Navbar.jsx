@@ -43,7 +43,7 @@ export const Navbar = () => {
           </Link>
           <Link
             to="/grass"
-            className="setu-apple-cta"
+            className="setu-apple-cta header-cta-desktop-only"
             onMouseEnter={() => triggerHaptic('hover')}
             onMouseDown={() => triggerHaptic('click')}
           >
@@ -116,7 +116,7 @@ export const Navbar = () => {
         ) : (
           <Link
             to="/grass"
-            className="setu-btn-primary"
+            className="setu-btn-primary header-cta-desktop-only"
             style={{
               fontSize: '0.75rem',
               fontWeight: '600',
