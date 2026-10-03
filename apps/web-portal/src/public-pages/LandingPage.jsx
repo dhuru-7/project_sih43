@@ -683,46 +683,64 @@ export const LandingPage = () => {
                 </div>
               </div>
 
-              {/* Apple Liquid Continue Button (Mobile) & Right-Click To Continue Popup (Desktop) */}
+              {/* Apple Physical Liquid Glass Action Container (Pops up ONLY in mobile frame section) */}
               <div
-                className={`setu-liquid-action-pill ${isInWalkthrough ? 'active' : ''} ${liquidRipple ? 'ripple' : ''}`}
-                onClick={handleContinue}
-                onContextMenu={handleWalkthroughContextMenu}
-                role="button"
-                tabIndex={0}
-                aria-label="Continue walkthrough"
-                title="Click or right-click to continue"
+                className={`setu-liquid-action-wrapper fx-layer ${isInWalkthrough ? 'active' : ''} ${liquidRipple ? 'ripple' : ''}`}
               >
-                {/* Specular Liquid Light Reflection Sheen */}
-                <div className="setu-liquid-specular-shine" />
-
-                {/* Desktop View: Right Click to Continue */}
-                <div className="setu-liquid-desktop-view">
-                  <div className="setu-liquid-mouse-icon">
-                    <svg width="15" height="20" viewBox="0 0 24 32" fill="none">
-                      <rect x="2" y="2" width="20" height="28" rx="10" stroke="currentColor" strokeWidth="2.2" />
-                      <line x1="12" y1="2" x2="12" y2="13" stroke="currentColor" strokeWidth="2.2" />
-                      <path d="M12 2 H17 A5 5 0 0 1 22 7 V13 H12 Z" fill="#34D399" />
+                {/* Desktop View: Liquid Glass "Right click to continue" */}
+                <div
+                  className="box start-btn setu-liquid-glass-box desktop-view"
+                  style={{ '--w': '300px', '--h': '68px', '--tr': '15%' }}
+                  onClick={handleContinue}
+                  onContextMenu={handleWalkthroughContextMenu}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Right click to continue"
+                  title="Click or right-click to continue"
+                >
+                  <div className="setu-liquid-desktop-label-group">
+                    <span className="text">Right click to continue</span>
+                    <span className="setu-liquid-subtext">or click · Step {activeStep + 1} of {WALKTHROUGH_STEPS.length}</span>
+                  </div>
+                  <div className="btn-icon">
+                    <svg
+                      className="svg"
+                      viewBox="0 0 1024 1024"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M779.180132 473.232045 322.354755 16.406668c-21.413706-21.413706-56.121182-21.413706-77.534887 0-21.413706 21.413706-21.413706 56.122205 0 77.534887l418.057421 418.057421L244.819868 930.057421c-21.413706 21.413706-21.413706 56.122205 0 77.534887 10.706853 10.706853 24.759917 16.059767 38.767955 16.059767s28.061103-5.353938 38.767955-16.059767L779.180132 550.767955C800.593837 529.35425 800.593837 494.64575 779.180132 473.232045z"
+                      ></path>
                     </svg>
                   </div>
-                  <div className="setu-liquid-text-group">
-                    <span className="setu-liquid-primary-text">Right click to continue</span>
-                    <span className="setu-liquid-secondary-text">or click · Step {activeStep + 1} of {WALKTHROUGH_STEPS.length}</span>
-                  </div>
-                  <div className="setu-liquid-step-dots">
-                    {WALKTHROUGH_STEPS.map((_, i) => (
-                      <span key={i} className={`setu-liquid-dot ${activeStep === i ? 'active' : ''}`} />
-                    ))}
-                  </div>
+                  <div className="circle-overlay"></div>
                 </div>
 
-                {/* Mobile View: Apple Liquid Continue Button */}
-                <div className="setu-liquid-mobile-view">
-                  <span className="setu-liquid-mobile-text">Continue</span>
-                  <span className="setu-liquid-step-pill">{activeStep + 1}/{WALKTHROUGH_STEPS.length}</span>
-                  <svg className="setu-liquid-arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M13 5l7 7-7 7" />
-                  </svg>
+                {/* Mobile View: Liquid Glass "Continue" */}
+                <div
+                  className="box start-btn setu-liquid-glass-box mobile-view"
+                  style={{ '--w': '220px', '--h': '60px', '--tr': '15%' }}
+                  onClick={handleContinue}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Continue"
+                  title="Continue"
+                >
+                  <span className="text">Continue</span>
+                  <div className="btn-icon">
+                    <svg
+                      className="svg"
+                      viewBox="0 0 1024 1024"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M779.180132 473.232045 322.354755 16.406668c-21.413706-21.413706-56.121182-21.413706-77.534887 0-21.413706 21.413706-21.413706 56.122205 0 77.534887l418.057421 418.057421L244.819868 930.057421c-21.413706 21.413706-21.413706 56.122205 0 77.534887 10.706853 10.706853 24.759917 16.059767 38.767955 16.059767s28.061103-5.353938 38.767955-16.059767L779.180132 550.767955C800.593837 529.35425 800.593837 494.64575 779.180132 473.232045z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <div className="circle-overlay"></div>
                 </div>
               </div>
             </div>
