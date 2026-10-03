@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "cd apps/web-portal && npm install && npm run build",
   "outputDirectory": "apps/web-portal/dist",
-  "framework": "vite",
+  "framework": null,
   "rewrites": [
     {
       "source": "/api",

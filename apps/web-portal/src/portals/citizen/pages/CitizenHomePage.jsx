@@ -197,10 +197,7 @@ export const CitizenHomePage = () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('setu_citizen_active_tab', newNav);
     }
-    const isGrass = location.pathname.startsWith('/grass');
-    const targetPath = isGrass
-      ? (newNav === 'home' ? '/grass' : `/grass/${newNav}`)
-      : (newNav === 'home' ? '/citizen/home' : `/citizen/${newNav}`);
+    const targetPath = newNav === 'home' ? '/grass' : `/grass/${newNav}`;
     if (location.pathname !== targetPath) {
       navigate(targetPath, { replace: true });
     }
@@ -253,7 +250,7 @@ export const CitizenHomePage = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const wantsProfile = location.pathname.includes('profile') || params.get('tab') === 'profile';
-    if (!wantsProfile && (location.pathname === '/report' || location.pathname === '/citizen/report')) {
+    if (!wantsProfile && (location.pathname === '/report' || location.pathname === '/citizen/report' || location.pathname === '/grass/report')) {
       setIsReportingOpen(true);
     }
   }, [location.pathname, location.search]);

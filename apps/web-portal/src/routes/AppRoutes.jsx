@@ -16,6 +16,7 @@ import { CitizenRouteGuard } from './CitizenRouteGuard';
 import { LandingPage } from '../public-pages/LandingPage';
 import { LoginPage } from '../public-pages/LoginPage';
 import { RegisterPage } from '../public-pages/RegisterPage';
+import { NotFoundPage } from '../public-pages/NotFoundPage';
 
 // Citizen Reporting Portal (Dual Desktop & Mobile with Apple Fluid Motion)
 import { CitizenHomePage } from '../portals/citizen/pages/CitizenHomePage';
@@ -202,8 +203,8 @@ export const AppRoutes = () => {
         </Route>
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* 404 Not Found Page (Optimized for Mobile & Desktop) */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };

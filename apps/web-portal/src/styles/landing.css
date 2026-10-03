@@ -1616,6 +1616,12 @@
   white-space: nowrap;
 }
 
+.setu-footer-portal-sep {
+  font-size: 0.8rem;
+  color: #64748b;
+  user-select: none;
+}
+
 .setu-footer-status-pill {
   font-size: 0.7rem;
   font-weight: 650;
@@ -1658,6 +1664,10 @@
   .setu-footer-portal-name {
     font-size: 0.82rem;
     line-height: 1.15;
+  }
+
+  .setu-footer-portal-sep {
+    display: none;
   }
 
   .setu-footer-portal-role {
