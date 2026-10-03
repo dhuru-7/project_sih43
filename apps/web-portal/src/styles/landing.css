@@ -911,19 +911,23 @@
 
 .setu-walkthrough-scroll-section {
   position: relative;
-  min-height: 500vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   z-index: 20;
   background-color: var(--setu-canvas);
-  padding-bottom: 9rem;
+  padding: 3.5rem 1.5rem 4.5rem 1.5rem;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .setu-walkthrough-sticky-viewport {
-  position: sticky;
-  top: 70px;
-  height: calc(100vh - 90px);
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .setu-walkthrough-stage-layout {
@@ -932,12 +936,35 @@
   gap: 4rem;
   align-items: center;
   width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
 }
 
 @media (max-width: 960px) {
   .setu-walkthrough-stage-layout {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 2.5rem;
+  }
+
+  .setu-walkthrough-left-col {
+    align-items: center;
+    text-align: center;
+    max-width: 580px;
+    margin: 0 auto;
+  }
+
+  .setu-stories-loading-lines {
+    margin: 0 auto 1.25rem auto;
+    max-width: 280px;
+  }
+
+  .setu-walkthrough-phone-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 
@@ -1029,15 +1056,15 @@
   flex-shrink: 0;
 }
 
-/* Right 3D Spinning Phone Column */
+/* Right Smartphone Hardware Column */
 .setu-walkthrough-phone-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  perspective: 1200px;
   position: relative;
-  gap: 1.25rem;
+  width: 100%;
+  gap: 0;
 }
 
 /* ==========================================================================
@@ -1290,7 +1317,51 @@
   }
 }
 
-/* Phone Frame (270px x 578px = Exact 10% Reduction of 300x642) */
+/* ==========================================================================
+   INSTAGRAM STORIES LOADING LINES (TOP) & AUTHENTIC PHONE FRAME
+   ========================================================================== */
+
+/* Stories Loading Lines (Placed Over Headings in Narrative Column) */
+.setu-stories-loading-lines {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 0 1.5rem 0;
+  user-select: none;
+  z-index: 10;
+}
+
+.setu-story-loading-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.setu-story-loading-track:hover {
+  transform: scaleY(1.6);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.setu-story-loading-track.active {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.setu-story-loading-fill {
+  height: 100%;
+  background: #09090b;
+  border-radius: 9999px;
+  transition: width 0.04s linear;
+}
+
+/* Phone Frame (Authentic Smartphone Hardware with Images Section Corner Shadows) */
 .setu-spinning-phone-frame {
   width: 270px;
   height: 578px;
@@ -1300,16 +1371,17 @@
   box-shadow: 
     0 0 0 2px #38383c,
     0 0 0 5px #18181a,
-    0 28px 54px -10px rgba(0, 0, 0, 0.4),
+    0 28px 64px -10px rgba(0, 0, 0, 0.55),
+    0 16px 36px -6px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.15) inset;
   position: relative;
   display: flex;
   flex-direction: column;
   user-select: none;
-  transform-style: preserve-3d;
-  will-change: transform;
-  transition: none;
+  -webkit-user-select: none;
   box-sizing: border-box;
+  cursor: pointer;
+  margin: 0 auto;
 }
 
 .setu-spinning-phone-screen {
@@ -1319,6 +1391,7 @@
   border-radius: 34px;
   overflow: hidden;
   position: relative;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.35);
 }
 
 /* Phone Screenshot Image (Cross-fading handled smoothly) */
@@ -1329,6 +1402,43 @@
   object-position: top center;
   display: block;
   border-radius: 34px;
+}
+
+/* Corner Shadows & Vignettes (Matching the Images Section) */
+.setu-phone-corner-scrim-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 75px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.15) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+  border-top-left-radius: 34px;
+  border-top-right-radius: 34px;
+}
+
+.setu-phone-corner-scrim-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 85px;
+  background: linear-gradient(
+    0deg,
+    rgba(5, 6, 9, 0.55) 0%,
+    rgba(5, 6, 9, 0.18) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+  border-bottom-left-radius: 34px;
+  border-bottom-right-radius: 34px;
 }
 
 /* ==========================================================================
@@ -1632,21 +1742,23 @@
 
 @media (max-width: 640px) {
   .setu-walkthrough-scroll-section {
-    min-height: 450vh;
-    padding-bottom: 5rem;
+    min-height: auto;
+    padding: 3rem 1rem 3.5rem 1rem;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .setu-walkthrough-sticky-viewport {
-    top: 50px;
-    height: calc(100dvh - 58px);
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .setu-walkthrough-stage-layout {
-    gap: 0.65rem;
+    gap: 1.75rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1656,26 +1768,45 @@
 
   .setu-walkthrough-left-col {
     width: 100%;
-    max-width: 330px;
+    max-width: 380px;
     margin: 0 auto;
+    align-items: center;
     text-align: center;
+  }
+
+  .setu-stories-pill-badge {
+    margin-bottom: 0.75rem;
+    font-size: 0.68rem;
+  }
+
+  .setu-stories-chips-row {
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+
+  .setu-story-tab-chip {
+    padding: 5px 11px;
+    font-size: 0.74rem;
   }
 
   .setu-walkthrough-heading {
-    font-size: 1.15rem;
-    margin: 0 0 0.35rem 0;
-    line-height: 1.22;
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.25;
     text-align: center;
+    white-space: normal !important;
   }
 
   .setu-walkthrough-bullets {
-    gap: 0.3rem;
+    gap: 0.75rem;
+    width: 100%;
   }
 
   .setu-walkthrough-bullet-item {
-    font-size: 0.78rem;
-    line-height: 1.35;
-    gap: 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    gap: 0.6rem;
     text-align: left;
   }
 
@@ -1685,42 +1816,61 @@
     height: 5px;
   }
 
-  .setu-walkthrough-phone-col {
-    gap: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .setu-story-hint-row {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    font-size: 0.74rem;
+    text-align: center;
     justify-content: center;
   }
 
+  .setu-walkthrough-phone-col {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    gap: 0 !important;
+  }
+
+  .setu-stories-loading-lines {
+    width: 240px !important;
+    max-width: 100% !important;
+    margin: 0 auto 14px auto !important;
+  }
+
   .setu-spinning-phone-frame {
-    width: 175px;
-    height: 374px;
-    border-radius: 28px;
-    padding: 5px;
+    width: 240px !important;
+    height: 512px !important;
+    border-radius: 36px !important;
+    padding: 6px !important;
+    margin: 0 auto !important;
+    box-shadow: 
+      0 0 0 2px #38383c,
+      0 0 0 4px #18181a,
+      0 20px 44px -8px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
   }
 
   .setu-spinning-phone-screen {
-    border-radius: 23px;
+    border-radius: 30px !important;
   }
 
   .setu-phone-ss-img {
-    border-radius: 23px;
+    border-radius: 30px !important;
   }
 
-  .setu-liquid-action-wrapper {
-    margin-top: 0.2rem;
+  .setu-phone-corner-scrim-top {
+    border-top-left-radius: 30px !important;
+    border-top-right-radius: 30px !important;
+    height: 55px !important;
   }
 
-  .setu-liquid-glass-box.mobile-view {
-    --w: 154px;
-    --h: 42px;
-    padding: 0 1rem;
-  }
-
-  .setu-liquid-glass-box.mobile-view .text {
-    font-size: 0.84rem;
-    font-weight: 650;
+  .setu-phone-corner-scrim-bottom {
+    border-bottom-left-radius: 30px !important;
+    border-bottom-right-radius: 30px !important;
+    height: 65px !important;
   }
 
   .setu-tara-section-wrap {
