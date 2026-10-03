@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 
 // Layouts
 import { LandingLayout } from '../layouts/LandingLayout';
@@ -50,6 +50,12 @@ import {
   IndustryFunding, IndustryMentorship, IndustryProfile 
 } from '../portals/industry/pages/OtherPages';
 
+// Parameterized redirect helper for Government report routes
+const OakReportRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/oak/reports/${id}`} replace />;
+};
+
 export const AppRoutes = () => {
   return (
     <Routes>
@@ -65,7 +71,7 @@ export const AppRoutes = () => {
 
       {/* 📱 \grass - Grassroots Reporting Portal (Citizens, Schools, Panchayats, ULBs) */}
       <Route element={<CitizenRouteGuard />}>
-        {/* 🌱 \grass routes */}
+        {/* Canonical \grass routes */}
         <Route path="/grass" element={<CitizenHomePage />} />
         <Route path="/grass/home" element={<CitizenHomePage />} />
         <Route path="/grass/explore" element={<CitizenHomePage />} />
@@ -74,24 +80,25 @@ export const AppRoutes = () => {
         <Route path="/grass/report" element={<CitizenHomePage />} />
         <Route path="/grass/submissions" element={<MySubmissionsPage />} />
         <Route path="/grass/my-submissions" element={<MySubmissionsPage />} />
-        <Route path="/submissions" element={<MySubmissionsPage />} />
-
-        {/* Action & legacy aliases */}
-        <Route path="/report" element={<CitizenHomePage />} />
-        <Route path="/reporting" element={<CitizenHomePage />} />
-        <Route path="/reporting-portal" element={<CitizenHomePage />} />
-        <Route path="/citizen" element={<CitizenHomePage />} />
-        <Route path="/citizen/home" element={<CitizenHomePage />} />
-        <Route path="/citizen/explore" element={<CitizenHomePage />} />
-        <Route path="/explore" element={<CitizenHomePage />} />
-        <Route path="/citizen/messages" element={<CitizenHomePage />} />
-        <Route path="/messages" element={<CitizenHomePage />} />
-        <Route path="/citizen/profile" element={<CitizenHomePage />} />
-        <Route path="/profile" element={<CitizenHomePage />} />
-        <Route path="/citizen/report" element={<CitizenHomePage />} />
-        <Route path="/my-submissions" element={<MySubmissionsPage />} />
-        <Route path="/citizen/my-submissions" element={<MySubmissionsPage />} />
       </Route>
+
+      {/* Legacy & Short Aliases - Immediately update URL to canonical \grass */}
+      <Route path="/citizen" element={<Navigate to="/grass" replace />} />
+      <Route path="/citizen/home" element={<Navigate to="/grass/home" replace />} />
+      <Route path="/citizen/explore" element={<Navigate to="/grass/explore" replace />} />
+      <Route path="/explore" element={<Navigate to="/grass/explore" replace />} />
+      <Route path="/citizen/messages" element={<Navigate to="/grass/messages" replace />} />
+      <Route path="/messages" element={<Navigate to="/grass/messages" replace />} />
+      <Route path="/citizen/profile" element={<Navigate to="/grass/profile" replace />} />
+      <Route path="/profile" element={<Navigate to="/grass/profile" replace />} />
+      <Route path="/citizen/report" element={<Navigate to="/grass/report" replace />} />
+      <Route path="/report" element={<Navigate to="/grass/report" replace />} />
+      <Route path="/reporting" element={<Navigate to="/grass/report" replace />} />
+      <Route path="/reporting-portal" element={<Navigate to="/grass/report" replace />} />
+      <Route path="/citizen/submissions" element={<Navigate to="/grass/submissions" replace />} />
+      <Route path="/citizen/my-submissions" element={<Navigate to="/grass/submissions" replace />} />
+      <Route path="/my-submissions" element={<Navigate to="/grass/submissions" replace />} />
+      <Route path="/submissions" element={<Navigate to="/grass/submissions" replace />} />
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
@@ -100,7 +107,7 @@ export const AppRoutes = () => {
 
       {/* 🌳 \oak - Government Command & Nodal Evaluation Shell */}
       <Route element={<GovernmentLayout />}>
-        {/* 🌳 \oak routes */}
+        {/* Canonical \oak routes */}
         <Route path="/oak" element={<GovernmentDashboard />} />
         <Route path="/oak/dashboard" element={<GovernmentDashboard />} />
         <Route path="/oak/inbox" element={<GovernmentIssueInbox />} />
@@ -108,31 +115,31 @@ export const AppRoutes = () => {
         <Route path="/oak/assigned" element={<GovernmentAssigned />} />
         <Route path="/oak/reports/:id" element={<GovernmentReportDetail />} />
 
-        {/* Existing & legacy aliases */}
-        <Route path="/government" element={<GovernmentDashboard />} />
-        <Route path="/government/dashboard" element={<GovernmentDashboard />} />
-        <Route path="/civic-dashboard" element={<GovernmentDashboard />} />
-        <Route path="/admin" element={<GovernmentDashboard />} />
-        <Route path="/admin/dashboard" element={<GovernmentDashboard />} />
+        {/* Existing & legacy redirects to canonical \oak */}
+        <Route path="/government" element={<Navigate to="/oak/dashboard" replace />} />
+        <Route path="/government/dashboard" element={<Navigate to="/oak/dashboard" replace />} />
+        <Route path="/civic-dashboard" element={<Navigate to="/oak/dashboard" replace />} />
+        <Route path="/admin" element={<Navigate to="/oak/dashboard" replace />} />
+        <Route path="/admin/dashboard" element={<Navigate to="/oak/dashboard" replace />} />
 
-        {/* 📥 Setu Govt Portal - Issue Inbox (Stitch Screen: 0880a62941244f0b803d9e84d2b9f9e1) */}
-        <Route path="/government/inbox" element={<GovernmentIssueInbox />} />
-        <Route path="/government/issue-inbox" element={<GovernmentIssueInbox />} />
-        <Route path="/inbox" element={<GovernmentIssueInbox />} />
+        {/* 📥 Setu Govt Portal - Issue Inbox */}
+        <Route path="/government/inbox" element={<Navigate to="/oak/inbox" replace />} />
+        <Route path="/government/issue-inbox" element={<Navigate to="/oak/inbox" replace />} />
+        <Route path="/inbox" element={<Navigate to="/oak/inbox" replace />} />
 
-        {/* 🗺️ Setu Govt Portal - Map View (Stitch Screen: 097b6c64fda845e1bbc8ee81b5957fe1) */}
-        <Route path="/government/map" element={<GovernmentMapView />} />
-        <Route path="/government/map-view" element={<GovernmentMapView />} />
-        <Route path="/map" element={<GovernmentMapView />} />
+        {/* 🗺️ Setu Govt Portal - Map View */}
+        <Route path="/government/map" element={<Navigate to="/oak/map" replace />} />
+        <Route path="/government/map-view" element={<Navigate to="/oak/map" replace />} />
+        <Route path="/map" element={<Navigate to="/oak/map" replace />} />
 
-        {/* 🏛️ Setu Govt Portal - Assigned (Web Layout) (Stitch Screen: 3d13ad36c0f64e8982230e4cbc9357a7) */}
-        <Route path="/government/assigned" element={<GovernmentAssigned />} />
-        <Route path="/assigned" element={<GovernmentAssigned />} />
+        {/* 🏛️ Setu Govt Portal - Assigned */}
+        <Route path="/government/assigned" element={<Navigate to="/oak/assigned" replace />} />
+        <Route path="/assigned" element={<Navigate to="/oak/assigned" replace />} />
 
-        {/* 📋 Setu Govt Portal - Detailed Report Page (Full Page Navigation) */}
-        <Route path="/government/reports/:id" element={<GovernmentReportDetail />} />
-        <Route path="/government/issues/:id" element={<GovernmentReportDetail />} />
-        <Route path="/reports/:id" element={<GovernmentReportDetail />} />
+        {/* 📋 Setu Govt Portal - Detailed Report Page */}
+        <Route path="/government/reports/:id" element={<OakReportRedirect />} />
+        <Route path="/government/issues/:id" element={<OakReportRedirect />} />
+        <Route path="/reports/:id" element={<OakReportRedirect />} />
       </Route>
 
       {/* Protected Stakeholder Portals */}
@@ -149,14 +156,14 @@ export const AppRoutes = () => {
             <Route path="/oak/certificates" element={<GovernmentCertificates />} />
             <Route path="/oak/analytics" element={<GovernmentAnalytics />} />
 
-            <Route path="/government/problems" element={<GovernmentProblems />} />
-            <Route path="/government/departments" element={<GovernmentDepartments />} />
-            <Route path="/government/universities" element={<GovernmentUniversities />} />
-            <Route path="/government/challenges" element={<GovernmentChallenges />} />
-            <Route path="/government/projects" element={<GovernmentProjects />} />
-            <Route path="/government/funding" element={<GovernmentFunding />} />
-            <Route path="/government/certificates" element={<GovernmentCertificates />} />
-            <Route path="/government/analytics" element={<GovernmentAnalytics />} />
+            <Route path="/government/problems" element={<Navigate to="/oak/problems" replace />} />
+            <Route path="/government/departments" element={<Navigate to="/oak/departments" replace />} />
+            <Route path="/government/universities" element={<Navigate to="/oak/universities" replace />} />
+            <Route path="/government/challenges" element={<Navigate to="/oak/challenges" replace />} />
+            <Route path="/government/projects" element={<Navigate to="/oak/projects" replace />} />
+            <Route path="/government/funding" element={<Navigate to="/oak/funding" replace />} />
+            <Route path="/government/certificates" element={<Navigate to="/oak/certificates" replace />} />
+            <Route path="/government/analytics" element={<Navigate to="/oak/analytics" replace />} />
           </Route>
 
           {/* 🌿 \saplings - University Portal (Role: UNIVERSITY) */}
@@ -171,14 +178,15 @@ export const AppRoutes = () => {
             <Route path="/saplings/funding" element={<UniversityFunding />} />
             <Route path="/saplings/communication" element={<UniversityCommunication />} />
 
-            <Route path="/university/dashboard" element={<UniversityDashboard />} />
-            <Route path="/university/challenges" element={<UniversityChallenges />} />
-            <Route path="/university/teams" element={<UniversityTeams />} />
-            <Route path="/university/projects" element={<UniversityProjects />} />
-            <Route path="/university/milestones" element={<UniversityMilestones />} />
-            <Route path="/university/mentors" element={<UniversityMentors />} />
-            <Route path="/university/funding" element={<UniversityFunding />} />
-            <Route path="/university/communication" element={<UniversityCommunication />} />
+            <Route path="/university" element={<Navigate to="/saplings/dashboard" replace />} />
+            <Route path="/university/dashboard" element={<Navigate to="/saplings/dashboard" replace />} />
+            <Route path="/university/challenges" element={<Navigate to="/saplings/challenges" replace />} />
+            <Route path="/university/teams" element={<Navigate to="/saplings/teams" replace />} />
+            <Route path="/university/projects" element={<Navigate to="/saplings/projects" replace />} />
+            <Route path="/university/milestones" element={<Navigate to="/saplings/milestones" replace />} />
+            <Route path="/university/mentors" element={<Navigate to="/saplings/mentors" replace />} />
+            <Route path="/university/funding" element={<Navigate to="/saplings/funding" replace />} />
+            <Route path="/university/communication" element={<Navigate to="/saplings/communication" replace />} />
           </Route>
 
           {/* 🌲 \grove - Industry Portal (Role: INDUSTRY) */}
@@ -192,13 +200,14 @@ export const AppRoutes = () => {
             <Route path="/grove/mentorship" element={<IndustryMentorship />} />
             <Route path="/grove/profile" element={<IndustryProfile />} />
 
-            <Route path="/industry/dashboard" element={<IndustryDashboard />} />
-            <Route path="/industry/challenges" element={<IndustryChallenges />} />
-            <Route path="/industry/projects" element={<IndustryProjects />} />
-            <Route path="/industry/collaborations" element={<IndustryCollaborations />} />
-            <Route path="/industry/funding" element={<IndustryFunding />} />
-            <Route path="/industry/mentorship" element={<IndustryMentorship />} />
-            <Route path="/industry/profile" element={<IndustryProfile />} />
+            <Route path="/industry" element={<Navigate to="/grove/dashboard" replace />} />
+            <Route path="/industry/dashboard" element={<Navigate to="/grove/dashboard" replace />} />
+            <Route path="/industry/challenges" element={<Navigate to="/grove/challenges" replace />} />
+            <Route path="/industry/projects" element={<Navigate to="/grove/projects" replace />} />
+            <Route path="/industry/collaborations" element={<Navigate to="/grove/collaborations" replace />} />
+            <Route path="/industry/funding" element={<Navigate to="/grove/funding" replace />} />
+            <Route path="/industry/mentorship" element={<Navigate to="/grove/mentorship" replace />} />
+            <Route path="/industry/profile" element={<Navigate to="/grove/profile" replace />} />
           </Route>
         </Route>
       </Route>

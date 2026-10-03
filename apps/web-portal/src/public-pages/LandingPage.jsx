@@ -5,17 +5,10 @@ import { triggerHaptic } from '../utils/haptics';
 import '../styles/landing.css';
 
 export const LandingPage = () => {
-  // Walkthrough Stories State (Instagram-Style Stories with Tap Navigation & Non-blocking Scroll)
+  // Walkthrough Stories State (Screen-Fit Showcase with Clean Step Navigation)
   const walkthroughRef = useRef(null);
   const [activeStep, setActiveStep] = useState(0); // 0, 1, 2, 3
-  const activeStepRef = useRef(0);
-  const [progress, setProgress] = useState(0); // 0 to 100%
-  const progressRef = useRef(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const isPausedRef = useRef(false);
   const phoneFrameRef = useRef(null);
-  const [isInWalkthrough, setIsInWalkthrough] = useState(false);
-  const isInWalkthroughRef = useRef(false);
 
   // Refs for Smooth Card Pull, Expanding/Un-rounding & Haptic Snap
   const slideSlotRefs = useRef([]);
@@ -177,12 +170,12 @@ export const LandingPage = () => {
           <line x1="2" x2="22" y1="11" y2="11" />
         </svg>
       ),
-      status: 'Under Development',
-      path: '#',
-      isLive: false,
+      status: 'Live',
+      path: '/oak/dashboard',
+      isLive: true,
       accentColor: '#60A5FA',      // Blue
       bgColor: 'rgba(96, 165, 250, 0.12)',
-      badgeBg: 'rgba(96, 165, 250, 0.16)',
+      badgeBg: '#1e3a8a',
       badgeColor: '#93C5FD'
     },
     {
@@ -194,12 +187,12 @@ export const LandingPage = () => {
           <path d="M6 12v5c3 3 9 3 12 0v-5" />
         </svg>
       ),
-      status: 'Under Development',
-      path: '#',
-      isLive: false,
+      status: 'Live',
+      path: '/saplings/dashboard',
+      isLive: true,
       accentColor: '#C084FC',      // Purple
       bgColor: 'rgba(192, 132, 252, 0.12)',
-      badgeBg: 'rgba(192, 132, 252, 0.16)',
+      badgeBg: '#581c87',
       badgeColor: '#E9D5FF'
     },
     {
@@ -212,117 +205,72 @@ export const LandingPage = () => {
           <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
         </svg>
       ),
-      status: 'Under Development',
-      path: '#',
-      isLive: false,
+      status: 'Live',
+      path: '/grove/dashboard',
+      isLive: true,
       accentColor: '#FB923C',      // Amber / Orange
       bgColor: 'rgba(251, 146, 60, 0.12)',
-      badgeBg: 'rgba(251, 146, 60, 0.16)',
+      badgeBg: '#7c2d12',
       badgeColor: '#FED7AA'
     }
   ];
 
-  // Sync ref values for high-frequency RAF loop
-  useEffect(() => {
-    activeStepRef.current = activeStep;
-  }, [activeStep]);
-
-  useEffect(() => {
-    isPausedRef.current = isPaused;
-  }, [isPaused]);
-
-  useEffect(() => {
-    isInWalkthroughRef.current = isInWalkthrough;
-  }, [isInWalkthrough]);
-
-  // Instagram Stories Navigation: Next Story (Tap right side)
+  // Stories Step Navigation: Next Step
   const handleNextStory = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     triggerHaptic('snap');
-    progressRef.current = 0;
-    setProgress(0);
-    const next = (activeStepRef.current + 1) % WALKTHROUGH_STEPS.length;
-    activeStepRef.current = next;
-    setActiveStep(next);
+    setActiveStep((prev) => (prev + 1) % WALKTHROUGH_STEPS.length);
   };
 
-  // Instagram Stories Navigation: Previous Story (Tap left side)
+  // Stories Step Navigation: Previous Step
   const handlePrevStory = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     triggerHaptic('snap');
-    progressRef.current = 0;
-    setProgress(0);
-    const prev = activeStepRef.current > 0 ? activeStepRef.current - 1 : WALKTHROUGH_STEPS.length - 1;
-    activeStepRef.current = prev;
-    setActiveStep(prev);
+    setActiveStep((prev) => (prev > 0 ? prev - 1 : WALKTHROUGH_STEPS.length - 1));
   };
 
-  // Clicking the phone frame: left side = previous, right side / center = next (authentic stories behavior)
+  // Jump directly to specific story step from progress lines
+  const handleJumpToStory = (index, e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    triggerHaptic('snap');
+    setActiveStep(index);
+  };
+
+  // Clicking the phone frame: left 35% = previous, right 65% = next
   const handlePhoneClick = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     if (!phoneFrameRef.current) {
       handleNextStory(e);
       return;
     }
     const rect = phoneFrameRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
-    if (clickX < rect.width * 0.3) {
+    if (clickX < rect.width * 0.35) {
       handlePrevStory(e);
     } else {
       handleNextStory(e);
     }
   };
 
-  // Jump to specific story directly from segmented progress bar
-  const handleJumpToStory = (index, e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    triggerHaptic('snap');
-    progressRef.current = 0;
-    setProgress(0);
-    activeStepRef.current = index;
-    setActiveStep(index);
+  // Clicking anywhere in the walkthrough section changes slides:
+  // Left 25% = previous slide, anywhere else (narrative text, background, right) = next slide
+  const handleSectionClick = (e) => {
+    if (e.target.closest('button, a')) {
+      return;
+    }
+    const sectionEl = walkthroughRef.current;
+    if (!sectionEl) {
+      handleNextStory(e);
+      return;
+    }
+    const rect = sectionEl.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    if (clickX < rect.width * 0.25) {
+      handlePrevStory(e);
+    } else {
+      handleNextStory(e);
+    }
   };
-
-  // Press-and-hold pause (Identical to holding finger/mouse on Instagram Stories)
-  const handleStoryPressStart = () => {
-    setIsPaused(true);
-    isPausedRef.current = true;
-  };
-
-  const handleStoryPressEnd = () => {
-    setIsPaused(false);
-    isPausedRef.current = false;
-  };
-
-  // 60/120fps Compositor-smooth Instagram Stories progression loop (4.5s duration per story)
-  // Auto-pauses when user holds down or when scrolled out of view; free scroll never hindered
-  useEffect(() => {
-    let animId;
-    let lastTime = performance.now();
-
-    const loop = (now) => {
-      const delta = now - lastTime;
-      lastTime = now;
-
-      if (isInWalkthroughRef.current && !isPausedRef.current) {
-        progressRef.current += (delta / 4500) * 100;
-        if (progressRef.current >= 100) {
-          progressRef.current = 0;
-          const next = (activeStepRef.current + 1) % WALKTHROUGH_STEPS.length;
-          activeStepRef.current = next;
-          setActiveStep(next);
-          setProgress(0);
-          triggerHaptic('snap');
-        } else {
-          setProgress(progressRef.current);
-        }
-      }
-
-      animId = requestAnimationFrame(loop);
-    };
-
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, []);
 
   // Scroll Listener for Apple 5G Inspired 3D Phone Spin & Step Progression
   // High-Performance 120 FPS Compositor-Friendly VSYNC Scroll Loop
@@ -402,15 +350,6 @@ export const LandingPage = () => {
           cardEl.style.boxShadow = '0 -16px 44px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }
       });
-
-      // 2. Apple 5G Walkthrough In-View Detection (Step progression is self-advancing 3s timer)
-      const wtEl = walkthroughRef.current;
-      if (wtEl) {
-        const wtRect = wtEl.getBoundingClientRect();
-        const inWalkthrough = wtRect.top <= 140 && wtRect.bottom >= windowH * 0.3;
-        setIsInWalkthrough(inWalkthrough);
-        isInWalkthroughRef.current = inWalkthrough;
-      }
     };
 
     const onScroll = () => {
@@ -434,26 +373,11 @@ export const LandingPage = () => {
       }
     };
 
-    let observer;
-    if (typeof IntersectionObserver !== 'undefined' && walkthroughRef.current) {
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          setIsInWalkthrough(entry.isIntersecting);
-        },
-        {
-          threshold: [0.08, 0.3, 0.7],
-          rootMargin: '-5% 0px -5% 0px'
-        }
-      );
-      observer.observe(walkthroughRef.current);
-    }
-
     window.addEventListener('scroll', onScroll, { passive: true });
     handleScrollEffects();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
-      if (observer) observer.disconnect();
     };
   }, []);
 
@@ -636,41 +560,69 @@ export const LandingPage = () => {
       {/* ================================================================= */}
       {/* 3. CITIZEN WALKTHROUGH: SMARTPHONE SHOWCASE WITH TOP STORIES LINES  */}
       {/* ================================================================= */}
+      {/* ================================================================= */}
+      {/* 3. CITIZEN WALKTHROUGH: SCREEN-FIT SHOWCASE (CLEAN HARDWARE)      */}
+      {/* ================================================================= */}
       <section
-        className="setu-section setu-walkthrough-scroll-section"
+        className="setu-walkthrough-scroll-section"
         id="reporting-flow"
         ref={walkthroughRef}
+        onClick={handleSectionClick}
       >
+        {/* Section Corner Shadow Scrims & Vignettes (Corners of the section, NOT inside the phone) */}
+        <div className="setu-walkthrough-scrim-top" />
+        <div className="setu-walkthrough-scrim-bottom" />
+        <div className="setu-walkthrough-vignette-corner-tl" />
+        <div className="setu-walkthrough-vignette-corner-tr" />
+        <div className="setu-walkthrough-vignette-corner-bl" />
+        <div className="setu-walkthrough-vignette-corner-br" />
+
         <div className="setu-walkthrough-sticky-viewport">
+          {/* Top Loading Lines for Mobile (End-to-End Across the Top of the Phone Screen) */}
+          <div
+            className="setu-stories-loading-lines setu-stories-loading-lines-mobile"
+            aria-label={`Story step ${activeStep + 1} of ${WALKTHROUGH_STEPS.length}`}
+          >
+            {WALKTHROUGH_STEPS.map((step, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className={`setu-story-loading-track ${idx <= activeStep ? 'active' : ''}`}
+                onClick={(e) => handleJumpToStory(idx, e)}
+                title={`Jump to step ${idx + 1}: ${step.chip}`}
+                aria-label={`Step ${idx + 1}: ${step.chip}`}
+              >
+                <div
+                  className="setu-story-loading-fill"
+                  style={{ width: idx <= activeStep ? '100%' : '0%' }}
+                />
+              </button>
+            ))}
+          </div>
+
           <div className="setu-walkthrough-stage-layout">
             {/* Left Column: Stories Loading Lines on Top + Clean Narrative & Staggered Bullets */}
             <div className="setu-walkthrough-left-col">
-              {/* Stories Loading Lines Placed Over the Headings */}
+              {/* Stories Loading Lines Placed Over the Headings (Desktop) */}
               <div
-                className="setu-stories-loading-lines"
+                className="setu-stories-loading-lines setu-stories-loading-lines-desktop"
                 aria-label={`Story step ${activeStep + 1} of ${WALKTHROUGH_STEPS.length}`}
               >
-                {WALKTHROUGH_STEPS.map((step, idx) => {
-                  let segmentWidth = 0;
-                  if (idx < activeStep) {
-                    segmentWidth = 100;
-                  } else if (idx === activeStep) {
-                    segmentWidth = Math.min(100, Math.max(0, progress));
-                  }
-                  return (
+                {WALKTHROUGH_STEPS.map((step, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`setu-story-loading-track ${idx <= activeStep ? 'active' : ''}`}
+                    onClick={(e) => handleJumpToStory(idx, e)}
+                    title={`Jump to step ${idx + 1}: ${step.chip}`}
+                    aria-label={`Step ${idx + 1}: ${step.chip}`}
+                  >
                     <div
-                      key={idx}
-                      className={`setu-story-loading-track ${activeStep === idx ? 'active' : ''}`}
-                      onClick={(e) => handleJumpToStory(idx, e)}
-                      title={`Jump to step ${idx + 1}: ${step.chip}`}
-                    >
-                      <div
-                        className="setu-story-loading-fill"
-                        style={{ width: `${segmentWidth}%` }}
-                      />
-                    </div>
-                  );
-                })}
+                      className="setu-story-loading-fill"
+                      style={{ width: idx <= activeStep ? '100%' : '0%' }}
+                    />
+                  </button>
+                ))}
               </div>
 
               <h3 className="setu-walkthrough-heading" key={`h-${activeStep}`}>
@@ -700,23 +652,19 @@ export const LandingPage = () => {
               </ul>
             </div>
 
-            {/* Right Column: Normal Smartphone Frame (Clean authentic screen with corner shadows) */}
+            {/* Right Column: Normal Smartphone Frame (Clean authentic screen with NO corner shadows inside) */}
             <div className="setu-walkthrough-phone-col">
               <div
                 ref={phoneFrameRef}
                 className="setu-spinning-phone-frame"
                 onClick={handlePhoneClick}
-                onMouseDown={handleStoryPressStart}
-                onMouseUp={handleStoryPressEnd}
-                onTouchStart={handleStoryPressStart}
-                onTouchEnd={handleStoryPressEnd}
-                title="Click right to advance, left to go back, hold to pause"
+                title="Click right half to advance, left half to go back"
                 style={{
                   cursor: 'pointer'
                 }}
               >
                 <div className="setu-spinning-phone-screen">
-                  {/* Screenshots */}
+                  {/* Screenshots - Completely crisp and unobstructed */}
                   {WALKTHROUGH_STEPS.map((step, idx) => (
                     <img
                       key={step.id}
@@ -727,16 +675,13 @@ export const LandingPage = () => {
                         position: 'absolute',
                         inset: 0,
                         opacity: activeStep === idx ? 1 : 0,
-                        transform: activeStep === idx ? 'scale(1)' : 'scale(1.03)',
-                        transition: 'opacity 0.38s ease, transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)',
+                        transform: activeStep === idx ? 'scale(1)' : 'scale(1.02)',
+                        transition: 'opacity 0.28s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
                         pointerEvents: 'none'
                       }}
                     />
                   ))}
-
-                  {/* Corner Shadows & Vignettes (Matching the Images Section) */}
-                  <div className="setu-phone-corner-scrim-top" />
-                  <div className="setu-phone-corner-scrim-bottom" />
+                  {/* NO corner shadows here! Phone screen stays completely clean and visible */}
                 </div>
               </div>
             </div>

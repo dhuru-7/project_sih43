@@ -813,7 +813,7 @@ export const GovernmentMapView = () => {
                       <span>{ward.authority}</span>
                       <button
                         type="button"
-                        onClick={() => navigate(`/government/reports/${ward.reportId}`)}
+                        onClick={() => navigate(`/oak/reports/${ward.reportId}`)}
                         style={{
                           background: 'none',
                           border: 'none',
@@ -862,7 +862,7 @@ export const GovernmentMapView = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/government/inbox')}
+                onClick={() => navigate('/oak/inbox')}
                 style={{
                   width: '100%',
                   padding: '9px',

@@ -8,36 +8,36 @@ export const Sidebar = () => {
   if (!user) return null;
 
   const govLinks = [
-    { to: '/government/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/government/problems', label: 'Problems & Grievances', icon: 'report_problem' },
-    { to: '/government/departments', label: 'Departments', icon: 'account_balance' },
-    { to: '/government/universities', label: 'Universities', icon: 'school' },
-    { to: '/government/challenges', label: 'Active Challenges', icon: 'flag' },
-    { to: '/government/projects', label: 'R&D Projects', icon: 'folder_open' },
-    { to: '/government/funding', label: 'Funding & Grants', icon: 'payments' },
-    { to: '/government/certificates', label: 'Certificates', icon: 'verified' },
-    { to: '/government/analytics', label: 'AI Analytics', icon: 'analytics' },
+    { to: '/oak/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { to: '/oak/problems', label: 'Problems & Grievances', icon: 'report_problem' },
+    { to: '/oak/departments', label: 'Departments', icon: 'account_balance' },
+    { to: '/oak/universities', label: 'Universities', icon: 'school' },
+    { to: '/oak/challenges', label: 'Active Challenges', icon: 'flag' },
+    { to: '/oak/projects', label: 'R&D Projects', icon: 'folder_open' },
+    { to: '/oak/funding', label: 'Funding & Grants', icon: 'payments' },
+    { to: '/oak/certificates', label: 'Certificates', icon: 'verified' },
+    { to: '/oak/analytics', label: 'AI Analytics', icon: 'analytics' },
   ];
 
   const uniLinks = [
-    { to: '/university/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/university/challenges', label: 'Open Challenges', icon: 'flag' },
-    { to: '/university/teams', label: 'Research Teams', icon: 'groups' },
-    { to: '/university/projects', label: 'Our Projects', icon: 'folder_open' },
-    { to: '/university/milestones', label: 'Milestones', icon: 'timeline' },
-    { to: '/university/mentors', label: 'Industry Mentors', icon: 'handshake' },
-    { to: '/university/funding', label: 'Grant Requests', icon: 'payments' },
-    { to: '/university/communication', label: 'Govt Communication', icon: 'forum' },
+    { to: '/saplings/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { to: '/saplings/challenges', label: 'Open Challenges', icon: 'flag' },
+    { to: '/saplings/teams', label: 'Research Teams', icon: 'groups' },
+    { to: '/saplings/projects', label: 'Our Projects', icon: 'folder_open' },
+    { to: '/saplings/milestones', label: 'Milestones', icon: 'timeline' },
+    { to: '/saplings/mentors', label: 'Industry Mentors', icon: 'handshake' },
+    { to: '/saplings/funding', label: 'Grant Requests', icon: 'payments' },
+    { to: '/saplings/communication', label: 'Govt Communication', icon: 'forum' },
   ];
 
   const indLinks = [
-    { to: '/industry/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/industry/challenges', label: 'Explore Challenges', icon: 'flag' },
-    { to: '/industry/projects', label: 'Sponsored Projects', icon: 'folder_open' },
-    { to: '/industry/collaborations', label: 'University Alliances', icon: 'handshake' },
-    { to: '/industry/funding', label: 'CSR Grant Portal', icon: 'payments' },
-    { to: '/industry/mentorship', label: 'Mentorship Program', icon: 'work' },
-    { to: '/industry/profile', label: 'CSR Profile', icon: 'apartment' },
+    { to: '/grove/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { to: '/grove/challenges', label: 'Explore Challenges', icon: 'flag' },
+    { to: '/grove/projects', label: 'Sponsored Projects', icon: 'folder_open' },
+    { to: '/grove/collaborations', label: 'University Alliances', icon: 'handshake' },
+    { to: '/grove/funding', label: 'CSR Grant Portal', icon: 'payments' },
+    { to: '/grove/mentorship', label: 'Mentorship Program', icon: 'work' },
+    { to: '/grove/profile', label: 'CSR Profile', icon: 'apartment' },
   ];
 
   const links = user.role === 'GOVERNMENT' ? govLinks :

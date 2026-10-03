@@ -13,6 +13,8 @@ export const GovernmentLayout = () => {
   };
 
   const isDashboardActive =
+    location.pathname === '/oak' ||
+    location.pathname === '/oak/dashboard' ||
     location.pathname === '/government' ||
     location.pathname === '/government/dashboard' ||
     location.pathname === '/civic-dashboard' ||
@@ -24,11 +26,13 @@ export const GovernmentLayout = () => {
     location.pathname.includes('problems');
 
   const isMapActive =
+    location.pathname === '/oak/map' ||
     location.pathname === '/government/map' ||
     location.pathname === '/government/map-view' ||
     location.pathname === '/map';
 
   const isAssignedActive =
+    location.pathname === '/oak/assigned' ||
     location.pathname === '/government/assigned' ||
     location.pathname === '/assigned';
 
@@ -60,7 +64,7 @@ export const GovernmentLayout = () => {
             {/* Dashboard */}
             <button
               type="button"
-              onClick={() => navigate('/government/dashboard')}
+              onClick={() => navigate('/oak/dashboard')}
               className={`gov-nav-btn ${isDashboardActive ? 'active' : ''}`}
             >
               <div className="gov-nav-icon-box">
@@ -73,7 +77,7 @@ export const GovernmentLayout = () => {
             {/* Issue Inbox */}
             <button
               type="button"
-              onClick={() => navigate('/government/inbox')}
+              onClick={() => navigate('/oak/inbox')}
               className={`gov-nav-btn ${isInboxActive ? 'active' : ''}`}
             >
               <div className="gov-nav-icon-box">
@@ -95,7 +99,7 @@ export const GovernmentLayout = () => {
             {/* Map View */}
             <button
               type="button"
-              onClick={() => navigate('/government/map')}
+              onClick={() => navigate('/oak/map')}
               className={`gov-nav-btn ${isMapActive ? 'active' : ''}`}
             >
               <div className="gov-nav-icon-box">
@@ -108,7 +112,7 @@ export const GovernmentLayout = () => {
             {/* Assigned */}
             <button
               type="button"
-              onClick={() => navigate('/government/assigned')}
+              onClick={() => navigate('/oak/assigned')}
               className={`gov-nav-btn ${isAssignedActive ? 'active' : ''}`}
             >
               <div className="gov-nav-icon-box">

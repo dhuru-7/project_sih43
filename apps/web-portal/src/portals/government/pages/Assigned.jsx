@@ -846,7 +846,7 @@ export const GovernmentAssigned = () => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => navigate(`/government/reports/${problem.reportId}`)}
+                      onClick={() => navigate(`/oak/reports/${problem.reportId}`)}
                       style={{
                         padding: '6px 14px',
                         backgroundColor: '#111827',

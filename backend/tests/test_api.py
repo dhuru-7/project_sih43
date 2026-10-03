@@ -21,7 +21,7 @@ def test_login_demo_government_user(client):
     assert response.status_code == 200
     assert "token" in response.json
     assert response.json["user"]["role"] == "GOVERNMENT"
-    assert response.json["portalUrl"] == "/government/dashboard"
+    assert response.json["portalUrl"] == "/oak/dashboard"
 
 def test_get_problems(client):
     response = client.get("/api/v1/problems")

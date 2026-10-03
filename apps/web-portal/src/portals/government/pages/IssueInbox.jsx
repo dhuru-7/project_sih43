@@ -424,7 +424,7 @@ export const GovernmentIssueInbox = () => {
               <div
                 key={issue.id}
                 className="inbox-card"
-                onClick={() => navigate(`/government/reports/${issue.id.replace('#', '')}`)}
+                onClick={() => navigate(`/oak/reports/${issue.id.replace('#', '')}`)}
                 title="Click to view full report detail, photo evidence, citizen profile & suggested university labs"
               >
                 {/* Left Media Card / Stacked Images (Directly from Stitch) */}

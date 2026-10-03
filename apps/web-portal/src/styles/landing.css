@@ -911,39 +911,129 @@
 
 .setu-walkthrough-scroll-section {
   position: relative;
-  min-height: 100vh;
-  min-height: 100dvh;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
   z-index: 20;
   background-color: var(--setu-canvas);
-  padding: 3.5rem 1.5rem 4.5rem 1.5rem;
+  padding: 2.5rem 1.5rem;
+  margin: 0 !important;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Section Corner Shadow Scrims & Vignettes (At corners of section, NOT inside phone) */
+.setu-walkthrough-scrim-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 130px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.04) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+.setu-walkthrough-scrim-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.16) 0%,
+    rgba(0, 0, 0, 0.04) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+.setu-walkthrough-vignette-corner-tl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle at 0% 0%, rgba(0, 0, 0, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.setu-walkthrough-vignette-corner-tr {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle at 100% 0%, rgba(0, 0, 0, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.setu-walkthrough-vignette-corner-bl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle at 0% 100%, rgba(0, 0, 0, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.setu-walkthrough-vignette-corner-br {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle at 100% 100%, rgba(0, 0, 0, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 3;
 }
 
 .setu-walkthrough-sticky-viewport {
   width: 100%;
+  max-width: 1240px;
+  height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 4;
 }
 
 .setu-walkthrough-stage-layout {
   display: grid;
   grid-template-columns: 1.35fr 300px;
-  gap: 4rem;
+  gap: 3.5rem;
   align-items: center;
   width: 100%;
-  max-width: 1240px;
   margin: 0 auto;
 }
 
 @media (max-width: 960px) {
   .setu-walkthrough-stage-layout {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 2rem;
   }
 
   .setu-walkthrough-left-col {
@@ -953,7 +1043,7 @@
     margin: 0 auto;
   }
 
-  .setu-stories-loading-lines {
+  .setu-stories-loading-lines-desktop {
     margin: 0 auto 1.25rem auto;
     max-width: 280px;
   }
@@ -1321,47 +1411,57 @@
    INSTAGRAM STORIES LOADING LINES (TOP) & AUTHENTIC PHONE FRAME
    ========================================================================== */
 
-/* Stories Loading Lines (Placed Over Headings in Narrative Column) */
+/* Stories Loading Lines (Top of Narrative / Top of Screen) */
 .setu-stories-loading-lines {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: 8px;
   width: 100%;
-  max-width: 320px;
-  margin: 0 0 1.5rem 0;
   user-select: none;
   z-index: 10;
 }
 
+.setu-stories-loading-lines-desktop {
+  display: flex;
+  max-width: 320px;
+  margin: 0 0 1.5rem 0;
+}
+
+.setu-stories-loading-lines-mobile {
+  display: none;
+}
+
 .setu-story-loading-track {
   flex: 1;
-  height: 3px;
-  background: rgba(0, 0, 0, 0.12);
+  height: 3.5px;
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 9999px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
+  border: none;
+  padding: 0;
+  outline: none;
   transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .setu-story-loading-track:hover {
-  transform: scaleY(1.6);
-  background: rgba(0, 0, 0, 0.22);
+  transform: scaleY(1.4);
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .setu-story-loading-track.active {
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .setu-story-loading-fill {
   height: 100%;
   background: #09090b;
   border-radius: 9999px;
-  transition: width 0.04s linear;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Phone Frame (Authentic Smartphone Hardware with Images Section Corner Shadows) */
+/* Phone Frame (Clean Hardware Frame - NO Scrim Shadows on Phone Glass) */
 .setu-spinning-phone-frame {
   width: 270px;
   height: 578px;
@@ -1382,6 +1482,11 @@
   box-sizing: border-box;
   cursor: pointer;
   margin: 0 auto;
+  transition: transform 0.18s ease;
+}
+
+.setu-spinning-phone-frame:hover {
+  transform: translateY(-2px);
 }
 
 .setu-spinning-phone-screen {
@@ -1391,10 +1496,10 @@
   border-radius: 34px;
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.35);
 }
 
-/* Phone Screenshot Image (Cross-fading handled smoothly) */
+/* Phone Screenshot Image (Crisp and Unobstructed) */
 .setu-phone-ss-img {
   width: 100%;
   height: 100%;
@@ -1402,43 +1507,6 @@
   object-position: top center;
   display: block;
   border-radius: 34px;
-}
-
-/* Corner Shadows & Vignettes (Matching the Images Section) */
-.setu-phone-corner-scrim-top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 75px;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.45) 0%,
-    rgba(0, 0, 0, 0.15) 55%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 3;
-  border-top-left-radius: 34px;
-  border-top-right-radius: 34px;
-}
-
-.setu-phone-corner-scrim-bottom {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 85px;
-  background: linear-gradient(
-    0deg,
-    rgba(5, 6, 9, 0.55) 0%,
-    rgba(5, 6, 9, 0.18) 55%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 3;
-  border-bottom-left-radius: 34px;
-  border-bottom-right-radius: 34px;
 }
 
 /* ==========================================================================
@@ -1742,86 +1810,94 @@
 
 @media (max-width: 640px) {
   .setu-walkthrough-scroll-section {
-    min-height: auto;
-    padding: 3rem 1rem 3.5rem 1rem;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    padding: 12px 14px 12px 14px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: normal !important;
   }
 
   .setu-walkthrough-sticky-viewport {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 2px 0 !important;
+  }
+
+  /* Top Loading Lines: Cover Top End-to-End Across Phone Screen */
+  .setu-stories-loading-lines-mobile {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 2px 4px !important;
+    gap: 6px !important;
+    margin: 0 auto 6px auto !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+  }
+
+  .setu-stories-loading-lines-desktop {
+    display: none !important;
   }
 
   .setu-walkthrough-stage-layout {
-    gap: 1.75rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
+    gap: 0.65rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    flex: 1 !important;
   }
 
   .setu-walkthrough-left-col {
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
-    align-items: center;
-    text-align: center;
-  }
-
-  .setu-stories-pill-badge {
-    margin-bottom: 0.75rem;
-    font-size: 0.68rem;
-  }
-
-  .setu-stories-chips-row {
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 1rem;
-  }
-
-  .setu-story-tab-chip {
-    padding: 5px 11px;
-    font-size: 0.74rem;
+    width: 100% !important;
+    max-width: 380px !important;
+    margin: 0 auto !important;
+    align-items: center !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
   }
 
   .setu-walkthrough-heading {
-    font-size: 1.25rem;
-    margin: 0 0 0.75rem 0;
-    line-height: 1.25;
-    text-align: center;
+    font-size: 1.1rem !important;
+    margin: 0 0 0.35rem 0 !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
     white-space: normal !important;
   }
 
   .setu-walkthrough-bullets {
-    gap: 0.75rem;
-    width: 100%;
+    gap: 0.25rem !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .setu-walkthrough-bullet-item {
-    font-size: 0.85rem;
-    line-height: 1.45;
-    gap: 0.6rem;
-    text-align: left;
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+    gap: 0.45rem !important;
+    text-align: left !important;
+    animation: none !important;
   }
 
   .setu-walkthrough-bullet-dot {
-    margin-top: 6px;
-    width: 5px;
-    height: 5px;
-  }
-
-  .setu-story-hint-row {
-    margin-top: 1.25rem;
-    padding-top: 0.75rem;
-    font-size: 0.74rem;
-    text-align: center;
-    justify-content: center;
+    margin-top: 5px !important;
+    width: 4px !important;
+    height: 4px !important;
   }
 
   .setu-walkthrough-phone-col {
@@ -1831,46 +1907,32 @@
     justify-content: center !important;
     width: 100% !important;
     margin: 0 auto !important;
+    flex-shrink: 0 !important;
     gap: 0 !important;
   }
 
-  .setu-stories-loading-lines {
-    width: 240px !important;
-    max-width: 100% !important;
-    margin: 0 auto 14px auto !important;
-  }
-
+  /* Phone Hardware Frame: Decreased by 25% on Mobile (180px x 384px) */
   .setu-spinning-phone-frame {
-    width: 240px !important;
-    height: 512px !important;
-    border-radius: 36px !important;
-    padding: 6px !important;
+    width: 180px !important;
+    height: 384px !important;
+    border-radius: 27px !important;
+    padding: 4.5px !important;
     margin: 0 auto !important;
     box-shadow: 
-      0 0 0 2px #38383c,
-      0 0 0 4px #18181a,
-      0 20px 44px -8px rgba(0, 0, 0, 0.4),
+      0 0 0 1.5px #38383c,
+      0 0 0 3px #18181a,
+      0 16px 36px -6px rgba(0, 0, 0, 0.4),
       0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
+    flex-shrink: 0 !important;
   }
 
   .setu-spinning-phone-screen {
-    border-radius: 30px !important;
+    border-radius: 23px !important;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3) !important;
   }
 
   .setu-phone-ss-img {
-    border-radius: 30px !important;
-  }
-
-  .setu-phone-corner-scrim-top {
-    border-top-left-radius: 30px !important;
-    border-top-right-radius: 30px !important;
-    height: 55px !important;
-  }
-
-  .setu-phone-corner-scrim-bottom {
-    border-bottom-left-radius: 30px !important;
-    border-bottom-right-radius: 30px !important;
-    height: 65px !important;
+    border-radius: 23px !important;
   }
 
   .setu-tara-section-wrap {
@@ -1903,11 +1965,13 @@
 
 .setu-bubbles-footer {
   position: relative;
-  z-index: 1;
+  z-index: 25;
   --footer-background: #000000; /* Pitch Black */
   background: var(--footer-background);
   min-height: 16rem;
-  margin-top: 8.5rem;
+  margin: 0;
+  margin-top: 0;
+  margin-bottom: 0;
   overflow: visible;
 }
 
@@ -2091,7 +2155,9 @@
 
 @media (max-width: 640px) {
   .setu-bubbles-footer {
-    margin-top: 6.5rem;
+    margin: 0;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   .setu-footer-content {

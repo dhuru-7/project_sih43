@@ -654,7 +654,7 @@ export const GovernmentDashboard = () => {
                           key={t.id}
                           className="gov-table-row"
                           style={{ cursor: 'pointer' }}
-                          onClick={() => navigate('/government/reports/' + t.id.replace('#', ''))}
+                          onClick={() => navigate('/oak/reports/' + t.id.replace('#', ''))}
                         >
                           <td className="gov-ticket-id">{t.id}</td>
                           <td>
@@ -679,7 +679,7 @@ export const GovernmentDashboard = () => {
                               className="gov-view-btn"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate('/government/reports/' + t.id.replace('#', ''));
+                                navigate('/oak/reports/' + t.id.replace('#', ''));
                               }}
                             >
                               View <span className="material-symbols-outlined text-[14px]">chevron_right</span>

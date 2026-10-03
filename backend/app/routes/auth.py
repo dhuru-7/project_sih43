@@ -260,13 +260,19 @@ def login():
         # Check if dummy user creation requested or fallback
         if email and password:
             role = data.get("role", "CITIZEN")
+            role_portals = {
+                "GOVERNMENT": "/oak/dashboard",
+                "UNIVERSITY": "/saplings/dashboard",
+                "INDUSTRY": "/grove/dashboard",
+                "CITIZEN": "/grass"
+            }
             user = {
                 "id": f"usr-{datetime.utcnow().timestamp()}",
                 "name": email.split("@")[0].capitalize(),
                 "email": email,
                 "role": role,
                 "organization": data.get("organization", "Portal User"),
-                "portalUrl": f"/{role.lower()}/dashboard" if role in ["GOVERNMENT", "UNIVERSITY", "INDUSTRY"] else "/government/dashboard"
+                "portalUrl": role_portals.get(role, "/grass")
             }
         else:
             return jsonify({"error": "Invalid email or password"}), 401
@@ -492,7 +498,7 @@ def verify_aadhaar_otp():
             "designation": account.get("designation", ""),
             "sessionId": new_session_id
         },
-        "portalUrl": "/report"
+        "portalUrl": "/grass"
     }), 200
 
 @auth_bp.route("/aadhaar/validate-session", methods=["POST"])

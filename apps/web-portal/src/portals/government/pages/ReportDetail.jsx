@@ -27,7 +27,7 @@ export const GovernmentReportDetail = () => {
         <p style={{ color: '#6b7280', margin: '1rem 0' }}>The requested grievance ID could not be loaded.</p>
         <button
           type="button"
-          onClick={() => navigate('/government/inbox')}
+          onClick={() => navigate('/oak/inbox')}
           style={{
             padding: '8px 16px',
             backgroundColor: '#111827',
@@ -86,7 +86,7 @@ export const GovernmentReportDetail = () => {
       >
         <button
           type="button"
-          onClick={() => navigate('/government/inbox')}
+          onClick={() => navigate('/oak/inbox')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
